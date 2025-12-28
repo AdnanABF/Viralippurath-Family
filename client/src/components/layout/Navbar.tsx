@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
           {/* Brand */}
           <div className="flex items-center">
             <img
-              src="./public/v_logo.svg"
+              src="/v_logo.svg"
               alt="Viralippurath Logo"
               className="h-10 w-10 mr-3"
             />
