@@ -12,6 +12,11 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-20">
           {/* Brand */}
           <div className="flex items-center">
+            <img
+              src="./public/v_logo.svg"
+              alt="Viralippurath Logo"
+              className="h-10 w-10 mr-3"
+            />
             <Link
               to="/"
               className="text-2xl font-serif font-bold text-stone-800 tracking-tight"
