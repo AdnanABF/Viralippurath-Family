@@ -9,6 +9,8 @@ interface Props {
 
 const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
   const [title, setTitle] = useState(initial?.title ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [type, setType] = useState(initial?.type ?? "");
   const [date, setDate] = useState(initial?.date ?? "");
   const [status, setStatus] = useState<EventStatus>(initial?.status ?? "DRAFT");
 
@@ -16,50 +18,56 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
     onSave({
       id: initial?.id ?? Date.now().toString(),
       title,
+      description,
+      type,
       date,
       status,
+      location: initial?.location,
     });
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-stone-200 space-y-4">
-      <h2 className="font-bold text-stone-800">
-        {initial ? "Edit Event" : "Create Event"}
-      </h2>
-
+    <div className="bg-white p-6 rounded-xl border space-y-4">
       <input
-        className="w-full border rounded-lg px-3 py-2"
-        placeholder="Event title"
+        placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        className="w-full border px-3 py-2 rounded"
+      />
+
+      <textarea
+        placeholder="Description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="w-full border px-3 py-2 rounded"
+      />
+
+      <input
+        placeholder="Type (Gathering, Ceremony)"
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+        className="w-full border px-3 py-2 rounded"
       />
 
       <input
         type="date"
-        className="w-full border rounded-lg px-3 py-2"
         value={date}
         onChange={(e) => setDate(e.target.value)}
+        className="w-full border px-3 py-2 rounded"
       />
 
       <select
-        className="w-full border rounded-lg px-3 py-2"
         value={status}
         onChange={(e) => setStatus(e.target.value as EventStatus)}
+        className="w-full border px-3 py-2 rounded"
       >
         <option value="DRAFT">Draft</option>
         <option value="PUBLISHED">Published</option>
       </select>
 
       <div className="flex justify-end gap-3">
-        <button onClick={onCancel} className="text-stone-600">
-          Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="bg-amber-700 text-white px-4 py-2 rounded-lg"
-        >
-          Save
-        </button>
+        <button onClick={onCancel}>Cancel</button>
+        <button onClick={handleSubmit}>Save</button>
       </div>
     </div>
   );

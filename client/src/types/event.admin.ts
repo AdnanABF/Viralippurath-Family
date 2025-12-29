@@ -1,5 +1,7 @@
-import type { PublicEvent } from './event.public';
+import type { PublicEvent } from "./event.public";
+
+export type EventStatus = "DRAFT" | "PUBLISHED";
 
 export type AdminEvent = PublicEvent & {
-  status: 'DRAFT' | 'PUBLISHED';
+  status: EventStatus;
 };
