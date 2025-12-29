@@ -1,7 +1,7 @@
-import type { FamilyEvent } from "../../types/event";
+import type { PublicEvent } from "../../types/event.public";
 
 interface Props {
-  event: FamilyEvent;
+  event: PublicEvent;
 }
 
 const EventCard: React.FC<Props> = ({ event }) => {

@@ -1,4 +1,4 @@
-export type FamilyEvent = {
+export type PublicEvent = {
   id: string;
   title: string;
   description: string;

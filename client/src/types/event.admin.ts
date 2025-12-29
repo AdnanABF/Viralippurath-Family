@@ -1,9 +1,5 @@
-export type EventStatus = "DRAFT" | "PUBLISHED";
+import type { PublicEvent } from './event.public';
 
-export type AdminEvent = {
-  id: string;
-  title: string;
-  date: string;
-  location?: string;
-  status: EventStatus;
+export type AdminEvent = PublicEvent & {
+  status: 'DRAFT' | 'PUBLISHED';
 };
