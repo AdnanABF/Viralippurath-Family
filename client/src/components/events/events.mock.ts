@@ -1,6 +1,6 @@
-import type { FamilyEvent } from "../../types/event";
+import type { PublicEvent } from "../../types/event.public";
 
-export const events: FamilyEvent[] = [
+export const events: PublicEvent[] = [
   {
     id: "1",
     title: "Annual Family Meet",

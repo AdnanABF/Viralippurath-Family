@@ -1,10 +1,18 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import NavLinks from "./NavLinks";
 import MobileMenu from "./MobileMenu";
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
@@ -28,12 +36,30 @@ const Navbar: React.FC = () => {
           {/* Desktop */}
           <div className="hidden md:flex items-center space-x-8">
             <NavLinks />
-            <Link
-              to="/login"
-              className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700 transition-all"
-            >
-              Portal
-            </Link>
+            {!isAuthenticated && (
+              <Link
+                to="/login"
+                className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700 transition-all"
+              >
+                Portal
+              </Link>
+            )}
+            {isAuthenticated && (
+              <>
+                <Link
+                  to="/admin/dashboard"
+                  className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700"
+                >
+                  Admin
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="border border-stone-300 text-stone-700 px-5 py-2 rounded-full text-sm hover:bg-stone-100 transition-all"
+                >
+                  Logout
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile button */}
