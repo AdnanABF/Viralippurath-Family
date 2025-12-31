@@ -10,19 +10,15 @@ import NotificationsAdmin from "../pages/admin/NotificationsAdmin";
 const AdminRouter = () => {
   return (
     <Routes>
-      <Route
-        element={
-          <AdminGuard>
-            <AdminLayout />
-          </AdminGuard>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="events" element={<EventsAdmin />} />
-        <Route path="gallery" element={<GalleryAdmin />} />
-        <Route path="magazine" element={<MagazineAdmin />} />
-        <Route path="notifications" element={<NotificationsAdmin />} />
+      <Route element={<AdminGuard />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="events" element={<EventsAdmin />} />
+          <Route path="gallery" element={<GalleryAdmin />} />
+          <Route path="magazine" element={<MagazineAdmin />} />
+          <Route path="notifications" element={<NotificationsAdmin />} />
+        </Route>
       </Route>
     </Routes>
   );

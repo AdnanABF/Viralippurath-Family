@@ -13,12 +13,12 @@ export class EventsService {
   ) {}
 
   // ADMIN
-  create(dto: CreateEventDto) {
-    return this.eventModel.create(dto);
-  }
-
   findAllAdmin() {
     return this.eventModel.find().sort({ date: -1 });
+  }
+
+  create(dto: CreateEventDto) {
+    return this.eventModel.create(dto);
   }
 
   update(id: string, dto: UpdateEventDto) {

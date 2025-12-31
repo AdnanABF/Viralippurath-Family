@@ -1,14 +1,22 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { Navigate, Outlet } from "react-router-dom";
+import { isTokenValid, getUserFromToken } from "../../utils/auth";
 
-const AdminGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
+const AdminGuard = () => {
+  if (!isTokenValid()) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  const user = getUserFromToken();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== "SUPER_ADMIN") {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default AdminGuard;

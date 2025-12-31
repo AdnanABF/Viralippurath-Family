@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logout } from "../utils/logout";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
@@ -7,6 +8,57 @@ const api = axios.create({
   },
 });
 
-// later: auth interceptors, 401 handling, etc.
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    const status =
+      error.response?.status ||
+      error.status ||
+      (error.request && error.request.status);
+
+    if (
+      status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh")
+    ) {
+      (originalRequest as any)._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) {
+          logout();
+          return Promise.reject(error);
+        }
+
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+          { refreshToken }
+        );
+
+        localStorage.setItem("accessToken", res.data.accessToken);
+        localStorage.setItem("refreshToken", res.data.refreshToken);
+
+        originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
+
+        return api(originalRequest);
+      } catch {
+        logout();
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;

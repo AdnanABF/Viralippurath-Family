@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import type { AdminEvent } from "../../types/event.admin";
+import type { AdminEvent, AdminEventDraft } from "../../types/event.admin";
 import { eventsAdminService } from "../../services/events.admin.service";
 import EventsTable from "../../components/admin/events/EventsTable";
 import EventForm from "../../components/admin/events/EventForm";
+import Modal from "../../components/ui/Modal";
 
 const EventsAdmin = () => {
   const [events, setEvents] = useState<AdminEvent[]>([]);
@@ -27,14 +28,15 @@ const EventsAdmin = () => {
     loadEvents();
   }, []);
 
-  const handleSave = async (event: AdminEvent) => {
+  const handleSave = async (event: AdminEvent | AdminEventDraft) => {
     try {
-      if (event.id) {
-        await eventsAdminService.update(event.id, event);
-      } else {
+      if ("id" in event) {
         const { id, ...payload } = event;
-        await eventsAdminService.create(payload);
+        await eventsAdminService.update(id, payload);
+      } else {
+        await eventsAdminService.create(event);
       }
+
       setEditing(null);
       loadEvents();
     } catch {
@@ -73,13 +75,15 @@ const EventsAdmin = () => {
         </button>
       </div>
 
-      {editing && (
-        <EventForm
-          initial={editing.id ? editing : undefined}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      )}
+      <Modal open={!!editing} onClose={() => setEditing(null)}>
+        {editing && (
+          <EventForm
+            initial={editing.id ? editing : undefined}
+            onSave={handleSave}
+            onCancel={() => setEditing(null)}
+          />
+        )}
+      </Modal>
 
       {loading && <p className="text-stone-500">Loading events…</p>}
 
