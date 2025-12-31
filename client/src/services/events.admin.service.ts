@@ -23,7 +23,8 @@ export const eventsAdminService = {
   },
 
   async update(id: string, event: Partial<AdminEvent>): Promise<AdminEvent> {
-    const { data } = await api.patch(`/events/${id}`, event);
+    const { id: _, ...payload } = event;
+    const { data } = await api.patch(`/events/${id}`, payload);
     return normalizeEvent(data);
   },
 

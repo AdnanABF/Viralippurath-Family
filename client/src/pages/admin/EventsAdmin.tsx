@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
-import type { AdminEvent } from "../../types/event.admin";
+import type { AdminEvent, AdminEventDraft } from "../../types/event.admin";
 import { eventsAdminService } from "../../services/events.admin.service";
 import EventsTable from "../../components/admin/events/EventsTable";
 import EventForm from "../../components/admin/events/EventForm";
+import Modal from "../../components/ui/Modal";
+import ConfirmModal from "../../components/ui/ConfirmModal";
+import toast from "react-hot-toast";
 
 const EventsAdmin = () => {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [editing, setEditing] = useState<AdminEvent | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const loadEvents = async () => {
     setLoading(true);
@@ -16,7 +23,8 @@ const EventsAdmin = () => {
     try {
       const data = await eventsAdminService.getAll();
       setEvents(data);
-    } catch (err) {
+    } catch {
+      // handled globally in api.ts
       setError("Failed to load events");
     } finally {
       setLoading(false);
@@ -27,28 +35,35 @@ const EventsAdmin = () => {
     loadEvents();
   }, []);
 
-  const handleSave = async (event: AdminEvent) => {
+  const handleSave = async (event: AdminEvent | AdminEventDraft) => {
     try {
-      if (event.id) {
-        await eventsAdminService.update(event.id, event);
-      } else {
+      if ("id" in event) {
         const { id, ...payload } = event;
-        await eventsAdminService.create(payload);
+        await eventsAdminService.update(id, payload);
+        toast.success("Event updated successfully");
+      } else {
+        await eventsAdminService.create(event);
+        toast.success("Event created successfully");
       }
+
       setEditing(null);
       loadEvents();
     } catch {
-      alert("Failed to save event");
+      // ❌ no toast here — api.ts already handled it
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this event permanently?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
     try {
-      await eventsAdminService.remove(id);
+      await eventsAdminService.remove(deleteTarget.id);
+      toast.success("Event deleted successfully");
       loadEvents();
     } catch {
-      alert("Failed to delete event");
+      // ❌ no toast here — api.ts already handled it
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -73,13 +88,16 @@ const EventsAdmin = () => {
         </button>
       </div>
 
-      {editing && (
+      {/* Create / Edit Modal */}
+      <Modal open={!!editing} onClose={() => setEditing(null)}>
+        {editing && (
         <EventForm
-          initial={editing.id ? editing : undefined}
+            initial={editing.id ? editing : undefined}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
-      )}
+        )}
+      </Modal>
 
       {loading && <p className="text-stone-500">Loading events…</p>}
 
@@ -88,10 +106,35 @@ const EventsAdmin = () => {
       {!loading && !error && (
         <EventsTable
           events={events}
-          onEdit={setEditing}
-          onDelete={handleDelete}
+          onEdit={(event) => setEditing(event)}
+          onDelete={(id) => {
+            const event = events.find((e) => e.id === id);
+            if (event) {
+              setDeleteTarget({ id: event.id, title: event.title });
+            }
+          }}
         />
       )}
+
+      {/* Delete Confirmation */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Event?"
+        description={
+          deleteTarget ? (
+            <span>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                {deleteTarget.title}
+              </span>
+              ? This action cannot be undone.
+            </span>
+          ) : undefined
+        }
+        confirmText="Delete"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

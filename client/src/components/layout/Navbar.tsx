@@ -1,18 +1,14 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
+import { logout } from "../../utils/logout";
+import { isTokenValid } from "../../utils/auth";
 import NavLinks from "./NavLinks";
 import MobileMenu from "./MobileMenu";
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+  const isAuthenticated = isTokenValid();
 
   return (
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
@@ -36,6 +32,7 @@ const Navbar: React.FC = () => {
           {/* Desktop */}
           <div className="hidden md:flex items-center space-x-8">
             <NavLinks />
+
             {!isAuthenticated && (
               <Link
                 to="/login"
@@ -44,6 +41,7 @@ const Navbar: React.FC = () => {
                 Portal
               </Link>
             )}
+
             {isAuthenticated && (
               <>
                 <Link
@@ -52,8 +50,9 @@ const Navbar: React.FC = () => {
                 >
                   Admin
                 </Link>
+
                 <button
-                  onClick={handleLogout}
+                  onClick={logout}
                   className="border border-stone-300 text-stone-700 px-5 py-2 rounded-full text-sm hover:bg-stone-100 transition-all"
                 >
                   Logout

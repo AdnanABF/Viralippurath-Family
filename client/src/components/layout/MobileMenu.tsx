@@ -1,19 +1,18 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { navLinks } from "./nav.config";
-import { useAuth } from "../../context/AuthContext";
+import { isTokenValid } from "../../utils/auth";
+import { logout } from "../../utils/logout";
 
 interface Props {
   onClose: () => void;
 }
 
 const MobileMenu: React.FC<Props> = ({ onClose }) => {
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
+  const isAuthenticated = isTokenValid();
 
   const handleLogout = () => {
     logout();
     onClose();
-    navigate("/");
   };
 
   return (

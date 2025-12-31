@@ -4,6 +4,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventsModule } from './events/events.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -27,6 +29,10 @@ import { AppService } from './app.service';
     }),
 
     EventsModule,
+
+    AuthModule,
+
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
