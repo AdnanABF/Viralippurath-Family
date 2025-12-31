@@ -24,6 +24,7 @@ const EventsAdmin = () => {
       const data = await eventsAdminService.getAll();
       setEvents(data);
     } catch {
+      // handled globally in api.ts
       setError("Failed to load events");
     } finally {
       setLoading(false);
@@ -48,7 +49,7 @@ const EventsAdmin = () => {
       setEditing(null);
       loadEvents();
     } catch {
-      toast.error("Failed to save event");
+      // ❌ no toast here — api.ts already handled it
     }
   };
 
@@ -60,7 +61,7 @@ const EventsAdmin = () => {
       toast.success("Event deleted successfully");
       loadEvents();
     } catch {
-      toast.error("Failed to delete event");
+      // ❌ no toast here — api.ts already handled it
     } finally {
       setDeleteTarget(null);
     }
@@ -90,11 +91,11 @@ const EventsAdmin = () => {
       {/* Create / Edit Modal */}
       <Modal open={!!editing} onClose={() => setEditing(null)}>
         {editing && (
-          <EventForm
+        <EventForm
             initial={editing.id ? editing : undefined}
-            onSave={handleSave}
-            onCancel={() => setEditing(null)}
-          />
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
         )}
       </Modal>
 

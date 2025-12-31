@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 import { logout } from "../utils/logout";
 
 const api = axios.create({
@@ -8,6 +9,9 @@ const api = axios.create({
   },
 });
 
+/**
+ * Attach access token to every request
+ */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   if (token) {
@@ -16,6 +20,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Global response + error handling
+ */
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -26,6 +33,7 @@ api.interceptors.response.use(
       error.status ||
       (error.request && error.request.status);
 
+    // ---------- 401: try refresh token ----------
     if (
       status === 401 &&
       !originalRequest._retry &&
@@ -55,6 +63,25 @@ api.interceptors.response.use(
         logout();
         return Promise.reject(error);
       }
+    }
+
+    if (!originalRequest?.url?.includes("/auth/refresh")) {
+      let message = "Something went wrong";
+
+      const status = error.response?.status;
+
+      if (status && status < 500) {
+        const backendMessage =
+          error?.response?.data?.message ?? error?.response?.data?.error;
+
+        if (backendMessage) {
+          message = Array.isArray(backendMessage)
+            ? backendMessage.join(", ")
+            : backendMessage;
+        }
+      }
+
+      toast.error(message);
     }
 
     return Promise.reject(error);
