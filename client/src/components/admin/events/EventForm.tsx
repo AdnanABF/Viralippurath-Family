@@ -19,6 +19,7 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [type, setType] = useState(initial?.type ?? "");
+  const [location, setLocation] = useState(initial?.location ?? "");
   const [date, setDate] = useState(
     initial?.date ? toDateTimeInputValue(initial.date) : nowDateTimeInputValue()
   );
@@ -29,16 +30,13 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
       title,
       description,
       type,
+      location: location || undefined,
       date,
       status,
-      location: initial?.location,
     };
 
     if (initial?.id) {
-      onSave({
-        ...payload,
-        id: initial.id,
-      });
+      onSave({ ...payload, id: initial.id });
     } else {
       onSave(payload);
     }
@@ -77,7 +75,7 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         />
       </div>
 
-      {/* Type + Date */}
+      {/* Type + Location */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-sm font-medium text-stone-700">Type</label>
@@ -91,15 +89,29 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-stone-700">Date</label>
+          <label className="text-sm font-medium text-stone-700">Location</label>
           <input
-            type="datetime-local"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+            placeholder="Kerala, Dubai, Online…"
           />
         </div>
+      </div>
+
+      {/* Date */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-stone-700">
+          Date & Time
+        </label>
+        <input
+          type="datetime-local"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
+                    focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+        />
       </div>
 
       {/* Status */}
@@ -125,7 +137,6 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         >
           Cancel
         </button>
-
         <button
           onClick={handleSubmit}
           className="px-5 py-2 rounded-lg bg-amber-700 text-white
