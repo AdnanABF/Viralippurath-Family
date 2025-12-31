@@ -87,7 +87,7 @@ const GalleryAdmin = () => {
           }
           className="bg-amber-700 text-white px-4 py-2 rounded-lg"
         >
-          + Add Image
+          Add New Image
         </button>
       </div>
 

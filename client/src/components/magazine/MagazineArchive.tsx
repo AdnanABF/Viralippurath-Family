@@ -1,9 +1,9 @@
-import type { MagazineIssue } from "../../types/magazine";
+import type { PublicMagazine } from "../../types/magazine.public";
 
 interface Props {
-  issues: MagazineIssue[];
+  issues: PublicMagazine[];
   selectedId?: string;
-  onSelect: (issue: MagazineIssue) => void;
+  onSelect: (issue: PublicMagazine) => void;
 }
 
 const MagazineArchive: React.FC<Props> = ({ issues, selectedId, onSelect }) => {
@@ -25,7 +25,7 @@ const MagazineArchive: React.FC<Props> = ({ issues, selectedId, onSelect }) => {
             }`}
           >
             <img
-              src={issue.thumbnail}
+              src={issue.coverImageUrl}
               alt={issue.title}
               className="w-16 h-20 object-cover rounded-md shadow-sm"
             />

@@ -1,7 +1,7 @@
-import type { MagazineIssue } from "../../types/magazine";
+import type { PublicMagazine } from "../../types/magazine.public";
 
 interface Props {
-  issue: MagazineIssue | null;
+  issue: PublicMagazine | null;
 }
 
 const MagazineViewer: React.FC<Props> = ({ issue }) => {
