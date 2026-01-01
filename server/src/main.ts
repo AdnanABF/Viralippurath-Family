@@ -11,10 +11,13 @@ async function bootstrap() {
   const corsOrigin = configService.get<string>('CORS_ORIGIN');
 
   app.enableCors({
-    origin: corsOrigin
-      ? corsOrigin.split(',').map(o => o.trim())
-      : false,
+    origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : false,
+
     credentials: true,
+
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.useGlobalPipes(
@@ -27,4 +30,5 @@ async function bootstrap() {
 
   await app.listen(3000);
 }
+
 bootstrap();
