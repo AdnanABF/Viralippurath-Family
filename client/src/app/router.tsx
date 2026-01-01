@@ -10,6 +10,7 @@ import About from "../pages/public/About";
 import Contact from "../pages/public/Contact";
 import Login from "../pages/public/Login";
 import AdminRouter from "./admin-router";
+import GuestGuard from "../components/admin/GuestGuard";
 
 const AppRouter = () => {
   return (
@@ -22,7 +23,11 @@ const AppRouter = () => {
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/login" element={<Login />} />
+
+      {/* 2. Guest-Only Routes (Redirects to Admin if logged in) */}
+      <Route element={<GuestGuard />}>
+        <Route path="/login" element={<Login />} />
+      </Route>
 
       {/* Admin */}
       <Route path="/admin/*" element={<AdminRouter />} />

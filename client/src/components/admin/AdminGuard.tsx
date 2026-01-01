@@ -1,8 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { isTokenValid, getUserFromToken } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
+import { getUserFromToken } from "../../utils/auth";
 
 const AdminGuard = () => {
-  if (!isTokenValid()) {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

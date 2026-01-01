@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
 import { navLinks } from "./nav.config";
-import { isTokenValid } from "../../utils/auth";
-import { logout } from "../../utils/logout";
+import { useAuth } from "../../context/AuthContext";
 
 interface Props {
   onClose: () => void;
 }
 
 const MobileMenu: React.FC<Props> = ({ onClose }) => {
-  const isAuthenticated = isTokenValid();
+  const { isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -37,7 +36,7 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
               onClick={onClose}
               className="block px-3 py-2 text-base font-medium text-stone-800 hover:bg-stone-50"
             >
-              Portal
+              Admin Portal
             </Link>
           )}
 
@@ -48,7 +47,7 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
                 onClick={onClose}
                 className="block px-3 py-2 text-base font-medium text-stone-800 hover:bg-stone-50"
               >
-                Admin
+                Admin Portal
               </Link>
 
               <button

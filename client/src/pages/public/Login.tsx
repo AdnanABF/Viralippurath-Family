@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -25,6 +27,7 @@ const Login = () => {
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
 
+      login();
       navigate("/admin/dashboard");
     } catch (err: any) {
       setError("Invalid username or password");
