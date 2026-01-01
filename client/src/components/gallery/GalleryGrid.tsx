@@ -1,7 +1,7 @@
-import type { GalleryImage } from "../../types/gallery";
+import type { PublicGalleryItem } from "../../types/gallery.public";
 
 interface Props {
-  images: GalleryImage[];
+  images: PublicGalleryItem[];
   loading: boolean;
 }
 const GalleryGrid: React.FC<Props> = ({ images, loading }) => {
@@ -23,7 +23,7 @@ const GalleryGrid: React.FC<Props> = ({ images, loading }) => {
           className="group relative overflow-hidden rounded-xl bg-white border border-stone-200 shadow-sm cursor-pointer"
         >
           <img
-            src={img.thumbnailUrl}
+            src={img.imageUrl}
             alt={img.caption}
             className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
             loading="lazy"

@@ -84,18 +84,18 @@ const EventsAdmin = () => {
           }
           className="bg-amber-700 text-white px-4 py-2 rounded-lg"
         >
-          + New Event
+          Create New Event
         </button>
       </div>
 
       {/* Create / Edit Modal */}
       <Modal open={!!editing} onClose={() => setEditing(null)}>
         {editing && (
-        <EventForm
+          <EventForm
             initial={editing.id ? editing : undefined}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
+            onSave={handleSave}
+            onCancel={() => setEditing(null)}
+          />
         )}
       </Modal>
 

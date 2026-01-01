@@ -6,6 +6,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { GalleryModule } from './gallery/gallery.module';
+import { MagazineModule } from './magazine/magazine.module';
 
 @Module({
   imports: [
@@ -33,6 +35,10 @@ import { AdminModule } from './admin/admin.module';
     AuthModule,
 
     AdminModule,
+
+    GalleryModule,
+
+    MagazineModule,
   ],
   controllers: [AppController],
   providers: [AppService],
