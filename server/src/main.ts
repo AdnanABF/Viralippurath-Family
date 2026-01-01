@@ -11,13 +11,10 @@ async function bootstrap() {
   const corsOrigin = configService.get<string>('CORS_ORIGIN');
 
   app.enableCors({
-    origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : false,
-
+    origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : '*', // ✅ NEVER false in production
     credentials: true,
-
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   app.useGlobalPipes(
