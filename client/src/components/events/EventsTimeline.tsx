@@ -1,3 +1,4 @@
+import React from "react";
 import type { PublicEvent } from "../../types/event.public";
 import EventCard from "./EventCard";
 
@@ -9,7 +10,7 @@ const EventsTimeline: React.FC<Props> = ({ events }) => {
   return (
     <div className="space-y-12">
       {events.map((event) => (
-        <EventCard key={event.id} event={event} />
+        <EventCard key={event.uuid} event={event} />
       ))}
     </div>
   );

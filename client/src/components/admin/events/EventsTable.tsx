@@ -6,7 +6,7 @@ import { EditIcon, DeleteIcon } from "../../ui/icons";
 interface Props {
   events: AdminEvent[];
   onEdit: (event: AdminEvent) => void;
-  onDelete: (id: string) => void;
+  onDelete: (uuid: string) => void;
 }
 
 const EventsTable: React.FC<Props> = ({ events, onEdit, onDelete }) => {
@@ -24,7 +24,7 @@ const EventsTable: React.FC<Props> = ({ events, onEdit, onDelete }) => {
       </thead>
       <tbody>
         {events.map((event) => (
-          <tr key={event.id} className="border-t">
+          <tr key={event.uuid} className="border-t">
             <td className="p-3 font-medium">{event.title}</td>
 
             <td className="p-3 text-center">
@@ -56,7 +56,7 @@ const EventsTable: React.FC<Props> = ({ events, onEdit, onDelete }) => {
                 </button>
 
                 <button
-                  onClick={() => onDelete(event.id)}
+                  onClick={() => onDelete(event.uuid)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
                              border border-red-200 text-red-600
                              hover:bg-red-50 transition"

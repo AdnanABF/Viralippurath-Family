@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -22,34 +24,38 @@ export class EventsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
-  create(@Body() dto: CreateEventDto) {
-    return this.eventsService.create(dto);
+  async create(@Body() dto: CreateEventDto) {
+    return await this.eventsService.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Get('admin')
-  getAllAdmin() {
-    return this.eventsService.findAllAdmin();
+  async getAllAdmin() {
+    return await this.eventsService.findAllAdmin();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateEventDto) {
-    return this.eventsService.update(id, dto);
+  @Patch(':uuid')
+  async update(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Body() dto: UpdateEventDto,
+  ) {
+    return await this.eventsService.update(uuid, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.eventsService.remove(id);
+  @Delete(':uuid')
+  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+    return await this.eventsService.remove(uuid);
   }
 
-  // 🌍 Public endpoint
+  // 🌍 Public endpoints
+
   @Get('published')
-  findPublished() {
-    return this.eventsService.findPublished();
+  async findPublished(@Query('type') type: 'upcoming' | 'past') {
+    return await this.eventsService.findPublished(type || 'upcoming');
   }
 }
