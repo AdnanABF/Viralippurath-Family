@@ -8,6 +8,7 @@ import MagazineTable from "../../components/admin/magazine/MagazineTable";
 import MagazineForm from "../../components/admin/magazine/MagazineForm";
 import Modal from "../../components/ui/Modal";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import EmptyState from "../../components/ui/EmptyState";
 import toast from "react-hot-toast";
 
 const MagazineAdmin = () => {
@@ -106,7 +107,14 @@ const MagazineAdmin = () => {
 
       {error && <p className="text-red-600">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && items.length === 0 && (
+        <EmptyState
+          title="No magazines yet"
+          description="Create your first magazine to get started."
+        />
+      )}
+
+      {!loading && !error && items.length > 0 && (
         <MagazineTable
           items={items}
           onEdit={(m) => setEditing(m)}

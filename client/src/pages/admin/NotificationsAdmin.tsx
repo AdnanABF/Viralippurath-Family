@@ -8,6 +8,7 @@ import NotificationsTable from "../../components/admin/notifications/Notificatio
 import NotificationForm from "../../components/admin/notifications/NotificationForm";
 import Modal from "../../components/ui/Modal";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import EmptyState from "../../components/ui/EmptyState";
 import toast from "react-hot-toast";
 
 const NotificationsAdmin = () => {
@@ -108,7 +109,14 @@ const NotificationsAdmin = () => {
 
       {error && <p className="text-red-600">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && items.length === 0 && (
+        <EmptyState
+          title="No notifications yet"
+          description="Create your first notification to get started."
+        />
+      )}
+
+      {!loading && !error && items.length > 0 && (
         <NotificationsTable
           items={items}
           onEdit={(item) => setEditing(item)}

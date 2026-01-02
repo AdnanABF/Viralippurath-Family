@@ -8,6 +8,7 @@ import GalleryTable from "../../components/admin/gallery/GalleryTable";
 import GalleryForm from "../../components/admin/gallery/GalleryForm";
 import Modal from "../../components/ui/Modal";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import EmptyState from "../../components/ui/EmptyState";
 import toast from "react-hot-toast";
 
 const GalleryAdmin = () => {
@@ -105,7 +106,14 @@ const GalleryAdmin = () => {
       {loading && <p className="text-stone-500">Loading gallery…</p>}
       {error && <p className="text-red-600">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && items.length === 0 && (
+        <EmptyState
+          title="No images in gallery yet"
+          description="Create your first image to get started."
+        />
+      )}
+
+      {!loading && !error && items.length > 0 && (
         <GalleryTable
           items={items}
           onEdit={setEditing}
