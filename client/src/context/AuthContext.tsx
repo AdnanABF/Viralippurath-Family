@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { isTokenValid } from "../utils/auth";
-import { logout as logoutUtil } from "../utils/logout";
+import { clearAuthData } from "../utils/logout";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -20,8 +20,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
-    logoutUtil();
-    setIsAuthenticated(false);
+    clearAuthData(); // Clear localStorage
+    setIsAuthenticated(false); // Update React state immediately
+    window.location.href = "/login"; // Redirect
   };
 
   // Sync auth state on refresh / token change

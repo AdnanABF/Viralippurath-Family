@@ -21,12 +21,32 @@ export class AuthService {
     }
 
     const isValid = await bcrypt.compare(password, admin.passwordHash);
-
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // --- ACCESS TOKEN GENERATION ---
+    return this.generateTokenPair(admin);
+  }
+
+  async refresh(userId: string, refreshToken: string) {
+    if (!refreshToken || !userId) {
+      throw new UnauthorizedException();
+    }
+
+    const admin = await this.adminService.findById(userId);
+    if (!admin || !admin.refreshTokenHash) {
+      throw new UnauthorizedException();
+    }
+
+    const isValid = await bcrypt.compare(refreshToken, admin.refreshTokenHash);
+    if (!isValid) {
+      throw new UnauthorizedException();
+    }
+
+    return this.generateTokenPair(admin);
+  }
+
+  private async generateTokenPair(admin: any) {
     const payload = {
       sub: admin._id,
       username: admin.username,
@@ -34,10 +54,10 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN'),
+      secret: this.config.get('JWT_SECRET'),
+      expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN'), // Use Access Expiry
     });
 
-    // --- REFRESH TOKEN GENERATION ---
     const refreshToken = randomBytes(64).toString('hex');
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
@@ -47,44 +67,6 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-    };
-  }
-
-  async refresh(refreshToken: string) {
-    if (!refreshToken) {
-      throw new UnauthorizedException();
-    }
-
-    const admin = await this.adminService.findByRefreshTokenHash();
-    if (!admin || !admin.refreshTokenHash) {
-      throw new UnauthorizedException();
-    }
-
-    const isValid = await bcrypt.compare(refreshToken, admin.refreshTokenHash);
-
-    if (!isValid) {
-      throw new UnauthorizedException();
-    }
-
-    // New Access Token
-    const payload = {
-      sub: admin._id,
-      username: admin.username,
-      role: admin.role,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN'),
-    });
-
-    //Rotate Refresh Token
-    const newRefreshToken = randomBytes(64).toString('hex');
-    admin.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
-    await admin.save();
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
     };
   }
 }

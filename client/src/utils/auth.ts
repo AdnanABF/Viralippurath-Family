@@ -2,7 +2,7 @@ import { jwtDecode } from "jwt-decode";
 
 type JwtPayload = {
   sub: string;
-  email: string;
+  username: string; // Updated to match your NestJS payload
   role: string;
   exp: number;
 };
@@ -26,6 +26,20 @@ export const getUserFromToken = () => {
 
   try {
     return jwtDecode<JwtPayload>(token);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Specifically extracts the userId (sub) for the refresh call
+ */
+export const getUserIdFromToken = (): string | null => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return null;
+  try {
+    const decoded = jwtDecode<JwtPayload>(token);
+    return decoded.sub;
   } catch {
     return null;
   }

@@ -15,12 +15,15 @@ import { AdminModule } from '../admin/admin.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get('JWT_SECRET'),
-        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') },
+        signOptions: {
+          expiresIn: config.get('JWT_ACCESS_EXPIRES_IN'),
+        },
       }),
     }),
     AdminModule,
   ],
   providers: [AuthService, JwtStrategy, RolesGuard],
   controllers: [AuthController],
+  exports: [AuthService], // Exported for use in other modules if needed
 })
 export class AuthModule {}

@@ -12,14 +12,18 @@ let cachedNestApp: any;
  * Shared setup logic for both Local and Production
  */
 async function setupApp(app: INestApplication) {
-  // Pulling from process.env directly
-  const corsOrigin = process.env.CORS_ORIGIN;
+  // 1. Trust Proxy (Crucial for Throttler on Vercel)
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
 
+  // 2. CORS Configuration
+  const corsOrigin = process.env.CORS_ORIGIN;
   app.enableCors({
     origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : [],
     credentials: true,
   });
 
+  // 3. Global Validation Pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
