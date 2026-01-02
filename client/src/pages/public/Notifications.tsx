@@ -1,10 +1,12 @@
 import NotificationsHeader from "../../components/notifications/NotificationsHeader";
 import NotificationsSection from "../../components/notifications/NotificationsSection";
-import { notifications } from "../../components/notifications/notifications.mock";
+import { publicNotification } from "../../components/notifications/notifications.mock";
 
 const Notifications = () => {
-  const highPriority = notifications.filter((n) => n.priority === "HIGH");
-  const normalPriority = notifications.filter((n) => n.priority === "NORMAL");
+  const highPriority = publicNotification.filter((n) => n.priority === "HIGH");
+  const normalPriority = publicNotification.filter(
+    (n) => n.priority === "NORMAL"
+  );
 
   return (
     <div className="py-20 bg-stone-50 min-h-screen">
