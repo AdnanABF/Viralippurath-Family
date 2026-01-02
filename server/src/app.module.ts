@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { EventsModule } from './events/events.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -9,7 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { GalleryModule } from './gallery/gallery.module';
 import { MagazineModule } from './magazine/magazine.module';
-import { APP_GUARD } from '@nestjs/core';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -18,10 +18,11 @@ import { APP_GUARD } from '@nestjs/core';
       isGlobal: true,
     }),
 
+    // Configuration is still here, but not forced globally
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // Time to live in milliseconds (1 minute)
-        limit: 5, // Maximum number of requests within the ttl
+        ttl: 60000,
+        limit: 100, // High default limit for general use
       },
     ]),
 
@@ -40,22 +41,13 @@ import { APP_GUARD } from '@nestjs/core';
     }),
 
     EventsModule,
-
     AuthModule,
-
     AdminModule,
-
     GalleryModule,
-
     MagazineModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}
