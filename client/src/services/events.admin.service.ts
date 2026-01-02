@@ -1,34 +1,25 @@
 import api from "./api";
 import type { AdminEvent } from "../types/event.admin";
 
-/**
- * NOTE:
- * Backend returns `_id`, frontend uses `id`
- * We normalize it here ONCE.
- */
-const normalizeEvent = (event: any): AdminEvent => ({
-  ...event,
-  id: event.id || event._id,
-});
-
 export const eventsAdminService = {
   async getAll(): Promise<AdminEvent[]> {
     const { data } = await api.get("/events/admin");
-    return data.map(normalizeEvent);
+    return data;
   },
 
-  async create(event: Omit<AdminEvent, "id">): Promise<AdminEvent> {
+  async create(event: Omit<AdminEvent, "uuid">): Promise<AdminEvent> {
     const { data } = await api.post("/events", event);
-    return normalizeEvent(data);
+    return data;
   },
 
-  async update(id: string, event: Partial<AdminEvent>): Promise<AdminEvent> {
-    const { id: _, ...payload } = event;
-    const { data } = await api.patch(`/events/${id}`, payload);
-    return normalizeEvent(data);
+  async update(uuid: string, event: Partial<AdminEvent>): Promise<AdminEvent> {
+    // We strip out the uuid from the body to prevent trying to update the ID itself
+    const { uuid: _, ...payload } = event;
+    const { data } = await api.patch(`/events/${uuid}`, payload);
+    return data;
   },
 
-  async remove(id: string): Promise<void> {
-    await api.delete(`/events/${id}`);
+  async remove(uuid: string): Promise<void> {
+    await api.delete(`/events/${uuid}`);
   },
 };

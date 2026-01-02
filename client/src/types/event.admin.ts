@@ -6,4 +6,4 @@ export type AdminEvent = PublicEvent & {
   status: EventStatus;
 };
 
-export type AdminEventDraft = Omit<AdminEvent, "id">;
+export type AdminEventDraft = Omit<AdminEvent, "uuid">;

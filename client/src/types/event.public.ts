@@ -1,5 +1,5 @@
 export type PublicEvent = {
-  id: string;
+  uuid: string;
   title: string;
   description: string;
   date: string; // ISO string

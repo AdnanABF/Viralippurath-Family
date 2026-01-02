@@ -14,7 +14,7 @@ const EventsAdmin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
-    id: string;
+    uuid: string;
     title: string;
   } | null>(null);
 
@@ -38,9 +38,9 @@ const EventsAdmin = () => {
 
   const handleSave = async (event: AdminEvent | AdminEventDraft) => {
     try {
-      if ("id" in event) {
-        const { id, ...payload } = event;
-        await eventsAdminService.update(id, payload);
+      if ("uuid" in event) {
+        const { uuid, ...payload } = event;
+        await eventsAdminService.update(uuid, payload);
         toast.success("Event updated successfully");
       } else {
         await eventsAdminService.create(event);
@@ -58,7 +58,7 @@ const EventsAdmin = () => {
     if (!deleteTarget) return;
 
     try {
-      await eventsAdminService.remove(deleteTarget.id);
+      await eventsAdminService.remove(deleteTarget.uuid);
       toast.success("Event deleted successfully");
       loadEvents();
     } catch {
@@ -75,7 +75,7 @@ const EventsAdmin = () => {
         <button
           onClick={() =>
             setEditing({
-              id: "",
+              uuid: "",
               title: "",
               description: "",
               type: "",
@@ -93,7 +93,7 @@ const EventsAdmin = () => {
       <Modal open={!!editing} onClose={() => setEditing(null)}>
         {editing && (
           <EventForm
-            initial={editing.id ? editing : undefined}
+            initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />
@@ -115,10 +115,10 @@ const EventsAdmin = () => {
         <EventsTable
           events={events}
           onEdit={(event) => setEditing(event)}
-          onDelete={(id) => {
-            const event = events.find((e) => e.id === id);
+          onDelete={(uuid) => {
+            const event = events.find((e) => e.uuid === uuid);
             if (event) {
-              setDeleteTarget({ id: event.id, title: event.title });
+              setDeleteTarget({ uuid: event.uuid, title: event.title });
             }
           }}
         />

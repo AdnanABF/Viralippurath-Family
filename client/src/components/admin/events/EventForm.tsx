@@ -35,17 +35,17 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
       status,
     };
 
-    if (initial?.id) {
-      onSave({ ...payload, id: initial.id });
+    if (initial?.uuid) {
+      onSave({ ...payload, uuid: initial.uuid });
     } else {
-      onSave(payload);
+      onSave(payload as AdminEventDraft);
     }
   };
 
   return (
     <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6">
       <h2 className="text-lg font-serif text-stone-800">
-        {initial ? "Edit Event" : "Create New Event"}
+        {initial?.uuid ? "Edit Event" : "Create New Event"}
       </h2>
 
       {/* Title */}
