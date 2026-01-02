@@ -1,7 +1,7 @@
-import type { Notification } from "../../types/notification";
+import type { PublicNotification } from "../../types/notification.public";
 
 interface Props {
-  notification: Notification;
+  notification: PublicNotification;
 }
 
 const NotificationItem: React.FC<Props> = ({ notification }) => {

@@ -5,6 +5,7 @@ import EventsTable from "../../components/admin/events/EventsTable";
 import EventForm from "../../components/admin/events/EventForm";
 import Modal from "../../components/ui/Modal";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import EmptyState from "../../components/ui/EmptyState";
 import toast from "react-hot-toast";
 
 const EventsAdmin = () => {
@@ -103,7 +104,14 @@ const EventsAdmin = () => {
 
       {error && <p className="text-red-600">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && events.length === 0 && (
+        <EmptyState
+          title="No events yet"
+          description="Create your first event to get started."
+        />
+      )}
+
+      {!loading && !error && events.length > 0 && (
         <EventsTable
           events={events}
           onEdit={(event) => setEditing(event)}

@@ -14,6 +14,10 @@ export class AdminService {
     return this.adminModel.findOne({ username, isActive: true });
   }
 
+  findById(id: string) {
+    return this.adminModel.findOne({ _id: id, isActive: true });
+  }
+
   create(data: Partial<Admin>) {
     return this.adminModel.create(data);
   }

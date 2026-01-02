@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { logout } from "../../utils/logout";
-import { isTokenValid } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
 import NavLinks from "./NavLinks";
 import MobileMenu from "./MobileMenu";
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const isAuthenticated = isTokenValid();
+  const { isAuthenticated, logout } = useAuth();
 
   return (
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
@@ -38,7 +36,7 @@ const Navbar: React.FC = () => {
                 to="/login"
                 className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700 transition-all"
               >
-                Portal
+                Admin Portal
               </Link>
             )}
 
@@ -48,7 +46,7 @@ const Navbar: React.FC = () => {
                   to="/admin/dashboard"
                   className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700"
                 >
-                  Admin
+                  Admin Portal
                 </Link>
 
                 <button

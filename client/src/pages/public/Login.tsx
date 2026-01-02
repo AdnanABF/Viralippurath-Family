@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
+  const { login, isAuthenticated } = useAuth(); // Destructure isAuthenticated
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Safety Redirect:
+   * Even though GuestGuard handles this, adding this ensures that if
+   * the auth state changes, the component reacts immediately.
+   */
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +38,28 @@ const Login = () => {
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
 
-      navigate("/admin/dashboard");
+      // Update the Context state FIRST
+      login();
+
+      // Navigate and REPLACE the history entry
+      navigate("/admin/dashboard", { replace: true });
     } catch (err: any) {
-      setError("Invalid username or password");
+      if (!err.response) {
+        setError("Network error. Please try again later.");
+      } else if (err.response.status === 429) {
+        // Handle Rate Limiting
+        setError("Too many login attempts. Please try again after 1 minute.");
+      } else {
+        // Generic message for security (Unauthorized 401)
+        setError("Invalid username or password");
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // If already authenticated, don't show the form at all while the redirect happens
+  if (isAuthenticated) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">

@@ -1,6 +1,6 @@
-import type { Notification } from "../../types/notification";
+import type { PublicNotification } from "../../types/notification.public";
 
-export const notifications: Notification[] = [
+export const publicNotification: PublicNotification[] = [
   {
     id: "1",
     title: "Annual Family Meet Announced",
