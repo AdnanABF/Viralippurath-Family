@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Notification, NotificationDocument, NotificationStatus } from './schemas/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+  NotificationStatus,
+} from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification-dto';
 import { UpdateNotificationDto } from './dto/update-notification-dto';
 
@@ -12,25 +16,45 @@ export class NotificationsService {
     private notificationModel: Model<NotificationDocument>,
   ) {}
 
-  // ADMIN
-  findAllAdmin() {
-    return this.notificationModel.find().sort({ date: -1 });
+  // ===== ADMIN =====
+
+  async findAllAdmin() {
+    return await this.notificationModel.find().sort({ createdAt: -1 }).exec();
   }
 
-  create(dto: CreateNotificationDto) {
-    return this.notificationModel.create(dto);
+  async create(dto: CreateNotificationDto) {
+    return await this.notificationModel.create(dto);
   }
 
-  update(id: string, dto: UpdateNotificationDto) {
-    return this.notificationModel.findByIdAndUpdate(id, dto, { new: true });
+  async update(uuid: string, dto: UpdateNotificationDto) {
+    const updated = await this.notificationModel
+      .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException(`Notification with UUID ${uuid} not found`);
+    }
+
+    return updated;
   }
 
-  remove(id: string) {
-    return this.notificationModel.findByIdAndDelete(id);
+  async remove(uuid: string) {
+    const res = await this.notificationModel.findOneAndDelete({ uuid }).exec();
+
+    if (!res) {
+      throw new NotFoundException(`Notification with UUID ${uuid} not found`);
+    }
+
+    return { deleted: true };
   }
 
-  // PUBLIC
-  findPublished() {
-    return this.notificationModel.find({ status: 'PUBLISHED' }).sort({ year: -1 });
+  // ===== PUBLIC =====
+
+  async findPublished() {
+    return await this.notificationModel
+      .find({ status: NotificationStatus.PUBLISHED })
+      .select('uuid title content date priority -_id')
+      .sort({ date: -1, createdAt: -1 })
+      .exec();
   }
 }

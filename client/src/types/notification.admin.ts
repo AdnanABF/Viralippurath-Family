@@ -7,4 +7,4 @@ export type AdminNotification = PublicNotification & {
   status: NotificationStatus;
 };
 
-export type AdminNotificationDraft = Omit<AdminNotification, "id">;
+export type AdminNotificationDraft = Omit<AdminNotification, "uuid">;

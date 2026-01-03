@@ -15,21 +15,20 @@ const NotificationsAdmin = () => {
   const [items, setItems] = useState<AdminNotification[]>([]);
   const [editing, setEditing] = useState<AdminNotification | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
-    id: string;
+    uuid: string;
     title: string;
   } | null>(null);
 
   const loadNotifications = async () => {
     setLoading(true);
-    setError(null);
+    setError(false);
     try {
       const data = await notificationsAdminService.getAll();
       setItems(data);
     } catch {
-      // handled globally in api.ts
-      setError("Failed to load notifications");
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -43,19 +42,19 @@ const NotificationsAdmin = () => {
     data: AdminNotification | AdminNotificationDraft
   ) => {
     try {
-      if ("id" in data) {
-        const { id, ...payload } = data;
-        await notificationsAdminService.update(id, payload);
+      if ("uuid" in data && data.uuid) {
+        const { uuid, ...payload } = data;
+        await notificationsAdminService.update(uuid, payload);
         toast.success("Notification updated successfully");
       } else {
-        await notificationsAdminService.create(data);
+        await notificationsAdminService.create(data as AdminNotificationDraft);
         toast.success("Notification created successfully");
       }
 
       setEditing(null);
       loadNotifications();
     } catch {
-      // ❌ no toast here — api.ts already handled it
+      // Handled globally in api.ts
     }
   };
 
@@ -63,11 +62,11 @@ const NotificationsAdmin = () => {
     if (!deleteTarget) return;
 
     try {
-      await notificationsAdminService.remove(deleteTarget.id);
+      await notificationsAdminService.remove(deleteTarget.uuid);
       toast.success("Notification deleted successfully");
       loadNotifications();
     } catch {
-      // ❌ no toast here — api.ts already handled it
+      // Handled globally in api.ts
     } finally {
       setDeleteTarget(null);
     }
@@ -75,20 +74,22 @@ const NotificationsAdmin = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-serif">Manage Notifications</h1>
+      {/* Responsive Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-serif text-stone-900">
+          Manage Notifications
+        </h1>
         <button
           onClick={() =>
             setEditing({
-              id: "",
               title: "",
               content: "",
               date: "",
               priority: "NORMAL",
               status: "DRAFT",
-            })
+            } as AdminNotification)
           }
-          className="bg-amber-700 text-white px-4 py-2 rounded-lg"
+          className="w-full sm:w-auto bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm hover:bg-amber-800 transition-all active:scale-95"
         >
           Create New Notification
         </button>
@@ -98,17 +99,36 @@ const NotificationsAdmin = () => {
       <Modal open={!!editing} onClose={() => setEditing(null)}>
         {editing && (
           <NotificationForm
-            initial={editing.id ? editing : undefined}
+            initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />
         )}
       </Modal>
 
-      {loading && <p className="text-stone-500">Loading notifications…</p>}
+      {/* Loading State */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
+          <p className="mt-4 text-stone-500 font-medium">
+            Loading notifications...
+          </p>
+        </div>
+      )}
 
-      {error && <p className="text-red-600">{error}</p>}
+      {/* Error State */}
+      {error && !loading && (
+        <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
+          <p className="text-stone-800 font-serif text-lg mb-1">
+            Something went wrong
+          </p>
+          <p className="text-stone-500 text-sm">
+            We couldn't load the notifications. Please try again later.
+          </p>
+        </div>
+      )}
 
+      {/* Empty State */}
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="No notifications yet"
@@ -116,14 +136,15 @@ const NotificationsAdmin = () => {
         />
       )}
 
+      {/* Data Table */}
       {!loading && !error && items.length > 0 && (
         <NotificationsTable
           items={items}
           onEdit={(item) => setEditing(item)}
-          onDelete={(id) => {
-            const item = items.find((n) => n.id === id);
+          onDelete={(uuid) => {
+            const item = items.find((n) => n.uuid === uuid);
             if (item) {
-              setDeleteTarget({ id: item.id, title: item.title });
+              setDeleteTarget({ uuid: item.uuid, title: item.title });
             }
           }}
         />
