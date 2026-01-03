@@ -45,7 +45,7 @@ export class EventsService {
     return { deleted: true };
   }
 
-  // PUBLIC
+  // ===== PUBLIC =====
 
   async findPublished(type: 'upcoming' | 'past' = 'upcoming') {
     const now = new Date();

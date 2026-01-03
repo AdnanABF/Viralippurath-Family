@@ -15,20 +15,20 @@ const GalleryAdmin = () => {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
-    id: string;
+    uuid: string;
     caption: string;
   } | null>(null);
 
   const loadGallery = async () => {
     setLoading(true);
-    setError(null);
+    setError(false);
     try {
       const data = await galleryAdminService.getAll();
       setItems(data);
     } catch {
-      setError("Failed to load gallery");
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -40,12 +40,12 @@ const GalleryAdmin = () => {
 
   const handleSave = async (payload: AdminGalleryItem | AdminGalleryDraft) => {
     try {
-      if ("id" in payload) {
-        const { id, ...data } = payload;
-        await galleryAdminService.update(id, data);
+      if ("uuid" in payload && payload.uuid) {
+        const { uuid, ...data } = payload;
+        await galleryAdminService.update(uuid, data);
         toast.success("Image updated successfully");
       } else {
-        await galleryAdminService.create(payload);
+        await galleryAdminService.create(payload as AdminGalleryDraft);
         toast.success("Image added to gallery");
       }
 
@@ -60,7 +60,7 @@ const GalleryAdmin = () => {
     if (!deleteTarget) return;
 
     try {
-      await galleryAdminService.remove(deleteTarget.id);
+      await galleryAdminService.remove(deleteTarget.uuid);
       toast.success("Image deleted successfully");
       loadGallery();
     } catch {
@@ -73,12 +73,12 @@ const GalleryAdmin = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-serif">Manage Gallery</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-serif text-stone-900">Manage Gallery</h1>
         <button
           onClick={() =>
             setEditing({
-              id: "",
+              uuid: "",
               imageUrl: "",
               caption: "",
               album: "",
@@ -86,7 +86,7 @@ const GalleryAdmin = () => {
               status: "DRAFT",
             })
           }
-          className="bg-amber-700 text-white px-4 py-2 rounded-lg"
+          className="w-full sm:w-auto bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm hover:bg-amber-800 transition-all active:scale-95"
         >
           Add New Image
         </button>
@@ -96,15 +96,34 @@ const GalleryAdmin = () => {
       <Modal open={!!editing} onClose={() => setEditing(null)}>
         {editing && (
           <GalleryForm
-            initial={editing.id ? editing : undefined}
+            initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />
         )}
       </Modal>
 
-      {loading && <p className="text-stone-500">Loading gallery…</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      {/* Loading State */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
+          <p className="mt-4 text-stone-500 font-medium">
+            Loading gallery images...
+          </p>
+        </div>
+      )}
+
+      {/* Generic Error State */}
+      {error && !loading && (
+        <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
+          <p className="text-stone-800 font-serif text-lg mb-1">
+            Something went wrong
+          </p>
+          <p className="text-stone-500 text-sm">
+            We couldn't load the events. Please try again later.
+          </p>
+        </div>
+      )}
 
       {!loading && !error && items.length === 0 && (
         <EmptyState
@@ -117,10 +136,10 @@ const GalleryAdmin = () => {
         <GalleryTable
           items={items}
           onEdit={setEditing}
-          onDelete={(id) => {
-            const item = items.find((i) => i.id === id);
+          onDelete={(uuid) => {
+            const item = items.find((i) => i.uuid === uuid);
             if (item) {
-              setDeleteTarget({ id: item.id, caption: item.caption });
+              setDeleteTarget({ uuid: item.uuid, caption: item.caption });
             }
           }}
         />

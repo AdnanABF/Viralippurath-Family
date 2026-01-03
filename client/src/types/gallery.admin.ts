@@ -6,4 +6,4 @@ export type AdminGalleryItem = PublicGalleryItem & {
   status: GalleryStatus;
 };
 
-export type AdminGalleryDraft = Omit<AdminGalleryItem, "id">;
+export type AdminGalleryDraft = Omit<AdminGalleryItem, "uuid">;
