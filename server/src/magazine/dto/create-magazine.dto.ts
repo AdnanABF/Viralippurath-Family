@@ -1,23 +1,34 @@
-import { IsEnum, IsInt, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
+import { MagazineStatus } from '../schemas/magazine.schema';
 
 export class CreateMagazineDto {
   @IsString()
+  @IsNotEmpty()
   title: string;
 
-  @IsInt()
-  year: number;
+  @IsDateString()
+  @IsNotEmpty()
+  publishedDate: string;
 
   @IsOptional()
   @IsUrl()
   coverImageUrl?: string;
 
   @IsUrl()
+  @IsNotEmpty()
   flipbookUrl: string;
 
   @IsOptional()
   @IsUrl()
   downloadUrl?: string;
 
-  @IsEnum(['DRAFT', 'PUBLISHED'])
-  status: 'DRAFT' | 'PUBLISHED';
+  @IsEnum(MagazineStatus)
+  status: MagazineStatus;
 }

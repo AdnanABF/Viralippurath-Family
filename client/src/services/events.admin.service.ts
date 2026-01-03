@@ -13,8 +13,7 @@ export const eventsAdminService = {
   },
 
   async update(uuid: string, event: Partial<AdminEvent>): Promise<AdminEvent> {
-    // We strip out the uuid from the body to prevent trying to update the ID itself
-    const { uuid: _, ...payload } = event;
+    const { id: _, uuid: __, ...payload } = event as any;
     const { data } = await api.patch(`/events/${uuid}`, payload);
     return data;
   },
