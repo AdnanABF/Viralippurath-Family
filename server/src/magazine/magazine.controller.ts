@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { MagazineService } from './magazine.service';
 import { CreateMagazineDto } from './dto/create-magazine.dto';
@@ -21,36 +22,39 @@ export class MagazineController {
 
   // ===== PUBLIC =====
   @Get('published')
-  getPublished() {
-    return this.magazineService.findPublished();
+  async getPublished() {
+    return await this.magazineService.findPublished();
   }
 
   // ===== ADMIN =====
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
-  getAllAdmin() {
-    return this.magazineService.findAllAdmin();
+  async getAllAdmin() {
+    return await this.magazineService.findAllAdmin();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Post()
-  create(@Body() dto: CreateMagazineDto) {
-    return this.magazineService.create(dto);
+  async create(@Body() dto: CreateMagazineDto) {
+    return await this.magazineService.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMagazineDto) {
-    return this.magazineService.update(id, dto);
+  @Patch(':uuid')
+  async update(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Body() dto: UpdateMagazineDto,
+  ) {
+    return await this.magazineService.update(uuid, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.magazineService.remove(id);
+  @Delete(':uuid')
+  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+    return await this.magazineService.remove(uuid);
   }
 }

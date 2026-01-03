@@ -28,9 +28,10 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const status = error.response?.status || error.status;
+    // Use optional chaining safely for status
+    const status = error.response?.status;
 
-    // 1. Handle 401 Unauthorized (Expired Access Token)
+    // 1. Handle 401 Unauthorized
     if (
       status === 401 &&
       !originalRequest._retry &&
@@ -57,20 +58,24 @@ api.interceptors.response.use(
         localStorage.setItem("accessToken", res.data.accessToken);
         localStorage.setItem("refreshToken", res.data.refreshToken);
 
-        // Retry the original request with the new token
+        // Optimization: Ensure the retry uses the fresh instance config
         originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        logout(); // Refresh failed (likely expired refresh token)
+        logout();
         return Promise.reject(refreshError);
       }
     }
 
     // 2. Global Error Toast Handling
-    // Skip toast if the error is from a refresh attempt (handled by the try/catch above)
-    if (!originalRequest?.url?.includes("/auth/refresh")) {
-      // Skip global toast for 429 errors on the login page
-      // (The Login.tsx component handles this specifically in its own state)
+    if (
+      !originalRequest?._retry ||
+      !originalRequest.url?.includes("/auth/refresh")
+    ) {
+      // Skip toast for 401s that are about to be retried
+      if (status === 401 && !originalRequest._retry)
+        return Promise.reject(error);
+
       if (status === 429 && originalRequest.url?.includes("/auth/login")) {
         return Promise.reject(error);
       }
@@ -80,17 +85,17 @@ api.interceptors.response.use(
       if (status === 429) {
         message = "Too many requests. Please slow down.";
       } else if (status && status < 500) {
-        // Extract backend error message if available
-        const backendMessage =
-          error?.response?.data?.message ?? error?.response?.data?.error;
+        const backendMessage = error?.response?.data?.message;
 
         if (backendMessage) {
           message = Array.isArray(backendMessage)
-            ? backendMessage.join(", ")
+            ? backendMessage[0]
             : backendMessage;
         }
       } else if (status >= 500) {
         message = "Server error. Please try again later.";
+      } else if (error.code === "ECONNABORTED") {
+        message = "Request timed out. Check your connection.";
       }
 
       toast.error(message);

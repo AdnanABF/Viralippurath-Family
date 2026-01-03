@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Magazine, MagazineDocument } from './schemas/magazine.schema';
+import {
+  Magazine,
+  MagazineDocument,
+  MagazineStatus,
+} from './schemas/magazine.schema';
 import { CreateMagazineDto } from './dto/create-magazine.dto';
 import { UpdateMagazineDto } from './dto/update-magazine.dto';
 
@@ -12,36 +16,50 @@ export class MagazineService {
     private magazineModel: Model<MagazineDocument>,
   ) {}
 
-  // ADMIN
-  findAllAdmin() {
-    return this.magazineModel.find().sort({ year: -1, createdAt: -1 });
+  // ===== PUBLIC =====
+
+  async findPublished() {
+    return await this.magazineModel
+      .find({ status: MagazineStatus.PUBLISHED })
+      .select(
+        'uuid title publishedDate coverImageUrl flipbookUrl downloadUrl -_id',
+      )
+      .sort({ publishedDate: -1 })
+      .exec();
   }
 
-  create(dto: CreateMagazineDto) {
-    return this.magazineModel.create(dto);
+  // ===== ADMIN =====
+
+  async findAllAdmin() {
+    return await this.magazineModel
+      .find()
+      .sort({ publishedDate: -1, createdAt: -1 })
+      .exec();
   }
 
-  async update(id: string, dto: UpdateMagazineDto) {
-    const updated = await this.magazineModel.findByIdAndUpdate(id, dto, {
-      new: true,
-    });
+  async create(dto: CreateMagazineDto) {
+    return await this.magazineModel.create(dto);
+  }
+
+  async update(uuid: string, dto: UpdateMagazineDto) {
+    const updated = await this.magazineModel
+      .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
+      .exec();
 
     if (!updated) {
-      throw new NotFoundException('Magazine not found');
+      throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
     }
 
     return updated;
   }
 
-  async remove(id: string) {
-    const deleted = await this.magazineModel.findByIdAndDelete(id);
-    if (!deleted) {
-      throw new NotFoundException('Magazine not found');
-    }
-  }
+  async remove(uuid: string) {
+    const res = await this.magazineModel.findOneAndDelete({ uuid }).exec();
 
-  // PUBLIC
-  findPublished() {
-    return this.magazineModel.find({ status: 'PUBLISHED' }).sort({ year: -1 });
+    if (!res) {
+      throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
+    }
+
+    return { deleted: true };
   }
 }
