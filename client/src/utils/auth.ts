@@ -14,7 +14,7 @@ export const isTokenValid = (): boolean => {
   try {
     const decoded = jwtDecode<JwtPayload>(token);
     const now = Date.now() / 1000;
-    return decoded.exp > now;
+    return decoded.exp > now + 10; // Add a 10-second buffer to prevent race conditions
   } catch {
     return false;
   }
