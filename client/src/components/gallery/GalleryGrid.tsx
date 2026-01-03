@@ -19,7 +19,7 @@ const GalleryGrid: React.FC<Props> = ({ images, loading }) => {
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {images.map((img) => (
         <div
-          key={img.id}
+          key={img.uuid}
           className="group relative overflow-hidden rounded-xl bg-white border border-stone-200 shadow-sm cursor-pointer"
         >
           <img

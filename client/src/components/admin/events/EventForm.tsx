@@ -25,7 +25,8 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
   );
   const [status, setStatus] = useState<EventStatus>(initial?.status ?? "DRAFT");
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const payload = {
       title,
       description,
@@ -36,101 +37,117 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
     };
 
     if (initial?.uuid) {
-      onSave({ ...payload, uuid: initial.uuid });
+      onSave({ ...payload, uuid: initial.uuid } as AdminEvent);
     } else {
       onSave(payload as AdminEventDraft);
     }
   };
 
   return (
-    <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6">
-      <h2 className="text-lg font-serif text-stone-800">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6"
+    >
+      <h2 className="text-xl font-serif text-stone-800">
         {initial?.uuid ? "Edit Event" : "Create New Event"}
       </h2>
 
       {/* Title */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Title</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Event Title
+        </label>
         <input
+          required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-          placeholder="Event title"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          placeholder="e.g., Annual Family Reunion"
         />
       </div>
 
       {/* Description */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
+        <label className="text-sm font-semibold text-stone-700">
           Description
         </label>
         <textarea
+          required
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-          placeholder="Short description of the event"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none"
+          placeholder="What is happening during this event?"
         />
       </div>
 
       {/* Type + Location */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-stone-700">Type</label>
+          <label className="text-sm font-semibold text-stone-700">
+            Event Type
+          </label>
           <input
+            required
             value={type}
             onChange={(e) => setType(e.target.value)}
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-            placeholder="Gathering, Ceremony, Meeting"
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            placeholder="Gathering, Ceremony, etc."
           />
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-stone-700">Location</label>
+          <label className="text-sm font-semibold text-stone-700">
+            Location
+          </label>
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-            placeholder="Kerala, Dubai, Online…"
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            placeholder="Kerala, Dubai, Online..."
           />
         </div>
       </div>
 
       {/* Date */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
+        <label className="text-sm font-semibold text-stone-700">
           Date & Time
         </label>
         <input
+          required
           type="datetime-local"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                    focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         />
       </div>
 
       {/* Status */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Status</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Visibility Status
+        </label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as EventStatus)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         >
-          <option value="DRAFT">Draft</option>
-          <option value="PUBLISHED">Published</option>
+          <option value="DRAFT">Draft (Hidden from Public)</option>
+          <option value="PUBLISHED">Published (Visible on Site)</option>
         </select>
       </div>
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
         <button
+          type="button"
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
                      hover:bg-stone-100 transition"
@@ -138,14 +155,14 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           Cancel
         </button>
         <button
-          onClick={handleSubmit}
-          className="px-5 py-2 rounded-lg bg-amber-700 text-white
-                     hover:bg-amber-800 transition font-medium"
+          type="submit"
+          className="px-6 py-2 rounded-lg bg-amber-700 text-white
+                     hover:bg-amber-800 transition font-bold shadow-md active:scale-95"
         >
-          Save Event
+          {initial?.uuid ? "Update Event" : "Save Event"}
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 

@@ -12,7 +12,7 @@ const EventsAdmin = () => {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [editing, setEditing] = useState<AdminEvent | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     uuid: string;
     title: string;
@@ -20,13 +20,12 @@ const EventsAdmin = () => {
 
   const loadEvents = async () => {
     setLoading(true);
-    setError(null);
+    setError(false);
     try {
       const data = await eventsAdminService.getAll();
       setEvents(data);
     } catch {
-      // handled globally in api.ts
-      setError("Failed to load events");
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -38,19 +37,19 @@ const EventsAdmin = () => {
 
   const handleSave = async (event: AdminEvent | AdminEventDraft) => {
     try {
-      if ("uuid" in event) {
+      if ("uuid" in event && event.uuid) {
         const { uuid, ...payload } = event;
         await eventsAdminService.update(uuid, payload);
         toast.success("Event updated successfully");
       } else {
-        await eventsAdminService.create(event);
+        await eventsAdminService.create(event as AdminEventDraft);
         toast.success("Event created successfully");
       }
 
       setEditing(null);
       loadEvents();
     } catch {
-      // ❌ no toast here — api.ts already handled it
+      // Handled globally in api.ts
     }
   };
 
@@ -62,7 +61,7 @@ const EventsAdmin = () => {
       toast.success("Event deleted successfully");
       loadEvents();
     } catch {
-      // ❌ no toast here — api.ts already handled it
+      // Handled globally in api.ts
     } finally {
       setDeleteTarget(null);
     }
@@ -70,22 +69,23 @@ const EventsAdmin = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-serif">Manage Events</h1>
+      {/* Responsive Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-serif text-stone-900">Manage Events</h1>
         <button
           onClick={() =>
             setEditing({
               uuid: "",
               title: "",
               description: "",
-              type: "",
+              type: "Gathering", // Default type
               date: "",
               status: "DRAFT",
-            })
+            } as AdminEvent)
           }
-          className="bg-amber-700 text-white px-4 py-2 rounded-lg"
+          className="w-full sm:w-auto bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm hover:bg-amber-800 transition-all active:scale-95"
         >
-          Create New Event
+          Add New Event
         </button>
       </div>
 
@@ -100,10 +100,29 @@ const EventsAdmin = () => {
         )}
       </Modal>
 
-      {loading && <p className="text-stone-500">Loading events…</p>}
+      {/* Loading State */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
+          <p className="mt-4 text-stone-500 font-medium">
+            Loading family events...
+          </p>
+        </div>
+      )}
 
-      {error && <p className="text-red-600">{error}</p>}
+      {/* Generic Error State */}
+      {error && !loading && (
+        <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
+          <p className="text-stone-800 font-serif text-lg mb-1">
+            Something went wrong
+          </p>
+          <p className="text-stone-500 text-sm">
+            We couldn't load the events. Please try again later.
+          </p>
+        </div>
+      )}
 
+      {/* Empty State */}
       {!loading && !error && events.length === 0 && (
         <EmptyState
           title="No events yet"
@@ -111,6 +130,7 @@ const EventsAdmin = () => {
         />
       )}
 
+      {/* Data Table */}
       {!loading && !error && events.length > 0 && (
         <EventsTable
           events={events}

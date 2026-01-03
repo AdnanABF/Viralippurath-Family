@@ -1,16 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { v4 as uuidv4 } from 'uuid';
 import { Document } from 'mongoose';
 
 export type GalleryDocument = Gallery & Document;
 
-export type GalleryStatus = 'DRAFT' | 'PUBLISHED';
+export enum GalleryStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+}
 
 @Schema({ timestamps: true })
 export class Gallery {
-  @Prop({ required: true })
+  @Prop({
+    default: () => uuidv4(),
+    unique: true,
+    required: true,
+  })
+  uuid: string;
+
+  @Prop({ required: true, trim: true })
   imageUrl: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true })
   caption: string;
 
   @Prop({ required: true })
@@ -19,7 +30,7 @@ export class Gallery {
   @Prop({ required: true })
   year: number;
 
-  @Prop({ enum: ['DRAFT', 'PUBLISHED'], default: 'DRAFT' })
+  @Prop({ enum: GalleryStatus, default: GalleryStatus.DRAFT })
   status: GalleryStatus;
 }
 
