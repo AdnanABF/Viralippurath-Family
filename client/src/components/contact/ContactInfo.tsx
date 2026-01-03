@@ -19,7 +19,7 @@ const ContactInfo = () => {
         </div>
         <div>
           <h4 className="font-bold text-stone-800">Email Address</h4>
-          <p className="text-stone-500">council@viralippurath.family</p>
+          <p className="text-stone-500">viralippurathkudumbam@gmail.com</p>
         </div>
       </div>
 
@@ -46,9 +46,9 @@ const ContactInfo = () => {
           </svg>
         </div>
         <div>
-          <h4 className="font-bold text-stone-800">Ancestral Home</h4>
+          <h4 className="font-bold text-stone-800">Mookkuthala</h4>
           <p className="text-stone-500">
-            Viralippurath House, Kerala, IN - 682024
+            Viralippurath House, Kerala, IN - 679574
           </p>
         </div>
       </div>

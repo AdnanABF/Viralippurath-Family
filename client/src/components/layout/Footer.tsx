@@ -44,14 +44,14 @@ const Footer: React.FC = () => {
             </h4>
             <p className="text-stone-600 text-sm">Kerala, India</p>
             <p className="text-stone-600 text-sm mt-2">
-              info@viralippurath.family
+              viralippurathkudumbam@gmail.com
             </p>
           </div>
         </div>
 
         <div className="mt-12 pt-8 border-t border-stone-200 flex flex-col md:flex-row justify-between items-center text-xs text-stone-500">
           <p>&copy; {new Date().getFullYear()} Viralippurath Kudumbasamithi.</p>
-          <p className="mt-4 md:mt-0">Designed for Heritage & Legacy.</p>
+          <p className="mt-4 md:mt-0">Designed & Developed by Adnan Bin Farook.</p>
         </div>
       </div>
     </footer>
