@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { Document } from 'mongoose';
 
 export type EventDocument = Event & Document;
@@ -11,7 +11,7 @@ export enum EventStatus {
 
 @Schema({ timestamps: true })
 export class Event {
-  @Prop({ default: () => uuidv4(), unique: true, required: true })
+  @Prop({ default: () => randomUUID(), unique: true, required: true })
   uuid: string;
 
   @Prop({ required: true, trim: true })

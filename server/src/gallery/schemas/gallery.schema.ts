@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import { Document } from 'mongoose';
+import { randomUUID } from 'node:crypto';import { Document } from 'mongoose';
 
 export type GalleryDocument = Gallery & Document;
 
@@ -12,7 +11,7 @@ export enum GalleryStatus {
 @Schema({ timestamps: true })
 export class Gallery {
   @Prop({
-    default: () => uuidv4(),
+    default: () => randomUUID(),
     unique: true,
     required: true,
   })
