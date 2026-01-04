@@ -2,9 +2,10 @@ import { jwtDecode } from "jwt-decode";
 
 type JwtPayload = {
   sub: string;
-  username: string; // Updated to match your NestJS payload
+  username: string;
   role: string;
   exp: number;
+  fullName: string;
 };
 
 export const isTokenValid = (): boolean => {

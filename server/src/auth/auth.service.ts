@@ -25,16 +25,23 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Update last login timestamp when they successfully log in
+    admin.lastLogin = new Date();
+    await admin.save();
+
     return this.generateTokenPair(admin);
   }
 
-  async refresh(userId: string, refreshToken: string) {
-    if (!refreshToken || !userId) {
+  // Changed parameter from userId to userUuid
+  async refresh(userUuid: string, refreshToken: string) {
+    if (!refreshToken || !userUuid) {
       throw new UnauthorizedException();
     }
 
-    const admin = await this.adminService.findById(userId);
-    if (!admin || !admin.refreshTokenHash) {
+    // Now using findByUuid instead of findById
+    const admin = await this.adminService.findByUuid(userUuid);
+
+    if (!admin || !admin.isActive || !admin.refreshTokenHash) {
       throw new UnauthorizedException();
     }
 
@@ -48,14 +55,15 @@ export class AuthService {
 
   private async generateTokenPair(admin: any) {
     const payload = {
-      sub: admin._id,
+      sub: admin.uuid,
       username: admin.username,
       role: admin.role,
+      fullName: admin.fullName,
     };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.config.get('JWT_SECRET'),
-      expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN'), // Use Access Expiry
+      expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN'),
     });
 
     const refreshToken = randomBytes(64).toString('hex');
