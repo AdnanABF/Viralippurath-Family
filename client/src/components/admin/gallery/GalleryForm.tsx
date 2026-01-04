@@ -1,18 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type {
   AdminGalleryItem,
-  AdminGalleryDraft,
   GalleryStatus,
 } from "../../../types/gallery.admin";
 
 interface Props {
   initial?: AdminGalleryItem;
-  onSave: (data: AdminGalleryItem | AdminGalleryDraft) => void;
+  onSave: (formData: FormData) => Promise<void>; // Changed to accept FormData
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
-const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
-  const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
+const GalleryForm: React.FC<Props> = ({
+  initial,
+  onSave,
+  onCancel,
+  isLoading,
+}) => {
+  // Local state for the physical file and the UI preview
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    initial?.imageUrl ?? null
+  );
   const [caption, setCaption] = useState(initial?.caption ?? "");
   const [album, setAlbum] = useState(initial?.album ?? "");
   const [year, setYear] = useState(initial?.year ?? new Date().getFullYear());
@@ -20,21 +29,41 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
     initial?.status ?? "DRAFT"
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload = {
-      imageUrl,
-      caption,
-      album,
-      year,
-      status,
+  // Clean up the object URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl && !initial?.imageUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
+  }, [previewUrl, initial?.imageUrl]);
 
-    if (initial?.uuid) {
-      onSave({ ...payload, uuid: initial.uuid } as AdminGalleryItem);
-    } else {
-      onSave(payload as AdminGalleryDraft);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Create FormData to send binary file + text fields
+    const formData = new FormData();
+
+    // Add the file (the key 'image' must match FileInterceptor('image') in NestJS)
+    if (selectedFile) {
+      formData.append("image", selectedFile);
+    }
+
+    // Add other fields
+    formData.append("caption", caption);
+    formData.append("album", album);
+    formData.append("year", year.toString());
+    formData.append("status", status);
+
+    await onSave(formData);
   };
 
   return (
@@ -46,34 +75,41 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         {initial?.uuid ? "Edit Gallery Image" : "Add New Gallery Image"}
       </h2>
 
-      {/* Image Preview */}
-      {imageUrl && (
-        <div className="relative w-full h-48 bg-stone-200 rounded-lg overflow-hidden border border-stone-300 shadow-inner">
-          <img
-            src={imageUrl}
-            alt="Preview"
-            className="w-full h-full object-contain"
-            onError={(e) =>
-              (e.currentTarget.src =
-                "https://placehold.co/600x400?text=Invalid+Image+URL")
-            }
-          />
+      {/* Image Preview Area */}
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-stone-700">
+          Image Preview
+        </label>
+        <div className="relative w-full h-56 bg-stone-200 rounded-lg overflow-hidden border-2 border-dashed border-stone-300 flex items-center justify-center shadow-inner">
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <div className="text-stone-400 text-sm">No image selected</div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Image URL */}
+      {/* File Selection */}
       <div className="space-y-1">
         <label className="text-sm font-semibold text-stone-700">
-          Image URL
+          {initial?.uuid ? "Change Image (Optional)" : "Select Image"}
         </label>
         <input
-          required
-          type="url"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-          placeholder="https://example.com/family-photo.jpg"
+          required={!initial?.uuid} // Only required for new uploads
+          disabled={isLoading}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="w-full text-sm text-stone-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-amber-50 file:text-amber-700
+            hover:file:bg-amber-100 transition-all"
         />
       </div>
 
@@ -82,6 +118,7 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         <label className="text-sm font-semibold text-stone-700">Caption</label>
         <input
           required
+          disabled={isLoading}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
@@ -98,6 +135,7 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           </label>
           <input
             required
+            disabled={isLoading}
             value={album}
             onChange={(e) => setAlbum(e.target.value)}
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
@@ -110,6 +148,7 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           <label className="text-sm font-semibold text-stone-700">Year</label>
           <input
             required
+            disabled={isLoading}
             type="number"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
@@ -128,6 +167,7 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <select
           value={status}
+          disabled={isLoading}
           onChange={(e) => setStatus(e.target.value as GalleryStatus)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
@@ -141,18 +181,29 @@ const GalleryForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
       <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
         <button
           type="button"
+          disabled={isLoading}
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 transition"
+                     hover:bg-stone-100 disabled:bg-stone-400 transition"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-6 py-2 rounded-lg bg-amber-700 text-white
-                     hover:bg-amber-800 transition font-bold shadow-md active:scale-95"
+          disabled={isLoading}
+          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
         >
-          {initial?.uuid ? "Update Image" : "Save to Gallery"}
+          {isLoading ? (
+            <>
+              {/* Ensure the spinner is a span or has inline-block properties */}
+              <span className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+              </span>
+              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
+            </>
+          ) : (
+            <span>{initial?.uuid ? "Update Image" : "Save to Gallery"}</span>
+          )}
         </button>
       </div>
     </form>

@@ -11,6 +11,8 @@ import toast from "react-hot-toast";
 const EventsAdmin = () => {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [editing, setEditing] = useState<AdminEvent | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -36,6 +38,8 @@ const EventsAdmin = () => {
   }, []);
 
   const handleSave = async (event: AdminEvent | AdminEventDraft) => {
+    setIsSaving(true);
+
     try {
       if ("uuid" in event && event.uuid) {
         const { uuid, ...payload } = event;
@@ -50,11 +54,15 @@ const EventsAdmin = () => {
       loadEvents();
     } catch {
       // Handled globally in api.ts
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
+    setIsDeleting(true);
 
     try {
       await eventsAdminService.remove(deleteTarget.uuid);
@@ -63,6 +71,7 @@ const EventsAdmin = () => {
     } catch {
       // Handled globally in api.ts
     } finally {
+      setIsDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -90,12 +99,13 @@ const EventsAdmin = () => {
       </div>
 
       {/* Create / Edit Modal */}
-      <Modal open={!!editing} onClose={() => setEditing(null)}>
+      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
         {editing && (
           <EventForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
+            isLoading={isSaving}
           />
         )}
       </Modal>
@@ -141,6 +151,7 @@ const EventsAdmin = () => {
               setDeleteTarget({ uuid: event.uuid, title: event.title });
             }
           }}
+          disabled={isDeleting || isSaving}
         />
       )}
 
@@ -162,6 +173,7 @@ const EventsAdmin = () => {
         confirmText="Delete"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+        isLoading={isDeleting}
       />
     </div>
   );

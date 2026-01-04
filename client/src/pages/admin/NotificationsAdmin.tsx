@@ -14,6 +14,8 @@ import toast from "react-hot-toast";
 const NotificationsAdmin = () => {
   const [items, setItems] = useState<AdminNotification[]>([]);
   const [editing, setEditing] = useState<AdminNotification | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -41,6 +43,8 @@ const NotificationsAdmin = () => {
   const handleSave = async (
     data: AdminNotification | AdminNotificationDraft
   ) => {
+    setIsSaving(true);
+
     try {
       if ("uuid" in data && data.uuid) {
         const { uuid, ...payload } = data;
@@ -55,11 +59,15 @@ const NotificationsAdmin = () => {
       loadNotifications();
     } catch {
       // Handled globally in api.ts
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
+    setIsDeleting(true);
 
     try {
       await notificationsAdminService.remove(deleteTarget.uuid);
@@ -68,6 +76,7 @@ const NotificationsAdmin = () => {
     } catch {
       // Handled globally in api.ts
     } finally {
+      setIsDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -96,12 +105,13 @@ const NotificationsAdmin = () => {
       </div>
 
       {/* Create / Edit Modal */}
-      <Modal open={!!editing} onClose={() => setEditing(null)}>
+      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
         {editing && (
           <NotificationForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
+            isLoading={isSaving}
           />
         )}
       </Modal>
@@ -147,6 +157,7 @@ const NotificationsAdmin = () => {
               setDeleteTarget({ uuid: item.uuid, title: item.title });
             }
           }}
+          disabled={isDeleting || isSaving}
         />
       )}
 
@@ -168,6 +179,7 @@ const NotificationsAdmin = () => {
         confirmText="Delete"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+        isLoading={isDeleting}
       />
     </div>
   );
