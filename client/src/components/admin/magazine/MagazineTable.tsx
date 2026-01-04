@@ -7,9 +7,15 @@ interface Props {
   items: AdminMagazine[];
   onEdit: (m: AdminMagazine) => void;
   onDelete: (uuid: string) => void;
+  disabled?: boolean;
 }
 
-const MagazineTable: React.FC<Props> = ({ items, onEdit, onDelete }) => {
+const MagazineTable: React.FC<Props> = ({
+  items,
+  onEdit,
+  onDelete,
+  disabled,
+}) => {
   return (
     <div className="w-full bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
@@ -63,20 +69,18 @@ const MagazineTable: React.FC<Props> = ({ items, onEdit, onDelete }) => {
                   <td className="p-4 text-right">
                     <div className="inline-flex items-center gap-2">
                       <button
+                        disabled={disabled}
                         onClick={() => onEdit(m)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                                 border border-stone-200 text-stone-700
-                                 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-stone-700 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <EditIcon />
                         <span>Edit</span>
                       </button>
 
                       <button
+                        disabled={disabled}
                         onClick={() => onDelete(m.uuid)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md
-                                 border border-stone-200 text-red-600
-                                 hover:bg-red-50 hover:border-red-200 transition-all"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all disabled:bg-stone-100 disabled:text-stone-400 disabled:border-stone-200 disabled:cursor-not-allowed min-w-21.25"
                       >
                         <DeleteIcon />
                         <span>Delete</span>

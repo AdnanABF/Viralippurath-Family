@@ -12,6 +12,7 @@ const GalleryAdmin = () => {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -40,6 +41,7 @@ const GalleryAdmin = () => {
    * handleSave now receives a FormData object from GalleryForm
    */
   const handleSave = async (formData: FormData) => {
+    setIsSaving(true);
     try {
       const uuid = editing?.uuid;
 
@@ -57,6 +59,8 @@ const GalleryAdmin = () => {
       loadGallery();
     } catch (err) {
       // Errors are handled by the global interceptor in api.ts,
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -100,12 +104,13 @@ const GalleryAdmin = () => {
       </div>
 
       {/* Create / Edit Modal */}
-      <Modal open={!!editing} onClose={() => setEditing(null)}>
+      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
         {editing && (
           <GalleryForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
+            isLoading={isSaving}
           />
         )}
       </Modal>
@@ -151,13 +156,13 @@ const GalleryAdmin = () => {
         <GalleryTable
           items={items}
           onEdit={setEditing}
-          isDeleting={isDeleting}
           onDelete={(uuid) => {
             const item = items.find((i) => i.uuid === uuid);
             if (item) {
               setDeleteTarget({ uuid: item.uuid, caption: item.caption });
             }
           }}
+          disabled={isDeleting || isSaving}
         />
       )}
 

@@ -9,9 +9,15 @@ interface Props {
   initial?: AdminMagazine;
   onSave: (data: AdminMagazine | AdminMagazineDraft) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
-const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
+const MagazineForm: React.FC<Props> = ({
+  initial,
+  onSave,
+  onCancel,
+  isLoading,
+}) => {
   // Sync state with uuid and publishedDate architecture
   const [title, setTitle] = useState(initial?.title ?? "");
   const [publishedDate, setPublishedDate] = useState(
@@ -28,7 +34,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
     initial?.status ?? "DRAFT"
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const payload = {
@@ -63,6 +69,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <input
           required
+          disabled={isLoading}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g., The Family Chronicle - Summer Edition"
@@ -78,6 +85,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <input
           required
+          disabled={isLoading}
           type="date"
           value={publishedDate}
           onChange={(e) => setPublishedDate(e.target.value)}
@@ -94,6 +102,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           </label>
           <input
             value={coverImageUrl}
+            disabled={isLoading}
             onChange={(e) => setCoverImageUrl(e.target.value)}
             placeholder="https://cloudinary.com/..."
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
@@ -107,6 +116,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           </label>
           <input
             required
+            disabled={isLoading}
             value={flipbookUrl}
             onChange={(e) => setFlipbookUrl(e.target.value)}
             placeholder="https://heyzine.com/..."
@@ -121,6 +131,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           </label>
           <input
             value={downloadUrl}
+            disabled={isLoading}
             onChange={(e) => setDownloadUrl(e.target.value)}
             placeholder="Direct link to PDF file"
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
@@ -136,6 +147,7 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <select
           value={status}
+          disabled={isLoading}
           onChange={(e) => setStatus(e.target.value as MagazineStatus)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
@@ -149,18 +161,29 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
       <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
         <button
           type="button"
+          disabled={isLoading}
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 transition"
+                     hover:bg-stone-100 disabled:bg-stone-400 transition"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-6 py-2 rounded-lg bg-amber-700 text-white
-                     hover:bg-amber-800 transition font-bold shadow-md active:scale-95"
+          disabled={isLoading}
+          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
         >
-          {initial?.uuid ? "Update Issue" : "Create Issue"}
+          {isLoading ? (
+            <>
+              {/* Ensure the spinner is a span or has inline-block properties */}
+              <span className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+              </span>
+              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
+            </>
+          ) : (
+            <span>{initial?.uuid ? "Update Issue" : "Create Issue"}</span>
+          )}
         </button>
       </div>
     </form>

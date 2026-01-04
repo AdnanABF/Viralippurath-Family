@@ -14,9 +14,15 @@ interface Props {
   initial?: AdminNotification;
   onSave: (data: AdminNotification | AdminNotificationDraft) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
-const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
+const NotificationForm: React.FC<Props> = ({
+  initial,
+  onSave,
+  onCancel,
+  isLoading,
+}) => {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
   const [priority, setPriority] = useState<NotificationPriority>(
@@ -29,7 +35,7 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
     initial?.status ?? "DRAFT"
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
       title,
@@ -62,6 +68,7 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <input
           required
+          disabled={isLoading}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
@@ -77,6 +84,7 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <textarea
           required
+          disabled={isLoading}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={4}
@@ -94,6 +102,7 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           </label>
           <select
             value={priority}
+            disabled={isLoading}
             onChange={(e) =>
               setPriority(e.target.value as NotificationPriority)
             }
@@ -111,6 +120,7 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
           </label>
           <input
             required
+            disabled={isLoading}
             type="datetime-local"
             value={date}
             onChange={(e) => setDate(e.target.value)}
@@ -127,6 +137,7 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
         </label>
         <select
           value={status}
+          disabled={isLoading}
           onChange={(e) => setStatus(e.target.value as NotificationStatus)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
@@ -140,19 +151,32 @@ const NotificationForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
       <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
         <button
           type="button"
+          disabled={isLoading}
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 transition"
+                     hover:bg-stone-100 disabled:bg-stone-400 transition"
         >
           Cancel
         </button>
 
         <button
           type="submit"
-          className="px-6 py-2 rounded-lg bg-amber-700 text-white
-                     hover:bg-amber-800 transition font-bold shadow-md active:scale-95"
+          disabled={isLoading}
+          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
         >
-          {initial?.uuid ? "Update Notification" : "Save Notification"}
+          {isLoading ? (
+            <>
+              {/* Ensure the spinner is a span or has inline-block properties */}
+              <span className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+              </span>
+              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
+            </>
+          ) : (
+            <span>
+              {initial?.uuid ? "Update Notification" : "Save Notification"}
+            </span>
+          )}
         </button>
       </div>
     </form>

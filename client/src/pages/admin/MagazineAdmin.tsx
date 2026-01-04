@@ -14,6 +14,8 @@ import toast from "react-hot-toast";
 const MagazineAdmin = () => {
   const [items, setItems] = useState<AdminMagazine[]>([]);
   const [editing, setEditing] = useState<AdminMagazine | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -39,6 +41,8 @@ const MagazineAdmin = () => {
   }, []);
 
   const handleSave = async (data: AdminMagazine | AdminMagazineDraft) => {
+    setIsSaving(true);
+
     try {
       if ("uuid" in data && data.uuid) {
         const { uuid, ...payload } = data;
@@ -53,11 +57,15 @@ const MagazineAdmin = () => {
       loadMagazines();
     } catch {
       // Handled globally in api.ts
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
+    setIsDeleting(true);
 
     try {
       await magazineAdminService.remove(deleteTarget.uuid);
@@ -66,6 +74,7 @@ const MagazineAdmin = () => {
     } catch {
       // Handled globally in api.ts
     } finally {
+      setIsDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -91,12 +100,13 @@ const MagazineAdmin = () => {
       </div>
 
       {/* Create / Edit Modal */}
-      <Modal open={!!editing} onClose={() => setEditing(null)}>
+      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
         {editing && (
           <MagazineForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
+            isLoading={isSaving}
           />
         )}
       </Modal>
@@ -140,6 +150,7 @@ const MagazineAdmin = () => {
               setDeleteTarget({ uuid: m.uuid, title: m.title });
             }
           }}
+          disabled={isDeleting || isSaving}
         />
       )}
 
@@ -161,6 +172,7 @@ const MagazineAdmin = () => {
         confirmText="Delete"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+        isLoading={isDeleting}
       />
     </div>
   );
