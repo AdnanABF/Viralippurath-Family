@@ -1,7 +1,7 @@
 export type PublicMagazine = {
-  id: string;
+  uuid: string;
   title: string;
-  year: number;
+  publishedDate: string;
   coverImageUrl?: string;
   flipbookUrl: string;
   downloadUrl?: string;

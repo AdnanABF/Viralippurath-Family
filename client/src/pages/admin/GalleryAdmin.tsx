@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import type {
-  AdminGalleryItem,
-  AdminGalleryDraft,
-} from "../../types/gallery.admin";
+import type { AdminGalleryItem } from "../../types/gallery.admin";
 import { galleryAdminService } from "../../services/gallery.admin.service";
 import GalleryTable from "../../components/admin/gallery/GalleryTable";
 import GalleryForm from "../../components/admin/gallery/GalleryForm";
@@ -14,21 +11,23 @@ import toast from "react-hot-toast";
 const GalleryAdmin = () => {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
-    id: string;
+    uuid: string;
     caption: string;
   } | null>(null);
 
   const loadGallery = async () => {
     setLoading(true);
-    setError(null);
+    setError(false);
     try {
       const data = await galleryAdminService.getAll();
       setItems(data);
     } catch {
-      setError("Failed to load gallery");
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -38,34 +37,46 @@ const GalleryAdmin = () => {
     loadGallery();
   }, []);
 
-  const handleSave = async (payload: AdminGalleryItem | AdminGalleryDraft) => {
+  /**
+   * handleSave now receives a FormData object from GalleryForm
+   */
+  const handleSave = async (formData: FormData) => {
+    setIsSaving(true);
     try {
-      if ("id" in payload) {
-        const { id, ...data } = payload;
-        await galleryAdminService.update(id, data);
+      const uuid = editing?.uuid;
+
+      if (uuid && uuid !== "") {
+        // Update existing record
+        await galleryAdminService.update(uuid, formData);
         toast.success("Image updated successfully");
       } else {
-        await galleryAdminService.create(payload);
+        // Create new record
+        await galleryAdminService.create(formData);
         toast.success("Image added to gallery");
       }
 
       setEditing(null);
       loadGallery();
-    } catch {
-      // handled globally in api.ts
+    } catch (err) {
+      // Errors are handled by the global interceptor in api.ts,
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
+    setIsDeleting(true);
+
     try {
-      await galleryAdminService.remove(deleteTarget.id);
+      await galleryAdminService.remove(deleteTarget.uuid);
       toast.success("Image deleted successfully");
       loadGallery();
     } catch {
       // handled globally
     } finally {
+      setIsDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -73,12 +84,12 @@ const GalleryAdmin = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-serif">Manage Gallery</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-serif text-stone-900">Manage Gallery</h1>
         <button
           onClick={() =>
             setEditing({
-              id: "",
+              uuid: "",
               imageUrl: "",
               caption: "",
               album: "",
@@ -86,26 +97,53 @@ const GalleryAdmin = () => {
               status: "DRAFT",
             })
           }
-          className="bg-amber-700 text-white px-4 py-2 rounded-lg"
+          className="w-full sm:w-auto bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm hover:bg-amber-800 transition-all active:scale-95"
         >
           Add New Image
         </button>
       </div>
 
       {/* Create / Edit Modal */}
-      <Modal open={!!editing} onClose={() => setEditing(null)}>
+      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
         {editing && (
           <GalleryForm
-            initial={editing.id ? editing : undefined}
+            initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
+            isLoading={isSaving}
           />
         )}
       </Modal>
 
-      {loading && <p className="text-stone-500">Loading gallery…</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      {/* Loading State */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
+          <p className="mt-4 text-stone-500 font-medium">
+            Loading gallery images...
+          </p>
+        </div>
+      )}
 
+      {/* Error State */}
+      {error && !loading && (
+        <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
+          <p className="text-stone-800 font-serif text-lg mb-1">
+            Something went wrong
+          </p>
+          <p className="text-stone-500 text-sm">
+            We couldn't load the gallery. Please try again later.
+          </p>
+          <button
+            onClick={loadGallery}
+            className="mt-4 text-amber-700 font-medium hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Empty State */}
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="No images in gallery yet"
@@ -113,16 +151,18 @@ const GalleryAdmin = () => {
         />
       )}
 
+      {/* Data Table */}
       {!loading && !error && items.length > 0 && (
         <GalleryTable
           items={items}
           onEdit={setEditing}
-          onDelete={(id) => {
-            const item = items.find((i) => i.id === id);
+          onDelete={(uuid) => {
+            const item = items.find((i) => i.uuid === uuid);
             if (item) {
-              setDeleteTarget({ id: item.id, caption: item.caption });
+              setDeleteTarget({ uuid: item.uuid, caption: item.caption });
             }
           }}
+          disabled={isDeleting || isSaving}
         />
       )}
 
@@ -144,6 +184,7 @@ const GalleryAdmin = () => {
         confirmText="Delete"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+        isLoading={isDeleting}
       />
     </div>
   );

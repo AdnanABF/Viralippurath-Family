@@ -13,9 +13,15 @@ interface Props {
   initial?: AdminEvent;
   onSave: (event: AdminEvent | AdminEventDraft) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
-const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
+const EventForm: React.FC<Props> = ({
+  initial,
+  onSave,
+  onCancel,
+  isLoading,
+}) => {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [type, setType] = useState(initial?.type ?? "");
@@ -25,7 +31,8 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
   );
   const [status, setStatus] = useState<EventStatus>(initial?.status ?? "DRAFT");
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const payload = {
       title,
       description,
@@ -35,117 +42,150 @@ const EventForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
       status,
     };
 
-    if (initial?.id) {
-      onSave({ ...payload, id: initial.id });
+    if (initial?.uuid) {
+      onSave({ ...payload, uuid: initial.uuid } as AdminEvent);
     } else {
-      onSave(payload);
+      onSave(payload as AdminEventDraft);
     }
   };
 
   return (
-    <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6">
-      <h2 className="text-lg font-serif text-stone-800">
-        {initial ? "Edit Event" : "Create New Event"}
+    <form
+      onSubmit={handleSubmit}
+      className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6"
+    >
+      <h2 className="text-xl font-serif text-stone-800">
+        {initial?.uuid ? "Edit Event" : "Create New Event"}
       </h2>
 
       {/* Title */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Title</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Event Title
+        </label>
         <input
+          required
+          disabled={isLoading}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-          placeholder="Event title"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          placeholder="e.g., Annual Family Reunion"
         />
       </div>
 
       {/* Description */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
+        <label className="text-sm font-semibold text-stone-700">
           Description
         </label>
         <textarea
+          required
+          disabled={isLoading}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-          placeholder="Short description of the event"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none"
+          placeholder="What is happening during this event?"
         />
       </div>
 
       {/* Type + Location */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-stone-700">Type</label>
+          <label className="text-sm font-semibold text-stone-700">
+            Event Type
+          </label>
           <input
+            required
+            disabled={isLoading}
             value={type}
             onChange={(e) => setType(e.target.value)}
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-            placeholder="Gathering, Ceremony, Meeting"
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            placeholder="Gathering, Ceremony, etc."
           />
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-stone-700">Location</label>
+          <label className="text-sm font-semibold text-stone-700">
+            Location
+          </label>
           <input
             value={location}
+            disabled={isLoading}
             onChange={(e) => setLocation(e.target.value)}
             className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-            placeholder="Kerala, Dubai, Online…"
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            placeholder="Kerala, Dubai, Online..."
           />
         </div>
       </div>
 
       {/* Date */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
+        <label className="text-sm font-semibold text-stone-700">
           Date & Time
         </label>
         <input
+          required
+          disabled={isLoading}
           type="datetime-local"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                    focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         />
       </div>
 
       {/* Status */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Status</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Visibility Status
+        </label>
         <select
           value={status}
+          disabled={isLoading}
           onChange={(e) => setStatus(e.target.value as EventStatus)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         >
-          <option value="DRAFT">Draft</option>
-          <option value="PUBLISHED">Published</option>
+          <option value="DRAFT">Draft (Hidden from Public)</option>
+          <option value="PUBLISHED">Published (Visible on Site)</option>
         </select>
       </div>
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
         <button
+          type="button"
+          disabled={isLoading}
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 transition"
+                     hover:bg-stone-100 disabled:bg-stone-400 transition"
         >
           Cancel
         </button>
         <button
-          onClick={handleSubmit}
-          className="px-5 py-2 rounded-lg bg-amber-700 text-white
-                     hover:bg-amber-800 transition font-medium"
+          type="submit"
+          disabled={isLoading}
+          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
         >
-          Save Event
+          {isLoading ? (
+            <>
+              {/* Ensure the spinner is a span or has inline-block properties */}
+              <span className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+              </span>
+              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
+            </>
+          ) : (
+            <span>{initial?.uuid ? "Update Event" : "Save Event"}</span>
+          )}
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 

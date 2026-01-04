@@ -4,31 +4,28 @@ import type {
   AdminMagazineDraft,
 } from "../types/magazine.admin";
 
-const normalize = (m: any): AdminMagazine => ({
-  ...m,
-  id: m.id || m._id,
-});
-
 export const magazineAdminService = {
   async getAll(): Promise<AdminMagazine[]> {
     const { data } = await api.get("/magazine/admin");
-    return data.map(normalize);
+    return data;
   },
 
   async create(payload: AdminMagazineDraft): Promise<AdminMagazine> {
     const { data } = await api.post("/magazine", payload);
-    return normalize(data);
+    return data;
   },
 
   async update(
-    id: string,
-    payload: Partial<AdminMagazineDraft>
+    uuid: string,
+    magazine: Partial<AdminMagazine>
   ): Promise<AdminMagazine> {
-    const { data } = await api.patch(`/magazine/${id}`, payload);
-    return normalize(data);
+    const { id: _, _id: __, uuid: ___, ...payload } = magazine as any;
+
+    const { data } = await api.patch(`/magazine/${uuid}`, payload);
+    return data;
   },
 
-  async remove(id: string): Promise<void> {
-    await api.delete(`/magazine/${id}`);
+  async remove(uuid: string): Promise<void> {
+    await api.delete(`/magazine/${uuid}`);
   },
 };

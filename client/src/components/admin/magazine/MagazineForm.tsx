@@ -9,11 +9,22 @@ interface Props {
   initial?: AdminMagazine;
   onSave: (data: AdminMagazine | AdminMagazineDraft) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
-const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
+const MagazineForm: React.FC<Props> = ({
+  initial,
+  onSave,
+  onCancel,
+  isLoading,
+}) => {
+  // Sync state with uuid and publishedDate architecture
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [year, setYear] = useState(initial?.year ?? new Date().getFullYear());
+  const [publishedDate, setPublishedDate] = useState(
+    initial?.publishedDate
+      ? new Date(initial.publishedDate).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0]
+  );
   const [coverImageUrl, setCoverImageUrl] = useState(
     initial?.coverImageUrl ?? ""
   );
@@ -23,131 +34,159 @@ const MagazineForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
     initial?.status ?? "DRAFT"
   );
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     const payload = {
       title,
-      year,
+      publishedDate: new Date(publishedDate).toISOString(),
       coverImageUrl: coverImageUrl || undefined,
       flipbookUrl,
       downloadUrl: downloadUrl || undefined,
       status,
     };
 
-    if (initial?.id) {
-      onSave({ ...payload, id: initial.id });
+    if (initial?.uuid) {
+      onSave({ ...payload, uuid: initial.uuid } as AdminMagazine);
     } else {
-      onSave(payload);
+      onSave(payload as AdminMagazineDraft);
     }
   };
 
   return (
-    <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6">
-      <h2 className="text-lg font-serif text-stone-800">
-        {initial ? "Edit Magazine" : "Create New Magazine"}
+    <form
+      onSubmit={handleSubmit}
+      className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto"
+    >
+      <h2 className="text-xl font-serif text-stone-800">
+        {initial?.uuid ? "Edit Magazine Issue" : "Create New Magazine Issue"}
       </h2>
 
       {/* Title */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Title</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Magazine Title
+        </label>
         <input
+          required
+          disabled={isLoading}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Magazine title"
+          placeholder="e.g., The Family Chronicle - Summer Edition"
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20
-                     focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         />
       </div>
 
-      {/* Year */}
+      {/* Date Selection */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Year</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Publication Date
+        </label>
         <input
-          type="number"
-          value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
+          required
+          disabled={isLoading}
+          type="date"
+          value={publishedDate}
+          onChange={(e) => setPublishedDate(e.target.value)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20
-                     focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         />
       </div>
 
       {/* URLs */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
-          Cover Image URL
-        </label>
-        <input
-          value={coverImageUrl}
-          onChange={(e) => setCoverImageUrl(e.target.value)}
-          placeholder="https://..."
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20
-                     focus:border-amber-600"
-        />
-      </div>
+      <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-stone-700">
+            Cover Image URL
+          </label>
+          <input
+            value={coverImageUrl}
+            disabled={isLoading}
+            onChange={(e) => setCoverImageUrl(e.target.value)}
+            placeholder="https://cloudinary.com/..."
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          />
+        </div>
 
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
-          Flipbook URL
-        </label>
-        <input
-          value={flipbookUrl}
-          onChange={(e) => setFlipbookUrl(e.target.value)}
-          placeholder="https://..."
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20
-                     focus:border-amber-600"
-        />
-      </div>
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-stone-700">
+            Flipbook URL (Required)
+          </label>
+          <input
+            required
+            disabled={isLoading}
+            value={flipbookUrl}
+            onChange={(e) => setFlipbookUrl(e.target.value)}
+            placeholder="https://heyzine.com/..."
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          />
+        </div>
 
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">
-          Download PDF URL
-        </label>
-        <input
-          value={downloadUrl}
-          onChange={(e) => setDownloadUrl(e.target.value)}
-          placeholder="https://..."
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20
-                     focus:border-amber-600"
-        />
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-stone-700">
+            Download PDF URL (Optional)
+          </label>
+          <input
+            value={downloadUrl}
+            disabled={isLoading}
+            onChange={(e) => setDownloadUrl(e.target.value)}
+            placeholder="Direct link to PDF file"
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          />
+        </div>
       </div>
 
       {/* Status */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-stone-700">Status</label>
+        <label className="text-sm font-semibold text-stone-700">
+          Visibility Status
+        </label>
         <select
           value={status}
+          disabled={isLoading}
           onChange={(e) => setStatus(e.target.value as MagazineStatus)}
           className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20
-                     focus:border-amber-600"
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         >
-          <option value="DRAFT">Draft</option>
-          <option value="PUBLISHED">Published</option>
+          <option value="DRAFT">Draft (Hidden from Archives)</option>
+          <option value="PUBLISHED">Published (Visible in Archives)</option>
         </select>
       </div>
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
         <button
+          type="button"
+          disabled={isLoading}
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 transition"
+                     hover:bg-stone-100 disabled:bg-stone-400 transition"
         >
           Cancel
         </button>
         <button
-          onClick={handleSubmit}
-          className="px-5 py-2 rounded-lg bg-amber-700 text-white
-                     hover:bg-amber-800 transition font-medium"
+          type="submit"
+          disabled={isLoading}
+          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
         >
-          Save Magazine
+          {isLoading ? (
+            <>
+              {/* Ensure the spinner is a span or has inline-block properties */}
+              <span className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+              </span>
+              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
+            </>
+          ) : (
+            <span>{initial?.uuid ? "Update Issue" : "Create Issue"}</span>
+          )}
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 

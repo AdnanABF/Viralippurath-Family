@@ -11,12 +11,28 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
     );
   }
 
+  // Format the date for the "Edition" line
+  const displayDate = new Date(issue.publishedDate).toLocaleDateString(
+    "en-US",
+    { month: "long", year: "numeric" }
+  );
+
   return (
     <>
-      <div className="aspect-4/3 bg-stone-200 rounded-2xl shadow-inner flex items-center justify-center relative overflow-hidden">
-        <div className="text-center p-8">
+      {/* Visual Preview / Action Area */}
+      <div className="aspect-4/3 bg-stone-200 rounded-2xl shadow-inner flex items-center justify-center relative overflow-hidden group">
+        {/* Background Decorative Element (Cover Image blurred) */}
+        {issue.coverImageUrl && (
+          <img
+            src={issue.coverImageUrl}
+            className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm transition-transform duration-700 group-hover:scale-110"
+            alt=""
+          />
+        )}
+
+        <div className="text-center p-8 relative z-10">
           <svg
-            className="w-16 h-16 mx-auto text-stone-400 mb-4"
+            className="w-16 h-16 mx-auto text-stone-600 mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -29,40 +45,54 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
             />
           </svg>
 
-          <h2 className="text-2xl font-serif text-stone-800">{issue.title}</h2>
-          <p className="text-stone-500 mt-2">Click to open flipbook viewer</p>
+          <h2 className="text-3xl font-serif text-stone-900">{issue.title}</h2>
+          <p className="text-stone-600 mt-2 font-medium italic">
+            Interactive Digital Edition
+          </p>
 
-          <button className="mt-8 bg-amber-700 text-white px-8 py-3 rounded-lg hover:bg-amber-800 transition-all">
-            Open Viewer
-          </button>
+          <a
+            href={issue.flipbookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-8 bg-amber-800 text-white px-10 py-3.5 rounded-full font-bold shadow-lg hover:bg-amber-900 hover:-translate-y-0.5 transition-all duration-300"
+          >
+            Read Issue Now
+          </a>
         </div>
       </div>
 
-      <div className="flex justify-between items-center bg-white p-6 rounded-xl border border-stone-200 mt-6">
-        <div>
-          <h3 className="font-bold text-stone-800">{issue.title}</h3>
-          <p className="text-sm text-stone-500">Edition {issue.year}</p>
+      {/* Info & Download Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm mt-6 gap-4">
+        <div className="text-center sm:text-left">
+          <h3 className="font-bold text-stone-900 text-lg">{issue.title}</h3>
+          <p className="text-sm text-stone-500 font-medium">
+            Published {displayDate}
+          </p>
         </div>
 
-        <a
-          href={issue.downloadUrl}
-          className="flex items-center text-amber-700 font-semibold hover:underline"
-        >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {issue.downloadUrl && (
+          <a
+            href={issue.downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center text-amber-800 font-bold hover:text-amber-900 transition-colors bg-amber-50 px-4 py-2 rounded-lg"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-            />
-          </svg>
-          Download PDF
-        </a>
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Download PDF
+          </a>
+        )}
       </div>
     </>
   );

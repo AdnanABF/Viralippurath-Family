@@ -6,4 +6,4 @@ export type AdminMagazine = PublicMagazine & {
   status: MagazineStatus;
 };
 
-export type AdminMagazineDraft = Omit<AdminMagazine, "id">;
+export type AdminMagazineDraft = Omit<AdminMagazine, "uuid">;

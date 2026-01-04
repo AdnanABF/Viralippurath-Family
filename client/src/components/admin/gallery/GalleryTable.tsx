@@ -5,62 +5,75 @@ import { EditIcon, DeleteIcon } from "../../ui/icons";
 interface Props {
   items: AdminGalleryItem[];
   onEdit: (item: AdminGalleryItem) => void;
-  onDelete: (id: string) => void;
+  onDelete: (uuid: string) => void;
+  disabled?: boolean;
 }
 
-const GalleryTable: React.FC<Props> = ({ items, onEdit, onDelete }) => {
+const GalleryTable: React.FC<Props> = ({
+  items,
+  onEdit,
+  onDelete,
+  disabled,
+}) => {
   return (
-    <table className="w-full bg-white rounded-xl border border-stone-200 overflow-hidden">
-      <thead className="bg-stone-100 text-sm text-stone-600">
-        <tr>
-          <th className="p-3 text-left">Preview</th>
-          <th className="p-3 text-left">Caption</th>
-          <th className="p-3">Album</th>
-          <th className="p-3">Year</th>
-          <th className="p-3">Status</th>
-          <th className="p-3 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((item) => (
-          <tr key={item.id} className="border-t">
-            <td className="p-3">
-              <img
-                src={item.imageUrl}
-                alt={item.caption}
-                className="w-16 h-16 object-cover rounded-lg border"
-              />
-            </td>
-            <td className="p-3">{item.caption}</td>
-            <td className="p-3 text-center">{item.album}</td>
-            <td className="p-3 text-center">{item.year}</td>
-            <td className="p-3 text-center">
-              <EventStatusBadge status={item.status} />
-            </td>
-            <td className="p-3 text-right">
-              <div className="inline-flex gap-2">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="inline-flex items-center gap-1.5 px-4 py-3 text-sm rounded-md
-                             border border-amber-200 text-amber-700
-                             hover:bg-amber-50 transition"
-                >
-                  <EditIcon /> Edit
-                </button>
-                <button
-                  onClick={() => onDelete(item.id)}
-                  className="inline-flex items-center gap-1.5 px-4 py-3 text-sm rounded-md
-                             border border-red-200 text-red-600
-                             hover:bg-red-50 transition"
-                >
-                  <DeleteIcon /> Delete
-                </button>
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="w-full bg-white border border-stone-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-225 border-collapse">
+          <thead className="bg-stone-50 text-sm text-stone-600 border-b border-stone-200">
+            <tr>
+              <th className="p-4 text-left font-semibold">Preview</th>
+              <th className="p-4 text-left font-semibold">Caption</th>
+              <th className="p-4 text-left font-semibold">Album</th>
+              <th className="p-4 text-left font-semibold">Year</th>
+              <th className="p-4 text-left font-semibold">Status</th>
+              <th className="p-4 text-right font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-100">
+            {items.map((item) => (
+              <tr
+                key={item.uuid}
+                className="hover:bg-stone-50/50 transition-colors"
+              >
+                <td className="p-4">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.caption}
+                    className="w-16 h-16 object-cover rounded-lg border border-stone-200 bg-stone-100"
+                  />
+                </td>
+                <td className="p-4 font-medium text-stone-900">
+                  {item.caption}
+                </td>
+                <td className="p-4 text-sm text-stone-500">{item.album}</td>
+                <td className="p-4 text-sm text-stone-600">{item.year}</td>
+                <td className="p-4">
+                  <EventStatusBadge status={item.status} />
+                </td>
+                <td className="p-4 text-right">
+                  <div className="inline-flex items-center gap-2">
+                    <button
+                      disabled={disabled}
+                      onClick={() => onEdit(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-stone-700 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <EditIcon /> <span>Edit</span>
+                    </button>
+                    <button
+                      disabled={disabled}
+                      onClick={() => onDelete(item.uuid)}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all disabled:bg-stone-100 disabled:text-stone-400 disabled:border-stone-200 disabled:cursor-not-allowed min-w-21.25"
+                    >
+                      <DeleteIcon /> <span>Delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 

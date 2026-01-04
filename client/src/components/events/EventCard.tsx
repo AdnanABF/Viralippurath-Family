@@ -1,15 +1,13 @@
+import React from "react";
 import type { PublicEvent } from "../../types/event.public";
+import { formatDate } from "../../utils/date";
 
 interface Props {
   event: PublicEvent;
 }
 
 const EventCard: React.FC<Props> = ({ event }) => {
-  const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedDate = formatDate(event.date);
 
   return (
     <div className="relative pl-8 border-l-2 border-stone-100">
@@ -34,7 +32,9 @@ const EventCard: React.FC<Props> = ({ event }) => {
           </div>
         </div>
 
-        <p className="text-stone-600 leading-relaxed">{event.description}</p>
+        <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">
+          {event.description}
+        </p>
 
         {event.location && (
           <div className="mt-6 flex items-center text-stone-500 text-sm">

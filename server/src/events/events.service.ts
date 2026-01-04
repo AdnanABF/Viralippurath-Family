@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Event, EventDocument, EventStatus } from './schemas/event.schema';
@@ -13,26 +13,54 @@ export class EventsService {
   ) {}
 
   // ADMIN
-  findAllAdmin() {
-    return this.eventModel.find().sort({ date: -1 });
+  async findAllAdmin() {
+    return await this.eventModel.find().sort({ date: -1 }).exec();
   }
 
-  create(dto: CreateEventDto) {
-    return this.eventModel.create(dto);
+  async create(dto: CreateEventDto) {
+    return await this.eventModel.create(dto);
   }
 
-  update(id: string, dto: UpdateEventDto) {
-    return this.eventModel.findByIdAndUpdate(id, dto, { new: true });
+  async update(uuid: string, dto: UpdateEventDto) {
+    const updatedEvent = await this.eventModel
+      .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
+      .exec();
+
+    if (!updatedEvent) {
+      throw new NotFoundException(`Event with UUID ${uuid} not found`);
+    }
+
+    return updatedEvent;
   }
 
-  remove(id: string) {
-    return this.eventModel.findByIdAndDelete(id);
+  async remove(uuid: string) {
+    const deletedEvent = await this.eventModel
+      .findOneAndDelete({ uuid })
+      .exec();
+
+    if (!deletedEvent) {
+      throw new NotFoundException(`Event with UUID ${uuid} not found`);
+    }
+
+    return { deleted: true };
   }
 
-  // PUBLIC
-  findPublished() {
+  // ===== PUBLIC =====
+
+  async findPublished(type: 'upcoming' | 'past' = 'upcoming') {
+    const now = new Date();
+
+    const query = {
+      status: EventStatus.PUBLISHED,
+      date: type === 'upcoming' ? { $gte: now } : { $lt: now },
+    };
+
+    const sortOrder = type === 'upcoming' ? 1 : -1;
+
     return this.eventModel
-      .find({ status: EventStatus.PUBLISHED })
-      .sort({ date: -1 });
+      .find(query)
+      .select('uuid title description date type location -_id')
+      .sort({ date: sortOrder })
+      .exec();
   }
 }

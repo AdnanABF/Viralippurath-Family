@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification-dto';
@@ -19,37 +20,41 @@ import { Roles } from '../auth/roles.decorator';
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  // 🌍 Public endpoint
+  // ===== PUBLIC =====
   @Get('published')
-  findPublished() {
-    return this.notificationsService.findPublished();
+  async getPublished() {
+    return await this.notificationsService.findPublished();
   }
 
+  // ===== ADMIN =====
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
-  @Post()
-  create(@Body() dto: CreateNotificationDto) {
-    return this.notificationsService.create(dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
-  getAllAdmin() {
-    return this.notificationsService.findAllAdmin();
+  async getAllAdmin() {
+    return await this.notificationsService.findAllAdmin();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateNotificationDto) {
-    return this.notificationsService.update(id, dto);
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Post()
+  async create(@Body() dto: CreateNotificationDto) {
+    return await this.notificationsService.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.notificationsService.remove(id);
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Patch(':uuid')
+  async update(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Body() dto: UpdateNotificationDto,
+  ) {
+    return await this.notificationsService.update(uuid, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Delete(':uuid')
+  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+    return await this.notificationsService.remove(uuid);
   }
 }

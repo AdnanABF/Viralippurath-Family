@@ -1,5 +1,5 @@
 export type PublicGalleryItem = {
-  id: string;
+  uuid: string;
   imageUrl: string;
   caption: string;
   album: string;

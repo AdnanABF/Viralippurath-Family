@@ -7,7 +7,11 @@ import {
   Patch,
   Post,
   UseGuards,
+  ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { GalleryService } from './gallery.service';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
@@ -21,36 +25,45 @@ export class GalleryController {
 
   // ===== PUBLIC =====
   @Get('published')
-  getPublished() {
-    return this.galleryService.findPublished();
+  async getPublished() {
+    return await this.galleryService.findPublished();
   }
 
   // ===== ADMIN =====
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
-  getAllAdmin() {
-    return this.galleryService.findAllAdmin();
+  async getAllAdmin() {
+    return await this.galleryService.findAllAdmin();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Post()
-  create(@Body() dto: CreateGalleryDto) {
-    return this.galleryService.create(dto);
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: CreateGalleryDto,
+  ) {
+    return await this.galleryService.create(dto, file);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateGalleryDto) {
-    return this.galleryService.update(id, dto);
+  @Patch(':uuid')
+  @UseInterceptors(FileInterceptor('image'))
+  async update(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Body() dto: UpdateGalleryDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return await this.galleryService.update(uuid, dto, file);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.galleryService.remove(id);
+  @Delete(':uuid')
+  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+    return await this.galleryService.remove(uuid);
   }
 }

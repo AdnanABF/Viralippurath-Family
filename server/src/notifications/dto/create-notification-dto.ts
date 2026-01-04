@@ -1,4 +1,8 @@
 import { IsDateString, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import {
+  NotificationPriority,
+  NotificationStatus,
+} from '../schemas/notification.schema';
 
 export class CreateNotificationDto {
   @IsString()
@@ -7,14 +11,14 @@ export class CreateNotificationDto {
 
   @IsString()
   @IsNotEmpty()
-  content?: string;
+  content: string;
 
   @IsDateString()
   date: string;
 
-  @IsEnum(['HIGH', 'NORMAL'])
-  priority: 'HIGH' | 'NORMAL';
+  @IsEnum(NotificationPriority)
+  priority: NotificationPriority;
 
-  @IsEnum(['DRAFT', 'PUBLISHED'])
-  status: 'DRAFT' | 'PUBLISHED';
+  @IsEnum(NotificationStatus)
+  status: NotificationStatus;
 }

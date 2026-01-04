@@ -1,3 +1,11 @@
+export function formatDate(isoDate: string) {
+  return new Date(isoDate).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function formatDateTime(isoDate: string, locale: string = "en-GB") {
   const date = new Date(isoDate);
 

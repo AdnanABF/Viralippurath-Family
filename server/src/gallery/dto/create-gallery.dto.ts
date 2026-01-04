@@ -1,18 +1,28 @@
-import { IsEnum, IsInt, IsString, IsUrl } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { GalleryStatus } from '../schemas/gallery.schema';
 
 export class CreateGalleryDto {
-  @IsUrl()
-  imageUrl: string;
-
   @IsString()
+  @IsNotEmpty()
   caption: string;
 
   @IsString()
+  @IsNotEmpty()
   album: string;
 
   @IsInt()
+  @IsNotEmpty()
+  @Type(() => Number) // Crucial for FormData to convert string to number
   year: number;
 
-  @IsEnum(['DRAFT', 'PUBLISHED'])
-  status: 'DRAFT' | 'PUBLISHED';
+  @IsEnum(GalleryStatus)
+  @IsOptional()
+  status: GalleryStatus;
 }
