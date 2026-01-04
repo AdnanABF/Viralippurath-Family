@@ -6,9 +6,15 @@ interface Props {
   items: AdminGalleryItem[];
   onEdit: (item: AdminGalleryItem) => void;
   onDelete: (uuid: string) => void;
+  isDeleting?: boolean;
 }
 
-const GalleryTable: React.FC<Props> = ({ items, onEdit, onDelete }) => {
+const GalleryTable: React.FC<Props> = ({
+  items,
+  onEdit,
+  onDelete,
+  isDeleting,
+}) => {
   return (
     <div className="w-full bg-white border border-stone-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -47,14 +53,16 @@ const GalleryTable: React.FC<Props> = ({ items, onEdit, onDelete }) => {
                 <td className="p-4 text-right">
                   <div className="inline-flex items-center gap-2">
                     <button
+                      disabled={isDeleting}
                       onClick={() => onEdit(item)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-stone-700 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-stone-700 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <EditIcon /> <span>Edit</span>
                     </button>
                     <button
+                      disabled={isDeleting}
                       onClick={() => onDelete(item.uuid)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all disabled:bg-stone-100 disabled:text-stone-400 disabled:border-stone-200 disabled:cursor-not-allowed min-w-21.25"
                     >
                       <DeleteIcon /> <span>Delete</span>
                     </button>

@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import type {
-  AdminGalleryItem,
-  AdminGalleryDraft,
-} from "../../types/gallery.admin";
+import type { AdminGalleryItem } from "../../types/gallery.admin";
 import { galleryAdminService } from "../../services/gallery.admin.service";
 import GalleryTable from "../../components/admin/gallery/GalleryTable";
 import GalleryForm from "../../components/admin/gallery/GalleryForm";
@@ -14,6 +11,7 @@ import toast from "react-hot-toast";
 const GalleryAdmin = () => {
   const [items, setItems] = useState<AdminGalleryItem[]>([]);
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -38,26 +36,34 @@ const GalleryAdmin = () => {
     loadGallery();
   }, []);
 
-  const handleSave = async (payload: AdminGalleryItem | AdminGalleryDraft) => {
+  /**
+   * handleSave now receives a FormData object from GalleryForm
+   */
+  const handleSave = async (formData: FormData) => {
     try {
-      if ("uuid" in payload && payload.uuid) {
-        const { uuid, ...data } = payload;
-        await galleryAdminService.update(uuid, data);
+      const uuid = editing?.uuid;
+
+      if (uuid && uuid !== "") {
+        // Update existing record
+        await galleryAdminService.update(uuid, formData);
         toast.success("Image updated successfully");
       } else {
-        await galleryAdminService.create(payload as AdminGalleryDraft);
+        // Create new record
+        await galleryAdminService.create(formData);
         toast.success("Image added to gallery");
       }
 
       setEditing(null);
       loadGallery();
-    } catch {
-      // handled globally in api.ts
+    } catch (err) {
+      // Errors are handled by the global interceptor in api.ts,
     }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
+    setIsDeleting(true);
 
     try {
       await galleryAdminService.remove(deleteTarget.uuid);
@@ -66,6 +72,7 @@ const GalleryAdmin = () => {
     } catch {
       // handled globally
     } finally {
+      setIsDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -113,18 +120,25 @@ const GalleryAdmin = () => {
         </div>
       )}
 
-      {/* Generic Error State */}
+      {/* Error State */}
       {error && !loading && (
         <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
           <p className="text-stone-800 font-serif text-lg mb-1">
             Something went wrong
           </p>
           <p className="text-stone-500 text-sm">
-            We couldn't load the events. Please try again later.
+            We couldn't load the gallery. Please try again later.
           </p>
+          <button
+            onClick={loadGallery}
+            className="mt-4 text-amber-700 font-medium hover:underline"
+          >
+            Retry
+          </button>
         </div>
       )}
 
+      {/* Empty State */}
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="No images in gallery yet"
@@ -132,10 +146,12 @@ const GalleryAdmin = () => {
         />
       )}
 
+      {/* Data Table */}
       {!loading && !error && items.length > 0 && (
         <GalleryTable
           items={items}
           onEdit={setEditing}
+          isDeleting={isDeleting}
           onDelete={(uuid) => {
             const item = items.find((i) => i.uuid === uuid);
             if (item) {
@@ -163,6 +179,7 @@ const GalleryAdmin = () => {
         confirmText="Delete"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+        isLoading={isDeleting}
       />
     </div>
   );

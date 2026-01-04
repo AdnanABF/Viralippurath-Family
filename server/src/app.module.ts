@@ -11,6 +11,7 @@ import { GalleryModule } from './gallery/gallery.module';
 import { MagazineModule } from './magazine/magazine.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContactModule } from './contact/contact.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ContactModule } from './contact/contact.module';
     MagazineModule,
     NotificationsModule,
     ContactModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

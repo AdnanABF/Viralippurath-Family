@@ -5,9 +5,6 @@ import { getUserIdFromToken } from "../utils/auth";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 /**
@@ -88,9 +85,15 @@ api.interceptors.response.use(
         const backendMessage = error?.response?.data?.message;
 
         if (backendMessage) {
-          message = Array.isArray(backendMessage)
+          let finalMessage = Array.isArray(backendMessage)
             ? backendMessage[0]
             : backendMessage;
+
+          if (finalMessage.includes("should not exist")) {
+            finalMessage = "Invalid data submitted. Please check the form.";
+          }
+
+          message = finalMessage;
         }
       } else if (status >= 500) {
         message = "Server error. Please try again later.";

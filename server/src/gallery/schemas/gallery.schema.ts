@@ -21,6 +21,10 @@ export class Gallery {
   @Prop({ required: true, trim: true })
   imageUrl: string;
 
+  // New field to store the Cloudinary identifier for deletions/updates
+  @Prop({ required: true, trim: true })
+  publicId: string;
+
   @Prop({ required: true, trim: true })
   caption: string;
 
