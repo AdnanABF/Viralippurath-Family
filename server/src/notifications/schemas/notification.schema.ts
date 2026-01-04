@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { Document } from 'mongoose';
 
 export type NotificationDocument = Notification & Document;
@@ -17,7 +17,7 @@ export enum NotificationPriority {
 @Schema({ timestamps: true })
 export class Notification {
   @Prop({
-    default: () => uuidv4(),
+    default: () => randomUUID(),
     unique: true,
     required: true,
   })
