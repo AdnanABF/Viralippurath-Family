@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Admin, AdminSchema } from './admin.schema';
 import { AdminService } from './admin.service';
+import { AdminController } from './admin.controller';
 
 @Module({
   imports: [
@@ -9,5 +10,6 @@ import { AdminService } from './admin.service';
   ],
   providers: [AdminService],
   exports: [AdminService],
+  controllers: [AdminController],
 })
 export class AdminModule {}
