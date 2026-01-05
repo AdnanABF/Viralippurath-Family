@@ -26,9 +26,18 @@ const EventForm: React.FC<Props> = ({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [type, setType] = useState(initial?.type ?? "");
   const [location, setLocation] = useState(initial?.location ?? "");
-  const [date, setDate] = useState(
-    initial?.date ? toDateTimeInputValue(initial.date) : nowDateTimeInputValue()
+
+  const [startDateTime, setStartDateTime] = useState(
+    initial?.startDateTime
+      ? toDateTimeInputValue(initial.startDateTime)
+      : nowDateTimeInputValue()
   );
+  const [endDateTime, setEndDateTime] = useState(
+    initial?.endDateTime
+      ? toDateTimeInputValue(initial.endDateTime)
+      : nowDateTimeInputValue()
+  );
+
   const [status, setStatus] = useState<EventStatus>(initial?.status ?? "DRAFT");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,8 +46,9 @@ const EventForm: React.FC<Props> = ({
       title,
       description,
       type,
-      location: location || undefined,
-      date,
+      location,
+      startDateTime,
+      endDateTime,
       status,
     };
 
@@ -46,6 +56,13 @@ const EventForm: React.FC<Props> = ({
       onSave({ ...payload, uuid: initial.uuid } as AdminEvent);
     } else {
       onSave(payload as AdminEventDraft);
+    }
+  };
+
+  const handleStartChange = (val: string) => {
+    setStartDateTime(val);
+    if (endDateTime < val) {
+      setEndDateTime(val);
     }
   };
 
@@ -68,8 +85,7 @@ const EventForm: React.FC<Props> = ({
           disabled={isLoading}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
           placeholder="e.g., Annual Family Reunion"
         />
       </div>
@@ -85,8 +101,7 @@ const EventForm: React.FC<Props> = ({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none"
+          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none"
           placeholder="What is happening during this event?"
         />
       </div>
@@ -102,8 +117,7 @@ const EventForm: React.FC<Props> = ({
             disabled={isLoading}
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
             placeholder="Gathering, Ceremony, etc."
           />
         </div>
@@ -113,30 +127,45 @@ const EventForm: React.FC<Props> = ({
             Location
           </label>
           <input
+            required
             value={location}
             disabled={isLoading}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
             placeholder="Kerala, Dubai, Online..."
           />
         </div>
       </div>
 
-      {/* Date */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Date & Time
-        </label>
-        <input
-          required
-          disabled={isLoading}
-          type="datetime-local"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-stone-700">
+            Start Date & Time
+          </label>
+          <input
+            required
+            disabled={isLoading}
+            type="datetime-local"
+            value={startDateTime}
+            onChange={(e) => handleStartChange(e.target.value)}
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-stone-700">
+            End Date & Time
+          </label>
+          <input
+            required
+            disabled={isLoading}
+            type="datetime-local"
+            value={endDateTime}
+            min={startDateTime} // Validates end is not before start
+            onChange={(e) => setEndDateTime(e.target.value)}
+            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          />
+        </div>
       </div>
 
       {/* Status */}
@@ -148,8 +177,7 @@ const EventForm: React.FC<Props> = ({
           value={status}
           disabled={isLoading}
           onChange={(e) => setStatus(e.target.value as EventStatus)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
         >
           <option value="DRAFT">Draft (Hidden from Public)</option>
           <option value="PUBLISHED">Published (Visible on Site)</option>
@@ -174,7 +202,6 @@ const EventForm: React.FC<Props> = ({
         >
           {isLoading ? (
             <>
-              {/* Ensure the spinner is a span or has inline-block properties */}
               <span className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
               </span>

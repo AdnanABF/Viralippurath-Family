@@ -87,8 +87,9 @@ const EventsAdmin = () => {
               uuid: "",
               title: "",
               description: "",
-              type: "Gathering", // Default type
-              date: "",
+              type: "Gathering",
+              startDateTime: "",
+              endDateTime: "",
               status: "DRAFT",
             } as AdminEvent)
           }
