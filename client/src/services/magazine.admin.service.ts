@@ -11,51 +11,20 @@ export const magazineAdminService = {
   },
 
   async create(payload: AdminMagazineDraft): Promise<AdminMagazine> {
-    const formData = new FormData();
-
-    // 1. Append the text fields
-    formData.append("title", payload.title);
-    formData.append("publishedDate", payload.publishedDate);
-    formData.append("status", payload.status);
-
-    // 2. Append the file (field name must be 'file' to match the Controller)
-    if (payload.file) {
-      formData.append("file", payload.file);
-    }
-
-    const { data } = await api.post("/magazine", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    // We send the JSON payload directly.
+    // The 'file' property was already removed in the handleSave logic.
+    const { data } = await api.post("/magazine", payload);
     return data;
   },
 
   async update(
     uuid: string,
-    magazine: Partial<AdminMagazine> & { file?: File }
+    magazine: Partial<AdminMagazineDraft> & { uuid?: string }
   ): Promise<AdminMagazine> {
-    const formData = new FormData();
+    // Clean up internal keys if they exist
+    const { uuid: _, file: __, ...cleanPayload } = magazine;
 
-    // 1. Extract and append fields, excluding internal IDs
-    const { id, _id, uuid: _, pdfUrl, ...rest } = magazine as any;
-
-    Object.keys(rest).forEach((key) => {
-      if (rest[key] !== undefined && rest[key] !== null) {
-        formData.append(key, rest[key]);
-      }
-    });
-
-    // 2. Append the new file if it exists
-    if (magazine.file) {
-      formData.append("file", magazine.file);
-    }
-
-    const { data } = await api.patch(`/magazine/${uuid}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const { data } = await api.patch(`/magazine/${uuid}`, cleanPayload);
     return data;
   },
 

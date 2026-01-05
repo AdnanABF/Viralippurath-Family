@@ -19,4 +19,12 @@ export class CreateMagazineDto {
   @IsEnum(MagazineStatus)
   @IsOptional()
   status?: MagazineStatus;
+
+  @IsString()
+  @IsNotEmpty()
+  pdfUrl: string;
+
+  @IsString()
+  @IsNotEmpty()
+  cloudinaryPublicId: string;
 }

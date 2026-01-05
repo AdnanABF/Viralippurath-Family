@@ -38,8 +38,11 @@ const MagazineForm: React.FC<Props> = ({
       title,
       publishedDate: new Date(publishedDate).toISOString(),
       status,
-      file: file || undefined, // Include file if selected
     };
+
+    if (file) {
+      payload.file = file;
+    }
 
     if (initial?.uuid) {
       onSave({ ...payload, uuid: initial.uuid });
