@@ -1,9 +1,19 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import { isTokenValid } from "../utils/auth";
 import { clearAuthData } from "../utils/logout";
 
+type User = {
+  userUuid: string;
+  username: string;
+  role: "SUPER_ADMIN" | "ADMIN" | "MEMBER";
+  fullName: string;
+};
+
 type AuthContextType = {
   isAuthenticated: boolean;
+  user: User | null;
+  loading: boolean;
   login: () => void;
   logout: () => void;
 };
@@ -14,24 +24,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(isTokenValid());
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = () => {
-    setIsAuthenticated(true);
+  const initAuth = () => {
+    setLoading(true);
+    const isValid = isTokenValid();
+    setIsAuthenticated(isValid);
+
+    if (isValid) {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode<User>(token);
+          setUser({
+            userUuid: decoded.sub,
+            username: decoded.username,
+            role: decoded.role,
+            fullName: decoded.fullName || "Admin User",
+          });
+        } catch {
+          logout();
+        }
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
   };
+
+  const login = () => initAuth();
 
   const logout = () => {
-    clearAuthData(); // Clear localStorage
-    setIsAuthenticated(false); // Update React state immediately
-    window.location.href = "/login"; // Redirect
+    clearAuthData();
+    setIsAuthenticated(false);
+    setUser(null);
+    setLoading(false);
+    window.location.href = "/login";
   };
 
-  // Sync auth state on refresh / token change
   useEffect(() => {
-    setIsAuthenticated(isTokenValid());
+    initAuth();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, user, loading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -39,8 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 };

@@ -43,7 +43,7 @@ const Magazine = () => {
         <MagazineHeader />
 
         {error ? (
-          /* Error State - Matching Notification/Gallery Pattern */
+          /* Error State */
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-stone-200 shadow-sm">
             <h3 className="text-stone-800 font-serif text-xl mb-2">
               Unable to load magazines
@@ -72,15 +72,22 @@ const Magazine = () => {
             ) : (
               /* Content State */
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-2 space-y-6">
-                  <MagazineViewer issue={selectedIssue} />
-                </div>
-
                 <MagazineArchive
                   issues={issues}
-                  selectedId={selectedIssue?.uuid} // Changed from id to uuid
+                  selectedId={selectedIssue?.uuid}
                   onSelect={setSelectedIssue}
                 />
+
+                {/* Viewer takes the selected issue. 
+                   We use the uuid as a key to force a re-render/reset 
+                   of the PDF reader when the user switches issues.
+                */}
+                <div className="lg:col-span-2 space-y-6">
+                  <MagazineViewer
+                    key={selectedIssue?.uuid}
+                    issue={selectedIssue}
+                  />
+                </div>
               </div>
             )}
           </>

@@ -15,7 +15,7 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   @Post('refresh')
-  async refresh(@Body() body: { userId: string; refreshToken: string }) {
-    return this.authService.refresh(body.userId, body.refreshToken);
+  async refresh(@Body() body: { userUuid: string; refreshToken: string }) {
+    return this.authService.refresh(body.userUuid, body.refreshToken);
   }
 }

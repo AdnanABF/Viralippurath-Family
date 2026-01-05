@@ -6,16 +6,32 @@ import type { PublicEvent } from "../../types/event.public";
 
 const Events = () => {
   const [events, setEvents] = useState<PublicEvent[]>([]);
+  const [ongoingEvents, setOngoingEvents] = useState<PublicEvent[]>([]); // New state
   const [loading, setLoading] = useState<boolean>(true);
   const [view, setView] = useState<"upcoming" | "past">("upcoming");
   const [error, setError] = useState<boolean>(false);
 
+  // Fetch ongoing events once on mount
+  useEffect(() => {
+    const fetchOngoing = async () => {
+      try {
+        const response = await api.get<PublicEvent[]>(
+          "/events/published?type=ongoing"
+        );
+        setOngoingEvents(response.data);
+      } catch (err) {
+        console.error("Failed to fetch ongoing events", err);
+      }
+    };
+    fetchOngoing();
+  }, []);
+
+  // Fetch toggled events (Upcoming/Past)
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        setError(false); // Reset error state on new fetch
-
+        setError(false);
         const response = await api.get<PublicEvent[]>(
           `/events/published?type=${view}`
         );
@@ -34,6 +50,22 @@ const Events = () => {
     <div className="py-20 bg-white min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <EventsHeader />
+
+        {/* --- Ongoing Events Section (Highlighted) --- */}
+        {ongoingEvents.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <h2 className="text-xl font-bold text-stone-800 uppercase tracking-widest">
+                Happening Now
+              </h2>
+            </div>
+            <EventsTimeline events={ongoingEvents} />
+          </div>
+        )}
 
         {/* View Toggle */}
         <div className="flex justify-center mb-12">
@@ -61,14 +93,12 @@ const Events = () => {
           </div>
         </div>
 
-        {/* --- Content States --- */}
-
+        {/* --- Toggled Content States --- */}
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
           </div>
         ) : error ? (
-          /* Generic Error View: Secure and User-friendly */
           <div className="text-center py-20 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
             <h3 className="text-stone-800 font-serif text-xl mb-2">
               Something went wrong
@@ -78,10 +108,8 @@ const Events = () => {
             </p>
           </div>
         ) : events.length > 0 ? (
-          /* Success View */
           <EventsTimeline events={events} />
         ) : (
-          /* Empty State View */
           <div className="text-center py-20 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
             <p className="text-stone-500 italic">
               {view === "upcoming"

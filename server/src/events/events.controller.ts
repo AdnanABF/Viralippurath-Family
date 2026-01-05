@@ -9,6 +9,7 @@ import {
   UseGuards,
   Query,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -25,6 +26,12 @@ export class EventsController {
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
   async create(@Body() dto: CreateEventDto) {
+    // Controller-level validation: End must be after Start
+    if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
+      throw new BadRequestException(
+        'End date-time must be strictly after the start date-time',
+      );
+    }
     return await this.eventsService.create(dto);
   }
 
@@ -42,6 +49,14 @@ export class EventsController {
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateEventDto,
   ) {
+    // Check dates if they are being updated
+    if (dto.startDateTime && dto.endDateTime) {
+      if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
+        throw new BadRequestException(
+          'End date-time must be strictly after the start date-time',
+        );
+      }
+    }
     return await this.eventsService.update(uuid, dto);
   }
 
@@ -55,7 +70,7 @@ export class EventsController {
   // 🌍 Public endpoints
 
   @Get('published')
-  async findPublished(@Query('type') type: 'upcoming' | 'past') {
+  async findPublished(@Query('type') type: 'upcoming' | 'past' | 'ongoing') {
     return await this.eventsService.findPublished(type || 'upcoming');
   }
 }

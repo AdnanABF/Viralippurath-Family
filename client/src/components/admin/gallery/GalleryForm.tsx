@@ -184,7 +184,7 @@ const GalleryForm: React.FC<Props> = ({
           disabled={isLoading}
           onClick={onCancel}
           className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 disabled:bg-stone-400 transition"
+                     hover:bg-stone-100 disabled:bg-stone-400 transition disabled:text-white disabled:opacity-50"
         >
           Cancel
         </button>

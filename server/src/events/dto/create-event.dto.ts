@@ -20,11 +20,13 @@ export class CreateEventDto {
   type: string;
 
   @IsDateString()
-  date: string;
+  startDateTime: string;
 
-  @IsOptional()
+  @IsDateString()
+  endDateTime: string;
+
   @IsString()
-  location?: string;
+  location: string;
 
   @IsOptional()
   @IsEnum(EventStatus)

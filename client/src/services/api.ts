@@ -38,9 +38,9 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem("refreshToken");
-        const userId = getUserIdFromToken(); // Decodes 'sub' from the current token
+        const userUuid = getUserIdFromToken(); // Decodes 'sub' from the current token
 
-        if (!refreshToken || !userId) {
+        if (!refreshToken || !userUuid) {
           logout(); // Redirects to login and clears storage
           return Promise.reject(error);
         }
@@ -48,7 +48,7 @@ api.interceptors.response.use(
         // Attempt to get a new token pair using userId and refreshToken
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          { userId, refreshToken }
+          { userUuid, refreshToken }
         );
 
         // Update local storage with new rotated tokens
