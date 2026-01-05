@@ -24,9 +24,20 @@ export class Event {
   type: string; // Gathering, Ceremony, Meeting, etc.
 
   @Prop({ required: true })
-  date: Date;
+  startDateTime: Date;
 
-  @Prop()
+  @Prop({
+    required: true,
+    validate: {
+      validator: function (this: any, value: Date) {
+        return value >= this.startDateTime;
+      },
+      message: 'End date-time must be equal to or after start date-time',
+    },
+  })
+  endDateTime: Date; // New field
+
+  @Prop({ required: true })
   location?: string;
 
   @Prop({

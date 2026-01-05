@@ -14,7 +14,7 @@ export class EventsService {
 
   // ADMIN
   async findAllAdmin() {
-    return await this.eventModel.find().sort({ date: -1 }).exec();
+    return await this.eventModel.find().sort({ startDateTime: -1 }).exec();
   }
 
   async create(dto: CreateEventDto) {
@@ -47,20 +47,38 @@ export class EventsService {
 
   // ===== PUBLIC =====
 
-  async findPublished(type: 'upcoming' | 'past' = 'upcoming') {
+  async findPublished(type: 'upcoming' | 'past' | 'ongoing' = 'upcoming') {
     const now = new Date();
+    let query: any = { status: EventStatus.PUBLISHED };
+    let sortOrder: any = { startDateTime: 1 };
 
-    const query = {
-      status: EventStatus.PUBLISHED,
-      date: type === 'upcoming' ? { $gte: now } : { $lt: now },
-    };
+    switch (type) {
+      case 'ongoing':
+        // Started in the past (or now) AND ends in the future (or now)
+        query.startDateTime = { $lte: now };
+        query.endDateTime = { $gte: now };
+        sortOrder = { startDateTime: 1 };
+        break;
 
-    const sortOrder = type === 'upcoming' ? 1 : -1;
+      case 'upcoming':
+        // Starts in the future
+        query.startDateTime = { $gt: now };
+        sortOrder = { startDateTime: 1 }; // Soonest first
+        break;
+
+      case 'past':
+        // Ended in the past
+        query.endDateTime = { $lt: now };
+        sortOrder = { startDateTime: -1 }; // Most recent first
+        break;
+    }
 
     return this.eventModel
       .find(query)
-      .select('uuid title description date type location -_id')
-      .sort({ date: sortOrder })
+      .select(
+        'uuid title description startDateTime endDateTime type location -_id',
+      )
+      .sort(sortOrder)
       .exec();
   }
 }

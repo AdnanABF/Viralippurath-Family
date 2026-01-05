@@ -8,7 +8,7 @@ interface Props {
 
 const EventsTimeline: React.FC<Props> = ({ events }) => {
   return (
-    <div className="space-y-12">
+    <div className="relative space-y-12">
       {events.map((event) => (
         <EventCard key={event.uuid} event={event} />
       ))}
