@@ -24,14 +24,13 @@ export class Magazine {
   @Prop({ required: true })
   publishedDate: Date;
 
-  @Prop({ trim: true })
-  coverImageUrl?: string;
-
+  // The primary source from Cloudinary
   @Prop({ required: true, trim: true })
-  flipbookUrl: string;
+  pdfUrl: string;
 
-  @Prop({ trim: true })
-  downloadUrl?: string;
+  // We can store the Cloudinary Public ID to make deletion easier later
+  @Prop({ required: true, trim: true })
+  cloudinaryPublicId: string;
 
   @Prop({
     type: String,

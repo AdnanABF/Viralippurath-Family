@@ -17,9 +17,9 @@ const MagazineTable: React.FC<Props> = ({
   disabled,
 }) => {
   return (
-    <div className="w-full bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+    <div className="w-full bg-white border border-stone-200 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-150 border-collapse">
+        <table className="w-full min-w-225 border-collapse">
           <thead className="bg-stone-50 text-sm text-stone-600 border-b border-stone-200">
             <tr>
               <th className="p-4 text-left font-semibold">Magazine Title</th>
@@ -31,23 +31,28 @@ const MagazineTable: React.FC<Props> = ({
 
           <tbody className="divide-y divide-stone-100">
             {items.map((m) => {
-              // Format ISO string to a readable Year/Month
               const displayDate = formatDate(m.publishedDate);
+
+              // Cloudinary Magic: Transform PDF URL to a JPG thumbnail of the first page
+              // We replace the .pdf extension with .jpg
+              const thumbnail = m.pdfUrl?.replace(/\.pdf$/, ".jpg");
 
               return (
                 <tr
                   key={m.uuid}
                   className="hover:bg-stone-50/50 transition-colors group"
                 >
-                  {/* Title */}
+                  {/* Title & Thumbnail */}
                   <td className="p-4 font-medium text-stone-900">
                     <div className="flex items-center gap-3">
-                      {m.coverImageUrl && (
+                      {thumbnail ? (
                         <img
-                          src={m.coverImageUrl}
+                          src={thumbnail}
                           alt=""
-                          className="w-8 h-10 object-cover rounded shadow-sm border border-stone-100"
+                          className="w-14 h-16 object-cover rounded-lg shadow-sm border border-stone-100 bg-stone-100"
                         />
+                      ) : (
+                        <div className="w-14 h-16 bg-stone-100 rounded-lg border border-stone-200" />
                       )}
                       {m.title}
                     </div>
