@@ -4,6 +4,7 @@ import type {
   AdminMagazineDraft,
 } from "../../types/magazine.admin";
 import { magazineAdminService } from "../../services/magazine.admin.service";
+import { cloudinaryUploadService } from "../../services/cloudinary.service";
 import MagazineTable from "../../components/admin/magazine/MagazineTable";
 import MagazineForm from "../../components/admin/magazine/MagazineForm";
 import Modal from "../../components/ui/Modal";
@@ -40,21 +41,40 @@ const MagazineAdmin = () => {
     loadMagazines();
   }, []);
 
-  /**
-   * Handles both Create and Update operations.
-   * Now accepts a payload that may contain a 'file' property (File object)
-   */
+  //Handles both Create and Update operations.
   const handleSave = async (data: any) => {
     setIsSaving(true);
 
     try {
+      let uploadResults = {};
+
+      // Upload file to cloudinary if file exists
+      if (data.file) {
+        toast.loading("Uploading PDF to cloud...", { id: "upload-toast" });
+
+        uploadResults = await cloudinaryUploadService.uploadFile(
+          data.file,
+          "magazines"
+        );
+
+        toast.success("PDF uploaded successfully", { id: "upload-toast" });
+      }
+
+      //Prepare the clean payload (strings only)
+      const { file, ...formFields } = data; // Remove the File object
+      const finalPayload = {
+        ...formFields,
+        ...uploadResults, // Spread pdfUrl and cloudinaryPublicId if they exist
+      };
+
+      // Send data to backend to save in DB
       if (data.uuid) {
         // Update existing
-        await magazineAdminService.update(data.uuid, data);
+        await magazineAdminService.update(data.uuid, finalPayload);
         toast.success("Magazine updated successfully");
       } else {
         // Create new
-        await magazineAdminService.create(data as AdminMagazineDraft);
+        await magazineAdminService.create(finalPayload as AdminMagazineDraft);
         toast.success("Magazine created successfully");
       }
 

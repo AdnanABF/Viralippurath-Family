@@ -11,6 +11,38 @@ const toStream = require('buffer-to-stream');
 export class CloudinaryService {
   constructor(private configService: ConfigService) {}
 
+  async generateSignature(folder: string = 'general') {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const prefix =
+      this.configService.get<string>('CLOUDINARY_FOLDER_PREFIX') || 'app';
+    const folderPath = `${prefix}/${folder}`;
+
+    // Get the secret and ensure it's treated as a string
+    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
+
+    if (!apiSecret) {
+      throw new Error(
+        'CLOUDINARY_API_SECRET is not defined in environment variables',
+      );
+    }
+
+    const signature = await cloudinary.utils.api_sign_request(
+      {
+        folder: folderPath,
+        timestamp: timestamp,
+      },
+      apiSecret,
+    );
+
+    return {
+      signature,
+      timestamp,
+      cloudName: this.configService.get<string>('CLOUDINARY_NAME'),
+      apiKey: this.configService.get<string>('CLOUDINARY_API_KEY'),
+      folder: folderPath,
+    };
+  }
+
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'general',

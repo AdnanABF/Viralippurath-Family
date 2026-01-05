@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -14,17 +10,10 @@ import { CreateMagazineDto } from './dto/create-magazine.dto';
 import { UpdateMagazineDto } from './dto/update-magazine.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
-/**
- * Internal interface to allow adding Cloudinary fields
- * that are not present in the public-facing DTO.
- */
-interface MagazineUpdatePayload extends UpdateMagazineDto {
-  pdfUrl?: string;
-  cloudinaryPublicId?: string;
-}
-
 @Injectable()
 export class MagazineService {
+  private readonly logger = new Logger(MagazineService.name);
+
   constructor(
     @InjectModel(Magazine.name)
     private magazineModel: Model<MagazineDocument>,
@@ -50,57 +39,37 @@ export class MagazineService {
       .exec();
   }
 
-  async create(dto: CreateMagazineDto, file: Express.Multer.File) {
-    if (!file) {
-      throw new BadRequestException('Magazine PDF file is required');
-    }
-
-    // 1. Upload to Cloudinary (resource_type 'image' enables PDF transformations)
-    const uploadResult = await this.cloudinaryService.uploadFile(
-      file,
-      'magazines',
-      'image',
-    );
-
-    return await this.magazineModel.create({
-      ...dto,
-      pdfUrl: uploadResult.secure_url,
-      cloudinaryPublicId: uploadResult.public_id,
-    });
+  async create(dto: CreateMagazineDto) {
+    return await this.magazineModel.create(dto);
   }
 
-  async update(
-    uuid: string,
-    dto: UpdateMagazineDto,
-    file?: Express.Multer.File,
-  ) {
+  async update(uuid: string, dto: UpdateMagazineDto) {
     const magazine = await this.magazineModel.findOne({ uuid }).exec();
     if (!magazine) {
       throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
     }
 
-    const updateData: MagazineUpdatePayload = { ...dto };
-
-    if (file) {
+    // Logic to clean up Cloudinary if the file is being replaced
+    if (
+      dto.cloudinaryPublicId &&
+      magazine.cloudinaryPublicId !== dto.cloudinaryPublicId
+    ) {
       if (magazine.cloudinaryPublicId) {
-        await this.cloudinaryService.deleteFile(
-          magazine.cloudinaryPublicId,
-          'image',
-        );
+        // We don't await this to avoid slowing down the response,
+        // or await if you want to ensure it's gone.
+        this.cloudinaryService
+          .deleteFile(magazine.cloudinaryPublicId, 'image')
+          .catch((err) =>
+            this.logger.error(
+              `Failed to delete old Cloudinary file: ${magazine.cloudinaryPublicId}`,
+              err,
+            ),
+          );
       }
-
-      const uploadResult = await this.cloudinaryService.uploadFile(
-        file,
-        'magazines',
-        'image',
-      );
-
-      updateData.pdfUrl = uploadResult.secure_url;
-      updateData.cloudinaryPublicId = uploadResult.public_id;
     }
 
     const updated = await this.magazineModel
-      .findOneAndUpdate({ uuid }, { $set: updateData }, { new: true })
+      .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
       .exec();
 
     return updated;

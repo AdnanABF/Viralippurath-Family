@@ -41,29 +41,18 @@ export class MagazineController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
-  async create(
-    @Body() dto: CreateMagazineDto,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    if (!file) {
-      throw new BadRequestException(
-        'A PDF file is required to create a magazine',
-      );
-    }
-    return await this.magazineService.create(dto, file);
+  async create(@Body() dto: CreateMagazineDto) {
+    return await this.magazineService.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Patch(':uuid')
-  @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateMagazineDto,
-    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return await this.magazineService.update(uuid, dto, file);
+    return await this.magazineService.update(uuid, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
