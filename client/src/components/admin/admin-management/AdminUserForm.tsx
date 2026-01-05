@@ -143,7 +143,7 @@ const AdminUserForm: React.FC<Props> = ({
           type="button"
           disabled={isLoading}
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300 hover:bg-stone-100 transition disabled:bg-stone-400"
+          className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300 hover:bg-stone-100 transition disabled:bg-stone-400 disabled:text-white disabled:opacity-50"
         >
           Cancel
         </button>

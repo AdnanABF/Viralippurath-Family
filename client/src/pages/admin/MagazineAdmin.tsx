@@ -40,23 +40,29 @@ const MagazineAdmin = () => {
     loadMagazines();
   }, []);
 
-  const handleSave = async (data: AdminMagazine | AdminMagazineDraft) => {
+  /**
+   * Handles both Create and Update operations.
+   * Now accepts a payload that may contain a 'file' property (File object)
+   */
+  const handleSave = async (data: any) => {
     setIsSaving(true);
 
     try {
-      if ("uuid" in data && data.uuid) {
-        const { uuid, ...payload } = data;
-        await magazineAdminService.update(uuid, payload);
+      if (data.uuid) {
+        // Update existing
+        await magazineAdminService.update(data.uuid, data);
         toast.success("Magazine updated successfully");
       } else {
+        // Create new
         await magazineAdminService.create(data as AdminMagazineDraft);
         toast.success("Magazine created successfully");
       }
 
       setEditing(null);
       loadMagazines();
-    } catch {
-      // Handled globally in api.ts
+    } catch (err) {
+      // Logic for specific error messages can be added here
+      // if not handled by your axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -81,7 +87,7 @@ const MagazineAdmin = () => {
 
   return (
     <div className="space-y-6">
-      {/* Responsive Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-serif text-stone-900">Manage Magazines</h1>
         <button
@@ -89,7 +95,6 @@ const MagazineAdmin = () => {
             setEditing({
               title: "",
               publishedDate: new Date().toISOString(),
-              flipbookUrl: "",
               status: "DRAFT",
             } as AdminMagazine)
           }

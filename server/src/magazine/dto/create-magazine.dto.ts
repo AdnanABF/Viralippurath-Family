@@ -4,7 +4,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
 } from 'class-validator';
 import { MagazineStatus } from '../schemas/magazine.schema';
 
@@ -17,18 +16,7 @@ export class CreateMagazineDto {
   @IsNotEmpty()
   publishedDate: string;
 
-  @IsOptional()
-  @IsUrl()
-  coverImageUrl?: string;
-
-  @IsUrl()
-  @IsNotEmpty()
-  flipbookUrl: string;
-
-  @IsOptional()
-  @IsUrl()
-  downloadUrl?: string;
-
   @IsEnum(MagazineStatus)
-  status: MagazineStatus;
+  @IsOptional()
+  status?: MagazineStatus;
 }

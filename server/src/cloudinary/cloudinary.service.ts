@@ -14,6 +14,8 @@ export class CloudinaryService {
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'general',
+    // Added resourceType parameter to handle different file kinds
+    resourceType: 'auto' | 'image' | 'video' | 'raw' = 'auto',
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
     const prefix =
       this.configService.get<string>('CLOUDINARY_FOLDER_PREFIX') || 'app';
@@ -22,7 +24,9 @@ export class CloudinaryService {
       const upload = cloudinary.uploader.upload_stream(
         {
           folder: `${prefix}/${folder}`,
-          resource_type: 'auto',
+          resource_type: resourceType,
+          // This ensures the filename is somewhat preserved in Cloudinary
+          public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
         },
         (error, result) => {
           if (error) return reject(error);
@@ -43,12 +47,20 @@ export class CloudinaryService {
     });
   }
 
-  async deleteFile(publicId: string): Promise<any> {
+  async deleteFile(
+    publicId: string,
+    resourceType: string = 'image',
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
-      cloudinary.uploader.destroy(publicId, (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      });
+      // For PDFs/Raw files, Cloudinary sometimes needs the resource_type specified to delete
+      cloudinary.uploader.destroy(
+        publicId,
+        { resource_type: resourceType },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
     });
   }
 }
