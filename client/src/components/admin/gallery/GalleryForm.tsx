@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Upload, X } from "lucide-react";
 import type {
   AdminGalleryItem,
   GalleryStatus,
@@ -6,7 +7,7 @@ import type {
 
 interface Props {
   initial?: AdminGalleryItem;
-  onSave: (formData: FormData) => Promise<void>; // Changed to accept FormData
+  onSave: (formData: FormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -46,6 +47,11 @@ const GalleryForm: React.FC<Props> = ({
     }
   };
 
+  const removeImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(initial?.imageUrl ?? null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -69,129 +75,153 @@ const GalleryForm: React.FC<Props> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6"
+      className="bg-white sm:bg-stone-50 border-x-0 sm:border border-stone-200 sm:rounded-2xl pt-0 p-4 sm:p-8 space-y-6 max-h-[92vh] overflow-y-auto"
     >
-      <h2 className="text-xl font-serif text-stone-800">
-        {initial?.uuid ? "Edit Gallery Image" : "Add New Gallery Image"}
-      </h2>
+      <div className="sticky top-0 bg-white sm:bg-stone-50 pt-4 pb-4 sm:pt-0 z-10 border-b border-stone-100 flex items-center justify-between">
+        <h2 className="text-xl font-serif text-stone-800">
+          {initial?.uuid ? "Edit Image" : "Add to Gallery"}
+        </h2>
+        {isLoading && (
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-700/30 border-t-amber-700"></div>
+        )}
+      </div>
 
-      {/* Image Preview Area */}
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-stone-700">
-          Image Preview
+      {/* Image Upload Area */}
+      <div className="space-y-3">
+        <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+          Image Content
         </label>
-        <div className="relative w-full h-56 bg-stone-200 rounded-lg overflow-hidden border-2 border-dashed border-stone-300 flex items-center justify-center shadow-inner">
+
+        <div
+          className={`relative group w-full aspect-video rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden
+          ${
+            previewUrl
+              ? "border-stone-200 bg-stone-100"
+              : "border-stone-300 bg-stone-50 hover:bg-stone-100"
+          }`}
+        >
           {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-full object-contain"
-            />
+            <>
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="w-full h-full object-contain"
+              />
+              {!isLoading && (
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-3 right-3 p-2 bg-red-600 text-white rounded-full shadow-lg active:scale-90 transition-transform"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </>
           ) : (
-            <div className="text-stone-400 text-sm">No image selected</div>
+            <div className="text-center p-6">
+              <div className="mx-auto w-12 h-12 bg-stone-200 rounded-full flex items-center justify-center text-stone-500 mb-3">
+                <Upload size={24} />
+              </div>
+              <p className="text-sm font-medium text-stone-600">
+                Tap to upload photo
+              </p>
+              <p className="text-xs text-stone-400 mt-1">PNG, JPG up to 10MB</p>
+            </div>
           )}
+
+          <input
+            type="file"
+            required={!initial?.uuid}
+            disabled={isLoading}
+            accept="image/*"
+            onChange={handleFileChange}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
         </div>
       </div>
 
-      {/* File Selection */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          {initial?.uuid ? "Change Image (Optional)" : "Select Image"}
-        </label>
-        <input
-          required={!initial?.uuid} // Only required for new uploads
-          disabled={isLoading}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="w-full text-sm text-stone-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-full file:border-0
-            file:text-sm file:font-semibold
-            file:bg-amber-50 file:text-amber-700
-            hover:file:bg-amber-100 transition-all"
-        />
-      </div>
-
-      {/* Caption */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">Caption</label>
-        <input
-          required
-          disabled={isLoading}
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-          placeholder="e.g., Grandparents at the summer cottage"
-        />
-      </div>
-
-      {/* Album + Year */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-stone-700">
-            Album Name
+      <div className="space-y-5">
+        {/* Caption */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Caption
           </label>
           <input
             required
             disabled={isLoading}
-            value={album}
-            onChange={(e) => setAlbum(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-            placeholder="e.g., Annual Meet, Childhood"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+            placeholder="Describe this moment..."
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-stone-700">Year</label>
-          <input
-            required
+        {/* Album + Year */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Album Name
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              value={album}
+              onChange={(e) => setAlbum(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="e.g., Family Meet 2024"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Year
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              type="number"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Visibility
+          </label>
+          <select
+            value={status}
             disabled={isLoading}
-            type="number"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-            min={1800}
-            max={new Date().getFullYear() + 1}
-          />
+            onChange={(e) => setStatus(e.target.value as GalleryStatus)}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl text-base appearance-none focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+          >
+            <option value="DRAFT">Draft (Hidden)</option>
+            <option value="PUBLISHED">Published (Public)</option>
+          </select>
         </div>
-      </div>
-
-      {/* Status */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Visibility Status
-        </label>
-        <select
-          value={status}
-          disabled={isLoading}
-          onChange={(e) => setStatus(e.target.value as GalleryStatus)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-        >
-          <option value="DRAFT">Draft (Hidden from Public)</option>
-          <option value="PUBLISHED">Published (Visible on Site)</option>
-        </select>
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <button
           type="button"
           disabled={isLoading}
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 disabled:bg-stone-400 transition disabled:text-white disabled:opacity-50"
+          className="order-2 sm:order-1 px-6 py-3 rounded-xl text-stone-600 border border-stone-300 font-medium
+           hover:bg-stone-100 disabled:bg-stone-400 transition disabled:text-white disabled:opacity-50 
+           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
+          className="order-1 sm:order-2 w-full sm:w-auto px-8 py-3 rounded-xl bg-amber-700 text-white
+           hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/20 active:scale-[0.98] disabled:bg-stone-400 flex items-center justify-center gap-2 
+           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
         >
           {isLoading ? (
             <>

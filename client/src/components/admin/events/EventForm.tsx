@@ -69,136 +69,145 @@ const EventForm: React.FC<Props> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6"
+      /* p-4 on mobile, p-8 on desktop to match the layout spacing */
+      className="bg-white lg:bg-stone-50 border-x-0 sm:border border-stone-200 sm:rounded-2xl p-4 pt-0 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto"
     >
-      <h2 className="text-xl font-serif text-stone-800">
-        {initial?.uuid ? "Edit Event" : "Create New Event"}
-      </h2>
-
-      {/* Title */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Event Title
-        </label>
-        <input
-          required
-          disabled={isLoading}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-          placeholder="e.g., Annual Family Reunion"
-        />
+      <div className="sticky top-0 bg-white lg:bg-stone-50 pt-4 pb-4 sm:pt-0 z-10 border-b border-stone-100 mb-2">
+        <h2 className="text-xl font-serif text-stone-800">
+          {initial?.uuid ? "Edit Event" : "Create New Event"}
+        </h2>
       </div>
 
-      {/* Description */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Description
-        </label>
-        <textarea
-          required
-          disabled={isLoading}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none"
-          placeholder="What is happening during this event?"
-        />
-      </div>
-
-      {/* Type + Location */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-stone-700">
-            Event Type
+      <div className="space-y-5">
+        {/* Title */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Event Title
           </label>
           <input
             required
             disabled={isLoading}
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-            placeholder="Gathering, Ceremony, etc."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+            placeholder="e.g., Annual Family Reunion"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-stone-700">
-            Location
+        {/* Description */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Description
           </label>
-          <input
-            required
-            value={location}
-            disabled={isLoading}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-            placeholder="Kerala, Dubai, Online..."
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-stone-700">
-            Start Date & Time
-          </label>
-          <input
+          <textarea
             required
             disabled={isLoading}
-            type="datetime-local"
-            value={startDateTime}
-            onChange={(e) => handleStartChange(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base"
+            placeholder="What is happening during this event?"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-stone-700">
-            End Date & Time
+        {/* Type + Location */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Event Type
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="Gathering, Ceremony, etc."
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Location
+            </label>
+            <input
+              required
+              value={location}
+              disabled={isLoading}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="Kerala, Dubai, Online..."
+            />
+          </div>
+        </div>
+
+        {/* Times */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Start Date & Time
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              type="datetime-local"
+              value={startDateTime}
+              onChange={(e) => handleStartChange(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              End Date & Time
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              type="datetime-local"
+              value={endDateTime}
+              min={startDateTime}
+              onChange={(e) => setEndDateTime(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+            />
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Visibility Status
           </label>
-          <input
-            required
+          <select
+            value={status}
             disabled={isLoading}
-            type="datetime-local"
-            value={endDateTime}
-            min={startDateTime} // Validates end is not before start
-            onChange={(e) => setEndDateTime(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-          />
+            onChange={(e) => setStatus(e.target.value as EventStatus)}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none"
+          >
+            <option value="DRAFT">Draft (Hidden from Public)</option>
+            <option value="PUBLISHED">Published (Visible on Site)</option>
+          </select>
         </div>
-      </div>
-
-      {/* Status */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Visibility Status
-        </label>
-        <select
-          value={status}
-          disabled={isLoading}
-          onChange={(e) => setStatus(e.target.value as EventStatus)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-        >
-          <option value="DRAFT">Draft (Hidden from Public)</option>
-          <option value="PUBLISHED">Published (Visible on Site)</option>
-        </select>
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <button
           type="button"
           disabled={isLoading}
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 disabled:bg-stone-400 transition disabled:text-white disabled:opacity-50"
+          className="order-2 sm:order-1 w-full sm:w-auto px-6 py-3 rounded-xl text-stone-600 border border-stone-300
+                     hover:bg-stone-100 disabled:opacity-50 transition font-medium disabled:bg-stone-400 disabled:text-white 
+                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
+          className="order-1 sm:order-2 w-full sm:w-auto px-8 py-3 rounded-xl bg-amber-700 text-white
+           hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/20 active:scale-[0.98] disabled:bg-stone-400 flex items-center justify-center gap-2
+            focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
         >
           {isLoading ? (
             <>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Upload, CheckCircle2 } from "lucide-react";
 import type {
   AdminMagazine,
   AdminMagazineDraft,
@@ -7,7 +8,7 @@ import type {
 
 interface Props {
   initial?: AdminMagazine;
-  onSave: (data: any) => void; // Using any here to handle the union of Draft + File
+  onSave: (data: any) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -28,7 +29,6 @@ const MagazineForm: React.FC<Props> = ({
     initial?.status ?? "DRAFT"
   );
 
-  // New state for the PDF file
   const [file, setFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,99 +54,131 @@ const MagazineForm: React.FC<Props> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-stone-50 border border-stone-200 rounded-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto"
+      className="bg-white sm:bg-stone-50 border-x-0 sm:border border-stone-200 sm:rounded-2xl pt-0 p-4 sm:p-8 space-y-6 max-h-[92vh] overflow-y-auto"
     >
-      <h2 className="text-xl font-serif text-stone-800">
-        {initial?.uuid ? "Edit Magazine Issue" : "Create New Magazine Issue"}
-      </h2>
-
-      {/* Title */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Magazine Title
-        </label>
-        <input
-          required
-          disabled={isLoading}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., The Family Chronicle - Summer Edition"
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-        />
+      <div className="sticky top-0 bg-white sm:bg-stone-50 pt-4 pb-4 sm:pt-0 z-10 border-b border-stone-100 mb-2">
+        <h2 className="text-xl font-serif text-stone-800">
+          {initial?.uuid ? "Edit Magazine Issue" : "Create New Magazine Issue"}
+        </h2>
       </div>
 
-      {/* Date */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Publication Date
-        </label>
-        <input
-          required
-          disabled={isLoading}
-          type="date"
-          value={publishedDate}
-          onChange={(e) => setPublishedDate(e.target.value)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-        />
-      </div>
-
-      {/* PDF File Upload */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Magazine PDF{" "}
-          {initial?.uuid ? "(Leave empty to keep current)" : "(Required)"}
-        </label>
-        <div className="relative">
+      <div className="space-y-5">
+        {/* Title */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Magazine Title
+          </label>
           <input
-            type="file"
-            accept=".pdf"
-            required={!initial?.uuid}
+            required
             disabled={isLoading}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 
-                       file:rounded-full file:border-0 file:text-sm file:font-semibold
-                       file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100
-                       border border-stone-300 rounded-lg bg-white p-1"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., The Family Chronicle - Summer Edition"
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
           />
         </div>
-        {initial?.pdfUrl && !file && (
-          <p className="text-xs text-stone-500 mt-1">
-            Current file: {initial.title}.pdf
-          </p>
-        )}
-      </div>
 
-      {/* Status */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-stone-700">
-          Visibility Status
-        </label>
-        <select
-          value={status}
-          disabled={isLoading}
-          onChange={(e) => setStatus(e.target.value as MagazineStatus)}
-          className="w-full bg-white border border-stone-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-        >
-          <option value="DRAFT">Draft (Hidden)</option>
-          <option value="PUBLISHED">Published (Visible)</option>
-        </select>
+        {/* Date */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Publication Date
+          </label>
+          <input
+            required
+            disabled={isLoading}
+            type="date"
+            value={publishedDate}
+            onChange={(e) => setPublishedDate(e.target.value)}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+          />
+        </div>
+
+        {/* PDF File Upload */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Magazine PDF {initial?.uuid ? "(Optional)" : "(Required)"}
+          </label>
+
+          <div
+            className={`relative group border-2 border-dashed rounded-xl p-4 transition-all flex flex-col items-center justify-center text-center
+            ${
+              file
+                ? "border-green-300 bg-green-50"
+                : "border-stone-300 bg-white hover:bg-stone-50"
+            }`}
+          >
+            <input
+              type="file"
+              accept=".pdf"
+              required={!initial?.uuid}
+              disabled={isLoading}
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="absolute inset-0 opacity-0 cursor-pointer z-10"
+            />
+
+            {file ? (
+              <div className="flex flex-col items-center gap-2">
+                <CheckCircle2 className="text-green-600" size={32} />
+                <div>
+                  <p className="text-sm font-bold text-green-800 truncate max-w-50">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-green-600">Ready to upload</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="text-stone-400" size={32} />
+                <div>
+                  <p className="text-sm font-medium text-stone-600">
+                    Tap to select PDF
+                  </p>
+                  {initial?.pdfUrl && (
+                    <p className="text-xs text-amber-700 font-medium mt-1">
+                      Has existing PDF
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            Visibility Status
+          </label>
+          <select
+            value={status}
+            disabled={isLoading}
+            onChange={(e) => setStatus(e.target.value as MagazineStatus)}
+            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none"
+          >
+            <option value="DRAFT">Draft (Hidden)</option>
+            <option value="PUBLISHED">Published (Visible)</option>
+          </select>
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <button
           type="button"
           disabled={isLoading}
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-stone-600 border border-stone-300
-                     hover:bg-stone-100 disabled:bg-stone-400 transition disabled:text-white disabled:opacity-50"
+          className="order-2 sm:order-1 px-6 py-3 rounded-xl text-stone-600 border border-stone-300
+           hover:bg-stone-100 disabled:bg-stone-400 transition font-medium disabled:opacity-50 disabled:text-white
+           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-6 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition font-bold shadow-md active:scale-95 disabled:bg-stone-400 flex items-center justify-center gap-2 min-w-35"
+          className="order-1 sm:order-2 px-8 py-3 rounded-xl bg-amber-700 text-white
+           hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/20 active:scale-[0.98] disabled:bg-stone-400 flex items-center justify-center gap-2
+           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
         >
           {isLoading ? (
             <>
