@@ -4,11 +4,11 @@ import { Model } from 'mongoose';
 import { Event, EventDocument, EventStatus } from './schemas/event.schema';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { ActivityLogService } from 'src/activity-log/activity-log.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import {
   ActivityAction,
   EntityType,
-} from 'src/activity-log/schemas/activity-log.schema';
+} from '../activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class EventsService {
