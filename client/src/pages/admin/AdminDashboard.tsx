@@ -3,7 +3,7 @@ import { Calendar, Image as ImageIcon, BookOpen, Bell } from "lucide-react";
 import StatsCard from "../../components/admin/dashboard/StatsCard";
 import QuickActions from "../../components/admin/dashboard/QuickActions";
 import RecentActivity from "../../components/admin/dashboard/RecentActivity";
-import { getDashboardStats } from "../../services/dashboard.service";
+import { dashboardAdminService } from "../../services/dashboard.service";
 import { useAuth } from "../../context/AuthContext";
 
 const AdminDashboard = () => {
@@ -16,7 +16,7 @@ const AdminDashboard = () => {
     isError,
   } = useQuery({
     queryKey: ["dashboard-stats"],
-    queryFn: getDashboardStats,
+    queryFn: dashboardAdminService.getDashboardStats,
   });
 
   // 2. Handle Error State (Optional but recommended)
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
             Welcome back, {user?.fullName?.split(" ")[0] || "Admin"}
           </h1>
           <p className="text-stone-500 mt-1">
-          Here is what's happening with Viralippurath today.
+            Here is what's happening with Viralippurath today.
           </p>
         </div>
         <div className="text-sm text-stone-400 font-medium bg-stone-100 px-3 py-1 rounded-full w-fit">

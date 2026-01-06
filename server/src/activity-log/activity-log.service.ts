@@ -26,6 +26,17 @@ export class ActivityLogService {
   }
 
   /**
+   * Fetches all activities.
+   */
+  async getAllActivities(): Promise<ActivityLog[]> {
+    return this.activityLogModel
+      .find()
+      .sort({ createdAt: -1 })
+      .select('uuid adminUserName action entityType entityTitle createdAt -_id')
+      .exec();
+  }
+
+  /**
    * Fetches recent activities for the admin dashboard.
    * @param limit Number of recent activities to fetch (default 10)
    */
@@ -34,7 +45,7 @@ export class ActivityLogService {
       .find()
       .sort({ createdAt: -1 }) // Sort by newest first
       .limit(limit)
-      .select("uuid adminUserName action entityType entityTitle createdAt -_id")
+      .select('uuid adminUserName action entityType entityTitle createdAt -_id')
       .exec();
   }
 

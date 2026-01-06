@@ -7,6 +7,7 @@ import GalleryAdmin from "../pages/admin/GalleryAdmin";
 import MagazineAdmin from "../pages/admin/MagazineAdmin";
 import NotificationsAdmin from "../pages/admin/NotificationsAdmin";
 import AdminManagement from "../pages/admin/AdminManagement";
+import ActivityLogAdmin from "../pages/admin/ActivityLogsAdmin";
 import { useAuth } from "../context/AuthContext";
 
 const AdminRouter = () => {
@@ -25,13 +26,14 @@ const AdminRouter = () => {
   return (
     <Routes>
       <Route element={<AdminGuard />}>
-        <Route element={<AdminLayout border-stone-200 />}>
+        <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="events" element={<EventsAdmin />} />
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="magazine" element={<MagazineAdmin />} />
           <Route path="notifications" element={<NotificationsAdmin />} />
+          <Route path="activity-log" element={<ActivityLogAdmin />} />
 
           <Route
             path="manage-admins"

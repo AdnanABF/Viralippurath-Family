@@ -17,6 +17,12 @@ import { AdminRole } from '../admin/admin.schema';
 export class ActivityLogController {
   constructor(private readonly activityLogService: ActivityLogService) {}
 
+  @Get()
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
+  async getAll(): Promise<ActivityLog[]> {
+    return this.activityLogService.getAllActivities();
+  }
+
   /**
    * GET /admin/activities
    * Fetches the most recent activities for the dashboard

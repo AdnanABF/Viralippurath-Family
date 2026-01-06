@@ -8,14 +8,16 @@ import {
   Clock,
   User,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { formatDateTime } from "../../../utils/date";
-import { getRecentActivities } from "../../../services/dashboard.service";
+import { activityAdminService } from "../../../services/activity-log.admin.service";
 
 const RecentActivity: React.FC = () => {
+  const navigate = useNavigate();
   // 1. Fetch activities from the service
   const { data: activities, isLoading } = useQuery({
     queryKey: ["recent-activities"],
-    queryFn: () => getRecentActivities(5), // We fetch the last 5 for the dashboard
+    queryFn: () => activityAdminService.getRecent(5), // We fetch the last 5 for the dashboard
   });
 
   const getIcon = (type: string) => {
@@ -48,7 +50,10 @@ const RecentActivity: React.FC = () => {
     <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden h-full">
       <div className="p-5 border-b border-stone-100 flex justify-between items-center">
         <h3 className="text-lg font-serif text-stone-800">Recent Activity</h3>
-        <button className="text-xs font-bold text-amber-700 uppercase tracking-widest hover:text-amber-800">
+        <button
+          onClick={() => navigate("/admin/activity-log")}
+          className="text-xs font-bold text-amber-700 uppercase tracking-widest hover:text-amber-800"
+        >
           View All
         </button>
       </div>
