@@ -6,3 +6,14 @@ export interface ActivityLog {
   entityTitle: string;
   createdAt: string;
 }
+
+export interface PaginatedActivityResponse {
+  data: ActivityLog[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}

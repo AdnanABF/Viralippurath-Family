@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { Filter, RotateCw } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import {
+  Filter,
+  RotateCw,
+  ChevronLeft,
+  ChevronRight,
+  Activity,
+} from "lucide-react";
 import type { ActivityLog } from "../../types/activity-log.admin";
 import { activityAdminService } from "../../services/activity-log.admin.service";
 import ActivityTable from "../../components/admin/activity-log/ActivityLogsTable";
@@ -10,32 +16,56 @@ const ActivityLogAdmin = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<boolean>(false);
-  const [filter, setFilter] = useState<string>("ALL");
 
-  const loadLogs = async () => {
-    setLoading(true);
-    setError(false);
-    try {
-      const data = await activityAdminService.getAll();
-      setLogs(data);
-    } catch {
-      setError(true);
-      toast.error("Failed to load activity logs");
-    } finally {
-      setLoading(false);
+  // Pagination & Filter States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [entityFilter, setEntityFilter] = useState<string>("ALL");
+  const [actionFilter, setActionFilter] = useState<string>("ALL");
+
+  const loadLogs = useCallback(
+    async (page: number) => {
+      setLoading(true);
+      setError(false);
+      try {
+        const response = await activityAdminService.getAll({
+          page,
+          limit: 10,
+          type: entityFilter,
+          action: actionFilter,
+        });
+
+        setLogs(response.data);
+        setTotalPages(response.meta.totalPages);
+        setTotalItems(response.meta.totalItems);
+        setCurrentPage(response.meta.currentPage);
+      } catch {
+        setError(true);
+        toast.error("Failed to load activity logs");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [entityFilter, actionFilter]
+  );
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    loadLogs(1);
+  }, [loadLogs]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      loadLogs(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  useEffect(() => {
-    loadLogs();
-  }, []);
-
-  const filteredLogs =
-    filter === "ALL" ? logs : logs.filter((log) => log.entityType === filter);
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header & Filters */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div>
           <h1 className="text-2xl font-serif text-stone-900">
             System Activity Log
@@ -45,16 +75,17 @@ const ActivityLogAdmin = () => {
           </p>
         </div>
 
-        <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:min-w-48">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto">
+          {/* Entity Filter */}
+          <div className="relative w-full sm:w-44">
             <Filter
               size={14}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
             />
             <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full pl-9 pr-8 py-2.5 bg-white border border-stone-200 rounded-lg text-sm text-stone-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-700 outline-none transition-all appearance-none cursor-pointer shadow-sm"
+              value={entityFilter}
+              onChange={(e) => setEntityFilter(e.target.value)}
+              className="w-full pl-9 pr-8 py-2.5 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-700 outline-none appearance-none cursor-pointer shadow-sm"
             >
               <option value="ALL">All Entities</option>
               <option value="EVENT">Events</option>
@@ -62,53 +93,51 @@ const ActivityLogAdmin = () => {
               <option value="NOTIFICATION">Notifications</option>
               <option value="MAGAZINE">Magazines</option>
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
+          </div>
+
+          {/* Action Filter */}
+          <div className="relative w-full sm:w-44">
+            <Activity
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
+            />
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="w-full pl-9 pr-8 py-2.5 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-700 outline-none appearance-none cursor-pointer shadow-sm"
+            >
+              <option value="ALL">All Actions</option>
+              <option value="CREATE">Create</option>
+              <option value="UPDATE">Update</option>
+              <option value="DELETE">Delete</option>
+            </select>
           </div>
 
           <button
-            onClick={loadLogs}
+            onClick={() => loadLogs(currentPage)}
             disabled={loading}
-            className="p-2.5 bg-stone-100 text-stone-600 rounded-lg hover:bg-stone-200 transition-all active:scale-95 disabled:opacity-50 border border-stone-200 shadow-sm"
-            title="Refresh Logs"
+            className="w-full sm:w-auto p-2.5 bg-stone-100 text-stone-600 rounded-lg hover:bg-stone-200 transition-all active:scale-95 disabled:opacity-50 border border-stone-200 shadow-sm flex justify-center"
           >
             <RotateCw size={20} className={loading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
 
+      {/* States (Loading/Error/Empty) */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 bg-white border border-stone-200 rounded-2xl shadow-sm">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
-          <p className="mt-4 text-stone-500 font-medium">
-            Fetching system logs...
-          </p>
+          <p className="mt-4 text-stone-500 font-medium">Fetching logs...</p>
         </div>
       )}
 
       {error && !loading && (
         <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
           <p className="text-stone-800 font-serif text-lg mb-1">
-            Something went wrong
-          </p>
-          <p className="text-stone-500 text-sm mb-4">
-            We couldn't load the activity logs. Please try again later.
+            Unable to load logs
           </p>
           <button
-            onClick={loadLogs}
+            onClick={() => loadLogs(1)}
             className="text-amber-700 font-medium hover:underline flex items-center gap-2 mx-auto"
           >
             <RotateCw size={14} /> Try again
@@ -116,28 +145,52 @@ const ActivityLogAdmin = () => {
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && !error && filteredLogs.length === 0 && (
+      {!loading && !error && logs.length === 0 && (
         <EmptyState
-          title={
-            filter === "ALL"
-              ? "No activity yet"
-              : `No ${filter.toLowerCase()} activity`
-          }
-          description="Actions performed by admins will appear here automatically."
+          title="No activity found"
+          description="Adjust your filters or check back later."
         />
       )}
 
-      {/* Data Table */}
-      {!loading && !error && filteredLogs.length > 0 && (
-        <ActivityTable logs={filteredLogs} />
-      )}
+      {/* Table & Pagination */}
+      {!loading && !error && logs.length > 0 && (
+        <>
+          <ActivityTable logs={logs} />
 
-      {/* Footer Info */}
-      {!loading && !error && filteredLogs.length > 0 && (
-        <p className="text-center text-stone-400 text-[11px] uppercase tracking-widest font-bold">
-          {filteredLogs.length} Activities Logged
-        </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+            <p className="text-stone-400 text-[11px] uppercase tracking-widest font-bold">
+              Total {totalItems} Activities
+            </p>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+                className="p-2 rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-30 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              <div className="flex items-center gap-1 mx-2">
+                <span className="text-sm font-semibold text-stone-900">
+                  {currentPage}
+                </span>
+                <span className="text-sm text-stone-400">of</span>
+                <span className="text-sm font-semibold text-stone-900">
+                  {totalPages}
+                </span>
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || loading}
+                className="p-2 rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-30 transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
