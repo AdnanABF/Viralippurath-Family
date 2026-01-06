@@ -8,11 +8,8 @@ import {
   Post,
   UseGuards,
   ParseUUIDPipe,
-  UseInterceptors,
-  UploadedFile,
-  BadRequestException,
+  Request,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { MagazineService } from './magazine.service';
 import { CreateMagazineDto } from './dto/create-magazine.dto';
 import { UpdateMagazineDto } from './dto/update-magazine.dto';
@@ -41,8 +38,8 @@ export class MagazineController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Post()
-  async create(@Body() dto: CreateMagazineDto) {
-    return await this.magazineService.create(dto);
+  async create(@Body() dto: CreateMagazineDto, @Request() req) {
+    return await this.magazineService.create(dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -51,14 +48,18 @@ export class MagazineController {
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateMagazineDto,
+    @Request() req,
   ) {
-    return await this.magazineService.update(uuid, dto);
+    return await this.magazineService.update(uuid, dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete(':uuid')
-  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return await this.magazineService.remove(uuid);
+  async remove(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Request() req,
+  ) {
+    return await this.magazineService.remove(uuid, req.user);
   }
 }

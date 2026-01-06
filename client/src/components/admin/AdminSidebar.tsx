@@ -21,12 +21,12 @@ const AdminSidebar = () => {
         fixed bottom-0 left-0 w-full h-16 bg-white border-t border-stone-200 flex flex-row items-center justify-around z-50
         
         /* Styles for Desktop: Sidebar */
-        lg:sticky lg:top-0 lg:left-0 lg:h-screen lg:flex-col lg:border-t-0 lg:border-r lg:transition-all lg:duration-300 lg:ease-in-out
-        ${isCollapsed ? "lg:w-20" : "lg:w-64"}
+         lg:sticky lg:top-0 lg:left-0 lg:h-screen lg:flex-col lg:border-t-0 lg:border-r lg:transition-all lg:duration-300 lg:ease-in-out
+         ${isCollapsed ? "lg:w-20" : "lg:w-64"}
       `}
     >
       {/* Header & Toggle Button - Hidden on Mobile */}
-      <div className="hidden lg:flex p-6 items-center justify-between overflow-hidden min-h-21">
+      <div className="hidden lg:flex lg:w-full p-6 items-center justify-between overflow-hidden min-h-21">
         {!isCollapsed && (
           <h2 className="text-xl font-serif font-bold text-stone-800 whitespace-nowrap animate-in fade-in duration-500">
             Admin Panel

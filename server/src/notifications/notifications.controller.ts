@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  Request,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification-dto';
@@ -37,8 +38,8 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Post()
-  async create(@Body() dto: CreateNotificationDto) {
-    return await this.notificationsService.create(dto);
+  async create(@Body() dto: CreateNotificationDto, @Request() req) {
+    return await this.notificationsService.create(dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -47,14 +48,18 @@ export class NotificationsController {
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateNotificationDto,
+    @Request() req,
   ) {
-    return await this.notificationsService.update(uuid, dto);
+    return await this.notificationsService.update(uuid, dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete(':uuid')
-  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return await this.notificationsService.remove(uuid);
+  async remove(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Request() req,
+  ) {
+    return await this.notificationsService.remove(uuid, req.user);
   }
 }

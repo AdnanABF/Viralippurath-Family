@@ -9,6 +9,11 @@ import {
 import { CreateMagazineDto } from './dto/create-magazine.dto';
 import { UpdateMagazineDto } from './dto/update-magazine.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ActivityLogService } from 'src/activity-log/activity-log.service';
+import {
+  ActivityAction,
+  EntityType,
+} from 'src/activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class MagazineService {
@@ -18,10 +23,10 @@ export class MagazineService {
     @InjectModel(Magazine.name)
     private magazineModel: Model<MagazineDocument>,
     private cloudinaryService: CloudinaryService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   // ===== PUBLIC METHODS =====
-
   async findPublished() {
     return await this.magazineModel
       .find({ status: MagazineStatus.PUBLISHED })
@@ -31,7 +36,6 @@ export class MagazineService {
   }
 
   // ===== ADMIN METHODS =====
-
   async findAllAdmin() {
     return await this.magazineModel
       .find()
@@ -39,24 +43,39 @@ export class MagazineService {
       .exec();
   }
 
-  async create(dto: CreateMagazineDto) {
-    return await this.magazineModel.create(dto);
+  async create(
+    dto: CreateMagazineDto,
+    admin: { userUuid: string; username: string },
+  ) {
+    const magazine = await this.magazineModel.create(dto);
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.CREATE,
+      entityType: EntityType.MAGAZINE,
+      entityTitle: magazine.title,
+      entityUuid: magazine.uuid,
+    });
+
+    return magazine;
   }
 
-  async update(uuid: string, dto: UpdateMagazineDto) {
+  async update(
+    uuid: string,
+    dto: UpdateMagazineDto,
+    admin: { userUuid: string; username: string },
+  ) {
     const magazine = await this.magazineModel.findOne({ uuid }).exec();
     if (!magazine) {
       throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
     }
 
-    // Logic to clean up Cloudinary if the file is being replaced
     if (
       dto.cloudinaryPublicId &&
       magazine.cloudinaryPublicId !== dto.cloudinaryPublicId
     ) {
       if (magazine.cloudinaryPublicId) {
-        // We don't await this to avoid slowing down the response,
-        // or await if you want to ensure it's gone.
         this.cloudinaryService
           .deleteFile(magazine.cloudinaryPublicId, 'image')
           .catch((err) =>
@@ -72,10 +91,20 @@ export class MagazineService {
       .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
       .exec();
 
+    if (updated) {
+      await this.activityLogService.create({
+        adminUuid: admin.userUuid,
+        adminUserName: admin.username,
+        action: ActivityAction.UPDATE,
+        entityType: EntityType.MAGAZINE,
+        entityTitle: updated.title,
+        entityUuid: updated.uuid,
+      });
+    }
     return updated;
   }
 
-  async remove(uuid: string) {
+  async remove(uuid: string, admin: { userUuid: string; username: string }) {
     const magazine = await this.magazineModel.findOne({ uuid }).exec();
     if (!magazine) {
       throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
@@ -89,6 +118,15 @@ export class MagazineService {
     }
 
     await this.magazineModel.findOneAndDelete({ uuid }).exec();
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.DELETE,
+      entityType: EntityType.MAGAZINE,
+      entityTitle: magazine.title,
+      entityUuid: magazine.uuid,
+    });
 
     return { deleted: true };
   }
