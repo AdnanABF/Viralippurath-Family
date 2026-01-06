@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLayout from "../components/admin/AdminLayout";
 import AdminGuard from "../components/admin/AdminGuard";
-import AdminDashboard from "../pages/admin/Dashboard";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 import EventsAdmin from "../pages/admin/EventsAdmin";
 import GalleryAdmin from "../pages/admin/GalleryAdmin";
 import MagazineAdmin from "../pages/admin/MagazineAdmin";

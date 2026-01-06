@@ -10,6 +10,7 @@ import {
   Query,
   ParseUUIDPipe,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -25,14 +26,13 @@ export class EventsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
-  async create(@Body() dto: CreateEventDto) {
-    // Controller-level validation: End must be after Start
+  async create(@Body() dto: CreateEventDto, @Request() req) {
     if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
       throw new BadRequestException(
         'End date-time must be strictly after the start date-time',
       );
     }
-    return await this.eventsService.create(dto);
+    return await this.eventsService.create(dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -48,8 +48,8 @@ export class EventsController {
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateEventDto,
+    @Request() req,
   ) {
-    // Check dates if they are being updated
     if (dto.startDateTime && dto.endDateTime) {
       if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
         throw new BadRequestException(
@@ -57,17 +57,18 @@ export class EventsController {
         );
       }
     }
-    return await this.eventsService.update(uuid, dto);
+    return await this.eventsService.update(uuid, dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Delete(':uuid')
-  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return await this.eventsService.remove(uuid);
+  async remove(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Request() req,
+  ) {
+    return await this.eventsService.remove(uuid, req.user);
   }
-
-  // 🌍 Public endpoints
 
   @Get('published')
   async findPublished(@Query('type') type: 'upcoming' | 'past' | 'ongoing') {
