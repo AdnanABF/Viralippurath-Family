@@ -8,11 +8,11 @@ import {
 } from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification-dto';
 import { UpdateNotificationDto } from './dto/update-notification-dto';
-import { ActivityLogService } from 'src/activity-log/activity-log.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import {
   ActivityAction,
   EntityType,
-} from 'src/activity-log/schemas/activity-log.schema';
+} from '../activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class NotificationsService {

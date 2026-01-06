@@ -9,11 +9,11 @@ import {
 import { CreateMagazineDto } from './dto/create-magazine.dto';
 import { UpdateMagazineDto } from './dto/update-magazine.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-import { ActivityLogService } from 'src/activity-log/activity-log.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import {
   ActivityAction,
   EntityType,
-} from 'src/activity-log/schemas/activity-log.schema';
+} from '../activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class MagazineService {
