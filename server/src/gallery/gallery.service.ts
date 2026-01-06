@@ -13,6 +13,11 @@ import {
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
+import {
+  ActivityAction,
+  EntityType,
+} from '../activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class GalleryService {
@@ -20,6 +25,7 @@ export class GalleryService {
     @InjectModel(Gallery.name)
     private galleryModel: Model<GalleryDocument>,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   // ===== ADMIN METHODS =====
@@ -28,35 +34,48 @@ export class GalleryService {
     return await this.galleryModel.find().sort({ createdAt: -1 }).exec();
   }
 
-  async create(dto: CreateGalleryDto, file: Express.Multer.File) {
+  async create(
+    dto: CreateGalleryDto,
+    file: Express.Multer.File,
+    admin: { userUuid: string; username: string },
+  ) {
     if (!file) {
       throw new BadRequestException(
         'Image file is required for gallery creation',
       );
     }
 
-    // 1. Upload file to Cloudinary
     const cloudResponse = await this.cloudinaryService.uploadFile(
       file,
       'gallery',
     );
 
-    // 2. Create database record with Cloudinary URL and PublicID
     const newGallery = new this.galleryModel({
       ...dto,
       imageUrl: cloudResponse.secure_url,
       publicId: cloudResponse.public_id,
     });
 
-    return await newGallery.save();
+    const savedGallery = await newGallery.save();
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.CREATE,
+      entityType: EntityType.GALLERY,
+      entityTitle: savedGallery.caption || 'New Photo',
+      entityUuid: savedGallery.uuid,
+    });
+
+    return savedGallery;
   }
 
   async update(
     uuid: string,
     dto: UpdateGalleryDto,
+    admin: { userUuid: string; username: string },
     file?: Express.Multer.File,
   ) {
-    // 1. Check if record exists
     const existing = await this.galleryModel.findOne({ uuid }).exec();
     if (!existing) {
       throw new NotFoundException(`Gallery image with UUID ${uuid} not found`);
@@ -64,49 +83,59 @@ export class GalleryService {
 
     let updateData = { ...dto } as any;
 
-    // 2. Handle File Swap if a new file is provided
     if (file) {
-      // Delete old file from Cloudinary to save space
       if (existing.publicId) {
         await this.cloudinaryService.deleteFile(existing.publicId);
       }
-
-      // Upload new file
       const cloudResponse = await this.cloudinaryService.uploadFile(file);
       updateData.imageUrl = cloudResponse.secure_url;
       updateData.publicId = cloudResponse.public_id;
     }
 
-    // 3. Update the document
     const updated = await this.galleryModel
       .findOneAndUpdate({ uuid }, { $set: updateData }, { new: true })
       .exec();
 
+    if (updated) {
+      await this.activityLogService.create({
+        adminUuid: admin.userUuid,
+        adminUserName: admin.username,
+        action: ActivityAction.UPDATE,
+        entityType: EntityType.GALLERY,
+        entityTitle: updated.caption || 'Updated Photo',
+        entityUuid: updated.uuid,
+      });
+    }
+
     return updated;
   }
 
-  async remove(uuid: string) {
-    // 1. Find record to get publicId
+  async remove(uuid: string, admin: { userUuid: string; username: string }) {
     const existing = await this.galleryModel.findOne({ uuid }).exec();
     if (!existing) {
       throw new NotFoundException(`Gallery image with UUID ${uuid} not found`);
     }
 
-    // 2. Remove file from Cloudinary
     if (existing.publicId) {
       await this.cloudinaryService.deleteFile(existing.publicId);
     }
 
-    // 3. Delete from Database
     await this.galleryModel.findOneAndDelete({ uuid }).exec();
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.DELETE,
+      entityType: EntityType.GALLERY,
+      entityTitle: existing.caption || 'Deleted Photo',
+      entityUuid: existing.uuid,
+    });
 
     return { deleted: true };
   }
 
   // ===== PUBLIC METHODS =====
-
   async findPublished() {
-    // Note: ensure 'publicId' is not selected for public API to keep internal IDs private
     return await this.galleryModel
       .find({ status: GalleryStatus.PUBLISHED })
       .select('uuid imageUrl caption album year -_id')

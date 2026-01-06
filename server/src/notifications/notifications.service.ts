@@ -8,12 +8,18 @@ import {
 } from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification-dto';
 import { UpdateNotificationDto } from './dto/update-notification-dto';
+import { ActivityLogService } from 'src/activity-log/activity-log.service';
+import {
+  ActivityAction,
+  EntityType,
+} from 'src/activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   // ===== ADMIN =====
@@ -22,11 +28,29 @@ export class NotificationsService {
     return await this.notificationModel.find().sort({ createdAt: -1 }).exec();
   }
 
-  async create(dto: CreateNotificationDto) {
-    return await this.notificationModel.create(dto);
+  async create(
+    dto: CreateNotificationDto,
+    admin: { userUuid: string; username: string },
+  ) {
+    const notification = await this.notificationModel.create(dto);
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.CREATE,
+      entityType: EntityType.NOTIFICATION,
+      entityTitle: notification.title,
+      entityUuid: notification.uuid,
+    });
+
+    return notification;
   }
 
-  async update(uuid: string, dto: UpdateNotificationDto) {
+  async update(
+    uuid: string,
+    dto: UpdateNotificationDto,
+    admin: { userUuid: string; username: string },
+  ) {
     const updated = await this.notificationModel
       .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
       .exec();
@@ -35,15 +59,33 @@ export class NotificationsService {
       throw new NotFoundException(`Notification with UUID ${uuid} not found`);
     }
 
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.UPDATE,
+      entityType: EntityType.NOTIFICATION,
+      entityTitle: updated.title,
+      entityUuid: updated.uuid,
+    });
+
     return updated;
   }
 
-  async remove(uuid: string) {
+  async remove(uuid: string, admin: { userUuid: string; username: string }) {
     const res = await this.notificationModel.findOneAndDelete({ uuid }).exec();
 
     if (!res) {
       throw new NotFoundException(`Notification with UUID ${uuid} not found`);
     }
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.DELETE,
+      entityType: EntityType.NOTIFICATION,
+      entityTitle: res.title,
+      entityUuid: res.uuid,
+    });
 
     return { deleted: true };
   }

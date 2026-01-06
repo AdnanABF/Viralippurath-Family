@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -13,26 +9,24 @@ import {
 import { CreateMagazineDto } from './dto/create-magazine.dto';
 import { UpdateMagazineDto } from './dto/update-magazine.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-
-/**
- * Internal interface to allow adding Cloudinary fields
- * that are not present in the public-facing DTO.
- */
-interface MagazineUpdatePayload extends UpdateMagazineDto {
-  pdfUrl?: string;
-  cloudinaryPublicId?: string;
-}
+import { ActivityLogService } from 'src/activity-log/activity-log.service';
+import {
+  ActivityAction,
+  EntityType,
+} from 'src/activity-log/schemas/activity-log.schema';
 
 @Injectable()
 export class MagazineService {
+  private readonly logger = new Logger(MagazineService.name);
+
   constructor(
     @InjectModel(Magazine.name)
     private magazineModel: Model<MagazineDocument>,
     private cloudinaryService: CloudinaryService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   // ===== PUBLIC METHODS =====
-
   async findPublished() {
     return await this.magazineModel
       .find({ status: MagazineStatus.PUBLISHED })
@@ -42,7 +36,6 @@ export class MagazineService {
   }
 
   // ===== ADMIN METHODS =====
-
   async findAllAdmin() {
     return await this.magazineModel
       .find()
@@ -50,63 +43,68 @@ export class MagazineService {
       .exec();
   }
 
-  async create(dto: CreateMagazineDto, file: Express.Multer.File) {
-    if (!file) {
-      throw new BadRequestException('Magazine PDF file is required');
-    }
+  async create(
+    dto: CreateMagazineDto,
+    admin: { userUuid: string; username: string },
+  ) {
+    const magazine = await this.magazineModel.create(dto);
 
-    // 1. Upload to Cloudinary (resource_type 'image' enables PDF transformations)
-    const uploadResult = await this.cloudinaryService.uploadFile(
-      file,
-      'magazines',
-      'image',
-    );
-
-    return await this.magazineModel.create({
-      ...dto,
-      pdfUrl: uploadResult.secure_url,
-      cloudinaryPublicId: uploadResult.public_id,
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.CREATE,
+      entityType: EntityType.MAGAZINE,
+      entityTitle: magazine.title,
+      entityUuid: magazine.uuid,
     });
+
+    return magazine;
   }
 
   async update(
     uuid: string,
     dto: UpdateMagazineDto,
-    file?: Express.Multer.File,
+    admin: { userUuid: string; username: string },
   ) {
     const magazine = await this.magazineModel.findOne({ uuid }).exec();
     if (!magazine) {
       throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
     }
 
-    const updateData: MagazineUpdatePayload = { ...dto };
-
-    if (file) {
+    if (
+      dto.cloudinaryPublicId &&
+      magazine.cloudinaryPublicId !== dto.cloudinaryPublicId
+    ) {
       if (magazine.cloudinaryPublicId) {
-        await this.cloudinaryService.deleteFile(
-          magazine.cloudinaryPublicId,
-          'image',
-        );
+        this.cloudinaryService
+          .deleteFile(magazine.cloudinaryPublicId, 'image')
+          .catch((err) =>
+            this.logger.error(
+              `Failed to delete old Cloudinary file: ${magazine.cloudinaryPublicId}`,
+              err,
+            ),
+          );
       }
-
-      const uploadResult = await this.cloudinaryService.uploadFile(
-        file,
-        'magazines',
-        'image',
-      );
-
-      updateData.pdfUrl = uploadResult.secure_url;
-      updateData.cloudinaryPublicId = uploadResult.public_id;
     }
 
     const updated = await this.magazineModel
-      .findOneAndUpdate({ uuid }, { $set: updateData }, { new: true })
+      .findOneAndUpdate({ uuid }, { $set: dto }, { new: true })
       .exec();
 
+    if (updated) {
+      await this.activityLogService.create({
+        adminUuid: admin.userUuid,
+        adminUserName: admin.username,
+        action: ActivityAction.UPDATE,
+        entityType: EntityType.MAGAZINE,
+        entityTitle: updated.title,
+        entityUuid: updated.uuid,
+      });
+    }
     return updated;
   }
 
-  async remove(uuid: string) {
+  async remove(uuid: string, admin: { userUuid: string; username: string }) {
     const magazine = await this.magazineModel.findOne({ uuid }).exec();
     if (!magazine) {
       throw new NotFoundException(`Magazine with UUID ${uuid} not found`);
@@ -120,6 +118,15 @@ export class MagazineService {
     }
 
     await this.magazineModel.findOneAndDelete({ uuid }).exec();
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.DELETE,
+      entityType: EntityType.MAGAZINE,
+      entityTitle: magazine.title,
+      entityUuid: magazine.uuid,
+    });
 
     return { deleted: true };
   }

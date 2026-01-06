@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GalleryService } from './gallery.service';
@@ -44,8 +45,9 @@ export class GalleryController {
   async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateGalleryDto,
+    @Request() req,
   ) {
-    return await this.galleryService.create(dto, file);
+    return await this.galleryService.create(dto, file, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -55,15 +57,19 @@ export class GalleryController {
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateGalleryDto,
+    @Request() req,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return await this.galleryService.update(uuid, dto, file);
+    return await this.galleryService.update(uuid, dto, req.user, file);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete(':uuid')
-  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return await this.galleryService.remove(uuid);
+  async remove(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Request() req,
+  ) {
+    return await this.galleryService.remove(uuid, req.user);
   }
 }

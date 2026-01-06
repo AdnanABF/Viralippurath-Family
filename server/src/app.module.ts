@@ -12,6 +12,9 @@ import { MagazineModule } from './magazine/magazine.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContactModule } from './contact/contact.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ActivityLogController } from './activity-log/activity-log.controller';
+import { ActivityLogModule } from './activity-log/activity-log.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -50,8 +53,10 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     NotificationsModule,
     ContactModule,
     CloudinaryModule,
+    ActivityLogModule,
+    DashboardModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ActivityLogController],
   providers: [AppService],
 })
 export class AppModule {}
