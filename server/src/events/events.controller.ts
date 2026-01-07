@@ -38,8 +38,22 @@ export class EventsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Get('admin')
-  async getAllAdmin() {
-    return await this.eventsService.findAllAdmin();
+  async getAllAdmin(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return await this.eventsService.findAllAdmin({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+      status,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -71,7 +85,15 @@ export class EventsController {
   }
 
   @Get('published')
-  async findPublished(@Query('type') type: 'upcoming' | 'past' | 'ongoing') {
-    return await this.eventsService.findPublished(type || 'upcoming');
+  async findPublished(
+    @Query('type') type: 'upcoming' | 'past' | 'ongoing',
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return await this.eventsService.findPublished(
+      type || 'upcoming',
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 10,
+    );
   }
 }

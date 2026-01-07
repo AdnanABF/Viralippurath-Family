@@ -11,6 +11,8 @@ import {
   UseInterceptors,
   UploadedFile,
   Request,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GalleryService } from './gallery.service';
@@ -34,8 +36,24 @@ export class GalleryController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
-  async getAllAdmin() {
-    return await this.galleryService.findAllAdmin();
+  async getAllAdmin(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('status') status?: string,
+    @Query('album') album?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return await this.galleryService.findAllAdmin({
+      page: page ?? 1,
+      limit: limit ?? 10,
+      status,
+      album,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

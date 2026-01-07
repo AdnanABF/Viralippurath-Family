@@ -2,21 +2,30 @@ import api from "./api";
 import type {
   AdminMagazine,
   AdminMagazineDraft,
+  MagazineQueryParams,
+  PaginatedMagazines,
 } from "../types/magazine.admin";
 
 export const magazineAdminService = {
-  async getAll(): Promise<AdminMagazine[]> {
-    const { data } = await api.get("/magazine/admin");
+  /**
+   * Fetches magazines for the admin view with filters and pagination
+   */
+  async getAll(params?: MagazineQueryParams): Promise<PaginatedMagazines> {
+    const { data } = await api.get("/magazine/admin", { params });
     return data;
   },
 
+  /**
+   * Creates a new magazine entry
+   */
   async create(payload: AdminMagazineDraft): Promise<AdminMagazine> {
-    // We send the JSON payload directly.
-    // The 'file' property was already removed in the handleSave logic.
     const { data } = await api.post("/magazine", payload);
     return data;
   },
 
+  /**
+   * Updates an existing magazine entry
+   */
   async update(
     uuid: string,
     magazine: Partial<AdminMagazineDraft> & { uuid?: string }
@@ -28,6 +37,9 @@ export const magazineAdminService = {
     return data;
   },
 
+  /**
+   * Removes a magazine and its PDF from Cloudinary
+   */
   async remove(uuid: string): Promise<void> {
     await api.delete(`/magazine/${uuid}`);
   },

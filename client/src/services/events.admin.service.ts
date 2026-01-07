@@ -1,9 +1,13 @@
 import api from "./api";
-import type { AdminEvent } from "../types/event.admin";
+import type {
+  AdminEvent,
+  PaginatedEvents,
+  EventQueryParams,
+} from "../types/event.admin";
 
 export const eventsAdminService = {
-  async getAll(): Promise<AdminEvent[]> {
-    const { data } = await api.get("/events/admin");
+  async getAll(params?: EventQueryParams): Promise<PaginatedEvents> {
+    const { data } = await api.get("/events/admin", { params });
     return data;
   },
 

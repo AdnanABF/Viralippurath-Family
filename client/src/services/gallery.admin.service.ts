@@ -1,12 +1,16 @@
 import api from "./api";
-import type { AdminGalleryItem } from "../types/gallery.admin";
+import type {
+  AdminGalleryItem,
+  GalleryQueryParams,
+  PaginatedGallery,
+} from "../types/gallery.admin";
 
 export const galleryAdminService = {
   /**
-   * Fetches all gallery items for the admin view
+   * Fetches gallery items for the admin view with filters and pagination
    */
-  async getAll(): Promise<AdminGalleryItem[]> {
-    const { data } = await api.get("/gallery/admin");
+  async getAll(params?: GalleryQueryParams): Promise<PaginatedGallery> {
+    const { data } = await api.get("/gallery/admin", { params });
     return data;
   },
 
@@ -25,7 +29,6 @@ export const galleryAdminService = {
    * @param formData - Contains updated text fields and optional 'image' File
    */
   async update(uuid: string, formData: FormData): Promise<AdminGalleryItem> {
-    // We pass the formData directly. Axios handles the headers.
     const { data } = await api.patch(`/gallery/${uuid}`, formData);
     return data;
   },
