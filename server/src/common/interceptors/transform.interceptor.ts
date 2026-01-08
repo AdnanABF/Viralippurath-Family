@@ -7,32 +7,27 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export interface Response<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<
-  T,
-  Response<T>
-> {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<Response<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<T, any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((data) => {
-        // 1. Check if the service returned a custom message
-        // This allows you to return { data: [...], message: "Admin created!" }
-        const customMessage = data?.message;
-        const finalData = data?.data !== undefined ? data.data : data;
+      map((payload) => {
+        // Handle null/undefined payloads
+        if (!payload) {
+          return { success: true, message: 'Operation successful', data: null };
+        }
+
+        // Check if payload is an object but NOT an array
+        const isObject = typeof payload === 'object' && !Array.isArray(payload);
+
+        // Extract message if it exists in the payload, keep the rest
+        const { message, ...rest } = isObject ? payload : { message: null };
 
         return {
           success: true,
-          message: customMessage || 'Operation successful',
-          data: finalData,
+          message: message || 'Operation successful',
+          // If it was an object, spread the rest. If it was an array/primitive, wrap in 'data'.
+          ...(isObject ? rest : { data: payload }),
         };
       }),
     );

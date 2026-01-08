@@ -1,70 +1,53 @@
-import { useEffect, useState } from "react";
-import api from "../../services/api";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { publicService } from "../../services/public.service";
 import NotificationsHeader from "../../components/notifications/NotificationsHeader";
 import NotificationsSection from "../../components/notifications/NotificationsSection";
 import type { PublicNotification } from "../../types/notification.public";
+import { AdminLoading, AdminError } from "../../components/ui";
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState<PublicNotification[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
+  // 1. Fetch Notifications Data
+  const {
+    data: notifications = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<PublicNotification[]>({
+    queryKey: ["public-notifications"],
+    queryFn: publicService.getNotifications,
+  });
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        const response = await api.get<PublicNotification[]>(
-          "/notifications/published"
-        );
-        setNotifications(response.data);
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
+  // 2. Memoize filtered lists to avoid re-calculation on every render
+  const { highPriority, normalPriority } = useMemo(() => {
+    return {
+      highPriority: notifications.filter((n) => n.priority === "HIGH"),
+      normalPriority: notifications.filter((n) => n.priority === "NORMAL"),
     };
-
-    fetchNotifications();
-  }, []);
-
-  const highPriority = notifications.filter((n) => n.priority === "HIGH");
-  const normalPriority = notifications.filter((n) => n.priority === "NORMAL");
+  }, [notifications]);
 
   return (
     <div className="py-20 bg-stone-50 min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <NotificationsHeader />
 
-        {error ? (
-          /* Error State - Matching Gallery Pattern */
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-stone-200 shadow-sm">
-            <h3 className="text-stone-800 font-serif text-xl mb-2">
-              Unable to load notifications
-            </h3>
-            <p className="text-stone-500">
-              Please check back later for the latest family updates.
-            </p>
-          </div>
+        {isError ? (
+          <AdminError
+            title="Unable to load notifications"
+            message="Please check back later for the latest family updates."
+            onRetry={() => refetch()}
+          />
         ) : (
           <>
-            {loading ? (
-              /* Loading State */
-              <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
-                <p className="mt-4 text-stone-500 font-medium">
-                  Loading updates...
-                </p>
-              </div>
+            {isLoading ? (
+              <AdminLoading message="Loading updates..." />
             ) : notifications.length === 0 ? (
-              /* Empty State */
               <div className="text-center py-20 bg-white rounded-2xl border border-stone-200 shadow-sm">
                 <p className="text-stone-500 italic">
                   No family updates at this time.
                 </p>
               </div>
             ) : (
-              /* Content State */
               <div className="space-y-16">
                 {highPriority.length > 0 && (
                   <NotificationsSection

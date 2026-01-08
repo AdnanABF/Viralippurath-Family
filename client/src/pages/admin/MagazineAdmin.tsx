@@ -81,7 +81,7 @@ const MagazineAdmin = () => {
     try {
       let uploadResults = {};
 
-      // Handle Cloudinary PDF upload if a new file is provided
+      // Handle Cloudinary PDF upload (Client-side action - keep manual toasts)
       if (data.file) {
         toast.loading("Uploading PDF to cloud...", { id: "upload-toast" });
         uploadResults = await cloudinaryUploadService.uploadFile(
@@ -96,16 +96,16 @@ const MagazineAdmin = () => {
 
       if (data.uuid) {
         await magazineAdminService.update(data.uuid, finalPayload);
-        toast.success("Magazine updated successfully");
       } else {
         await magazineAdminService.create(finalPayload as AdminMagazineDraft);
-        toast.success("Magazine created successfully");
       }
 
       setEditing(null);
       refresh();
     } catch (err) {
-      toast.error("An error occurred during save", { id: "upload-toast" });
+      // If error occurs, we handle the toast cleanup here
+      // (Global interceptor will show the error message toast)
+      toast.dismiss("upload-toast");
     } finally {
       setIsSaving(false);
     }
@@ -116,10 +116,9 @@ const MagazineAdmin = () => {
     setIsDeleting(true);
     try {
       await magazineAdminService.remove(deleteTarget.uuid);
-      toast.success("Magazine deleted successfully");
       refresh();
     } catch {
-      /* Handled globally */
+      /* Handled globally by api.ts */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);

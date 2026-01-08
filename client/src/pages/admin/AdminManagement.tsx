@@ -45,15 +45,13 @@ const AdminManagement = () => {
       if ("uuid" in admin && admin.uuid) {
         const { uuid, ...payload } = admin;
         await adminManagementService.update(uuid, payload);
-        toast.success("Admin account updated");
       } else {
         await adminManagementService.create(admin as AdminUserDraft);
-        toast.success("New admin created successfully");
       }
       setEditing(null);
       loadAdmins();
     } catch {
-      // API service handles toasts
+      // Global interceptor handles error reporting
     } finally {
       setIsSaving(false);
     }
@@ -64,7 +62,6 @@ const AdminManagement = () => {
     setIsDeleting(true);
     try {
       await adminManagementService.remove(deleteTarget.uuid);
-      toast.success("Admin removed");
       loadAdmins();
     } catch {
       // Handled globally
@@ -148,10 +145,11 @@ const AdminManagement = () => {
       {!loading && !error && admins.length > 0 && (
         <AdminsTable
           admins={admins}
-          currentUserUuid={user?.userUuid}
+          currentUserUuid={user?.uuid}
           onEdit={(admin) => setEditing(admin)}
           onDelete={(uuid) => {
-            if (uuid === user?.userUuid) {
+            // Keep manual toast for client-side validation
+            if (uuid === user?.uuid) {
               toast.error("You cannot delete your own account");
               return;
             }

@@ -6,27 +6,37 @@ import type {
   PaginatedNotifications,
 } from "../types/notification.admin";
 
+/**
+ * Service handling Admin-only Notification operations.
+ * api.ts now automatically unwraps 'response.data.data' and handles success toasts.
+ */
 export const notificationsAdminService = {
   async getAll(
     params?: NotificationQueryParams
   ): Promise<PaginatedNotifications> {
-    const { data } = await api.get("/notifications/admin", { params });
-    return data;
+    return (await api.get<PaginatedNotifications>("/notifications/admin", {
+      params,
+    })) as any;
   },
 
   async create(payload: AdminNotificationDraft): Promise<AdminNotification> {
-    const { data } = await api.post("/notifications", payload);
-    return data;
+    return (await api.post<AdminNotification>(
+      "/notifications",
+      payload
+    )) as any;
   },
 
   async update(
     uuid: string,
     notification: Partial<AdminNotification>
   ): Promise<AdminNotification> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // Strip out internal ID/UUID to avoid backend validation errors
     const { id: _, uuid: __, ...payload } = notification as any;
-    const { data } = await api.patch(`/notifications/${uuid}`, payload);
-    return data;
+
+    return (await api.patch<AdminNotification>(
+      `/notifications/${uuid}`,
+      payload
+    )) as any;
   },
 
   async remove(uuid: string): Promise<void> {

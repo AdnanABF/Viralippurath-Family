@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react"; // Added useEffect
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import { authService } from "../../services/auth.service";
 import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
-  const { login, isAuthenticated } = useAuth(); // Destructure isAuthenticated
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -12,11 +12,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Safety Redirect:
-   * Even though GuestGuard handles this, adding this ensures that if
-   * the auth state changes, the component reacts immediately.
-   */
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/admin/dashboard", { replace: true });
@@ -29,28 +24,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", {
-        username,
-        password,
-      });
+      // 1. Call the service (interceptor unwraps the response)
+      const data = await authService.login({ username, password });
 
-      // Save tokens to localStorage
-      localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("refreshToken", res.data.refreshToken);
+      // 2. Save tokens from the unwrapped data
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
 
-      // Update the Context state FIRST
+      // 3. Update context and navigate
       login();
-
-      // Navigate and REPLACE the history entry
       navigate("/admin/dashboard", { replace: true });
     } catch (err: any) {
+      // Logic for specific login error messaging
       if (!err.response) {
         setError("Network error. Please try again later.");
       } else if (err.response.status === 429) {
-        // Handle Rate Limiting
-        setError("Too many login attempts. Please try again after 1 minute.");
+        setError("Too many attempts. Please try again after 1 minute.");
       } else {
-        // Generic message for security (Unauthorized 401)
         setError("Invalid username or password");
       }
     } finally {
@@ -58,18 +48,20 @@ const Login = () => {
     }
   };
 
-  // If already authenticated, don't show the form at all while the redirect happens
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-sm">
-        <h1 className="text-2xl font-serif text-stone-800 mb-8 text-center">
-          Admin Login
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
+      <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-xl w-full max-w-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-serif text-stone-800">Admin Login</h1>
+          <p className="text-stone-500 text-sm mt-2">
+            Access the family portal
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-4 text-sm text-red-700 bg-red-100 px-4 py-2 rounded-lg">
+          <div className="mb-6 text-sm text-red-700 bg-red-50 border border-red-100 px-4 py-3 rounded-xl animate-in fade-in slide-in-from-top-1">
             {error}
           </div>
         )}
@@ -84,8 +76,8 @@ const Login = () => {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700"
-              placeholder="username@viralippurath"
+              className="w-full border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
+              placeholder="admin@viralippurath"
             />
           </div>
 
@@ -98,7 +90,7 @@ const Login = () => {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700"
+              className="w-full border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
               placeholder="••••••••"
             />
           </div>
@@ -106,9 +98,9 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-700 text-white font-bold py-3 rounded-xl hover:bg-amber-800 transition-all disabled:opacity-60"
+            className="w-full bg-amber-700 text-white font-bold py-3.5 rounded-xl hover:bg-amber-800 transition-all disabled:opacity-60 shadow-lg shadow-amber-900/10"
           >
-            {loading ? "Signing in..." : "Login"}
+            {loading ? "Signing in..." : "Login to Dashboard"}
           </button>
         </form>
       </div>

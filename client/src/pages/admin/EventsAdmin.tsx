@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 // Types and services
 import type { AdminEvent, AdminEventDraft } from "../../types/event.admin";
@@ -81,16 +80,16 @@ const EventsAdmin = () => {
     try {
       if ("uuid" in event && event.uuid) {
         const { uuid, ...payload } = event;
+        // Success toast is now handled globally by api.ts interceptor
         await eventsAdminService.update(uuid, payload);
-        toast.success("Event updated successfully");
       } else {
+        // Success toast is now handled globally by api.ts interceptor
         await eventsAdminService.create(event as AdminEventDraft);
-        toast.success("Event created successfully");
       }
       setEditing(null);
       refresh(); // Reload data via hook
     } catch {
-      /* API handles error reporting */
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsSaving(false);
     }
@@ -100,11 +99,11 @@ const EventsAdmin = () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
+      // Success toast is now handled globally by api.ts interceptor
       await eventsAdminService.remove(deleteTarget.uuid);
-      toast.success("Event deleted successfully");
       refresh(); // Reload data via hook
     } catch {
-      /* API handles error reporting */
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);

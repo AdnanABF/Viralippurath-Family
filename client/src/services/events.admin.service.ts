@@ -5,21 +5,25 @@ import type {
   EventQueryParams,
 } from "../types/event.admin";
 
+/**
+ * Service handling Admin-only Event operations.
+ * Note: api.ts now automatically unwraps 'response.data.data',
+ * so we return the results directly.
+ * toast messages handled by api.ts
+ */
 export const eventsAdminService = {
   async getAll(params?: EventQueryParams): Promise<PaginatedEvents> {
-    const { data } = await api.get("/events/admin", { params });
-    return data;
+    return await api.get("/events/admin", { params });
   },
 
   async create(event: Omit<AdminEvent, "uuid">): Promise<AdminEvent> {
-    const { data } = await api.post("/events", event);
-    return data;
+    return await api.post("/events", event);
   },
 
   async update(uuid: string, event: Partial<AdminEvent>): Promise<AdminEvent> {
+    // Remove metadata fields that shouldn't be sent to the backend
     const { id: _, uuid: __, ...payload } = event as any;
-    const { data } = await api.patch(`/events/${uuid}`, payload);
-    return data;
+    return await api.patch(`/events/${uuid}`, payload);
   },
 
   async remove(uuid: string): Promise<void> {
