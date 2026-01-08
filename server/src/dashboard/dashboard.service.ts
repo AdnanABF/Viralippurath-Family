@@ -32,6 +32,10 @@ export class DashboardService {
     private notificationModel: Model<NotificationDocument>,
   ) {}
 
+  /**
+   * Aggregates summary statistics across all major modules.
+   * Return structure is designed for quick-glance dashboard widgets.
+   */
   async getSummaryStats() {
     const now = new Date();
 

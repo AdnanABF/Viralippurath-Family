@@ -44,6 +44,7 @@ export class ActivityLogController {
 
   /**
    * GET /admin/activities/recent
+   * Returns recent logs for dashboard widgets
    */
   @Get('recent')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)

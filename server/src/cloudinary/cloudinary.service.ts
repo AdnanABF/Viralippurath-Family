@@ -11,13 +11,16 @@ const toStream = require('buffer-to-stream');
 export class CloudinaryService {
   constructor(private configService: ConfigService) {}
 
+  /**
+   * Generates a signature for secure client-side uploads.
+   * Returns standardized format as this is often a direct API call.
+   */
   async generateSignature(folder: string = 'general') {
     const timestamp = Math.round(new Date().getTime() / 1000);
     const prefix =
       this.configService.get<string>('CLOUDINARY_FOLDER_PREFIX') || 'app';
     const folderPath = `${prefix}/${folder}`;
 
-    // Get the secret and ensure it's treated as a string
     const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
 
     if (!apiSecret) {
@@ -26,7 +29,7 @@ export class CloudinaryService {
       );
     }
 
-    const signature = await cloudinary.utils.api_sign_request(
+    const signature = cloudinary.utils.api_sign_request(
       {
         folder: folderPath,
         timestamp: timestamp,
@@ -35,18 +38,24 @@ export class CloudinaryService {
     );
 
     return {
-      signature,
-      timestamp,
-      cloudName: this.configService.get<string>('CLOUDINARY_NAME'),
-      apiKey: this.configService.get<string>('CLOUDINARY_API_KEY'),
-      folder: folderPath,
+      data: {
+        signature,
+        timestamp,
+        cloudName: this.configService.get<string>('CLOUDINARY_NAME'),
+        apiKey: this.configService.get<string>('CLOUDINARY_API_KEY'),
+        folder: folderPath,
+      },
+      message: 'Upload signature generated successfully',
     };
   }
 
+  /**
+   * Internal helper to upload files directly from the server buffer.
+   * Returns raw Cloudinary response for internal service consumption.
+   */
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'general',
-    // Added resourceType parameter to handle different file kinds
     resourceType: 'auto' | 'image' | 'video' | 'raw' = 'auto',
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
     const prefix =
@@ -57,7 +66,6 @@ export class CloudinaryService {
         {
           folder: `${prefix}/${folder}`,
           resource_type: resourceType,
-          // This ensures the filename is somewhat preserved in Cloudinary
           public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
         },
         (error, result) => {
@@ -79,12 +87,14 @@ export class CloudinaryService {
     });
   }
 
+  /**
+   * Internal helper to delete assets from Cloudinary.
+   */
   async deleteFile(
     publicId: string,
     resourceType: string = 'image',
   ): Promise<any> {
     return new Promise((resolve, reject) => {
-      // For PDFs/Raw files, Cloudinary sometimes needs the resource_type specified to delete
       cloudinary.uploader.destroy(
         publicId,
         { resource_type: resourceType },

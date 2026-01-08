@@ -2,7 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common'; // Added BadRequestException
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Admin, AdminDocument } from './admin.schema';
@@ -37,7 +37,7 @@ export class AdminService {
       .find()
       .select('-passwordHash -refreshTokenHash')
       .sort({ createdAt: -1 })
-      .lean() // Use lean for faster, read-only performance
+      .lean()
       .exec();
   }
 
@@ -48,7 +48,6 @@ export class AdminService {
     const { password, ...rest } = data;
 
     if (!password) {
-      // Switched to BadRequestException (Standard NestJS)
       throw new BadRequestException('Password is required to create an admin');
     }
 
@@ -62,7 +61,6 @@ export class AdminService {
 
     const saved = await newAdmin.save();
 
-    // Activity Log
     await this.activityLogService.create({
       adminUuid: admin.userUuid,
       adminUserName: admin.username,
@@ -72,11 +70,15 @@ export class AdminService {
       entityUuid: saved.uuid,
     });
 
-    // Convert to object and remove passwordHash before returning
     const result = saved.toObject() as any;
     delete result.passwordHash;
     delete result.refreshTokenHash;
-    return result;
+
+    // Return with custom message for the Interceptor
+    return {
+      data: result,
+      message: 'Admin account created successfully',
+    };
   }
 
   async updateAdmin(
@@ -107,7 +109,11 @@ export class AdminService {
       entityUuid: updated.uuid,
     });
 
-    return updated;
+    // Return with custom message for the Interceptor
+    return {
+      data: updated,
+      message: 'Admin profile updated successfully',
+    };
   }
 
   async removeAdmin(
@@ -130,7 +136,11 @@ export class AdminService {
       entityUuid: deletedAdmin.uuid,
     });
 
-    return { success: true };
+    // Return with custom message for the Interceptor
+    return {
+      data: { success: true },
+      message: 'Admin account removed successfully',
+    };
   }
 
   async findByRefreshTokenHash() {

@@ -136,7 +136,10 @@ export class GalleryService {
       entityUuid: savedGallery.uuid,
     });
 
-    return savedGallery;
+    return {
+      data: savedGallery,
+      message: 'Gallery item uploaded successfully',
+    };
   }
 
   async update(
@@ -176,7 +179,10 @@ export class GalleryService {
       });
     }
 
-    return updated;
+    return {
+      data: updated,
+      message: 'Gallery item updated successfully',
+    };
   }
 
   async remove(uuid: string, admin: { userUuid: string; username: string }) {
@@ -200,7 +206,10 @@ export class GalleryService {
       entityUuid: existing.uuid,
     });
 
-    return { deleted: true };
+    return {
+      data: { deleted: true },
+      message: 'Gallery item removed successfully',
+    };
   }
 
   // ===== PUBLIC METHODS =====

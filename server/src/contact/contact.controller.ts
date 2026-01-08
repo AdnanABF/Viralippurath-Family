@@ -8,7 +8,12 @@ import { CreateContactDto } from './dto/create-contact.dto';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 attempts per minute
+  /**
+   * POST /contact
+   * Public endpoint for contact form submissions.
+   * Rate limited to 3 attempts per minute to prevent spam.
+   */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post()
   async create(@Body() createContactDto: CreateContactDto) {
     return await this.contactService.handleSubmission(createContactDto);

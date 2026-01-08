@@ -109,7 +109,10 @@ export class MagazineService {
       entityUuid: magazine.uuid,
     });
 
-    return magazine;
+    return {
+      data: magazine,
+      message: 'Magazine issue created successfully',
+    };
   }
 
   async update(
@@ -152,7 +155,11 @@ export class MagazineService {
         entityUuid: updated.uuid,
       });
     }
-    return updated;
+
+    return {
+      data: updated,
+      message: 'Magazine issue updated successfully',
+    };
   }
 
   async remove(uuid: string, admin: { userUuid: string; username: string }) {
@@ -179,6 +186,9 @@ export class MagazineService {
       entityUuid: magazine.uuid,
     });
 
-    return { deleted: true };
+    return {
+      data: { success: true },
+      message: 'Magazine issue removed successfully',
+    };
   }
 }
