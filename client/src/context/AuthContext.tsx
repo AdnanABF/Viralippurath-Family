@@ -2,17 +2,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { isTokenValid } from "../utils/auth";
 import { clearAuthData } from "../utils/logout";
-
-type User = {
-  userUuid: string;
-  username: string;
-  role: "SUPER_ADMIN" | "ADMIN" | "MEMBER";
-  fullName: string;
-};
+import type { AuthUser } from "../types/auth";
 
 type AuthContextType = {
   isAuthenticated: boolean;
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
   login: () => void;
   logout: () => void;
@@ -24,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(isTokenValid());
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const initAuth = () => {
@@ -36,9 +30,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const token = localStorage.getItem("accessToken");
       if (token) {
         try {
-          const decoded: any = jwtDecode<User>(token);
+          const decoded = jwtDecode<{
+            sub: string;
+            username: string;
+            role: string;
+            fullName: string;
+          }>(token);
+
           setUser({
-            userUuid: decoded.sub,
+            uuid: decoded.sub,
             username: decoded.username,
             role: decoded.role,
             fullName: decoded.fullName || "Admin User",

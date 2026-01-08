@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -10,6 +10,8 @@ import { CreateActivityLogDto } from './dto/create-activity-log.dto';
 
 @Injectable()
 export class ActivityLogService {
+  private readonly logger = new Logger(ActivityLogService.name);
+
   constructor(
     @InjectModel(ActivityLog.name)
     private activityLogModel: Model<ActivityLogDocument>,
@@ -18,11 +20,13 @@ export class ActivityLogService {
   /**
    * Creates a new activity log entry.
    */
-  async create(
-    createActivityLogDto: CreateActivityLogDto,
-  ): Promise<ActivityLog> {
-    const newLog = new this.activityLogModel(createActivityLogDto);
-    return newLog.save();
+  async create(createActivityLogDto: CreateActivityLogDto) {
+    try {
+      const newLog = new this.activityLogModel(createActivityLogDto);
+      return newLog.save();
+    } catch (err) {
+      this.logger.error(`Failed to save the log : ${err.message}`, err);
+    }
   }
 
   /**
@@ -33,8 +37,8 @@ export class ActivityLogService {
     limit?: number;
     entityType?: string;
     action?: ActivityAction;
-    startDate?: string; // Expecting ISO string or YYYY-MM-DD
-    endDate?: string; // Expecting ISO string or YYYY-MM-DD
+    startDate?: string;
+    endDate?: string;
   }) {
     const {
       page = 1,
@@ -62,15 +66,12 @@ export class ActivityLogService {
         filters.createdAt.$gte = new Date(startDate);
       }
       if (endDate) {
-        // We set the end date to the very end of the day (23:59:59)
-        // to ensure events on that day are included
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
         filters.createdAt.$lte = end;
       }
     }
 
-    // Execute count and data fetch in parallel
     const [data, totalItems] = await Promise.all([
       this.activityLogModel
         .find(filters)
@@ -93,7 +94,7 @@ export class ActivityLogService {
         itemCount: data.length,
         itemsPerPage: limit,
         totalPages,
-        currentPage: page,
+        currentPage: Number(page),
       },
     };
   }

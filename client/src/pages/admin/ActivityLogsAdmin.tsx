@@ -36,8 +36,7 @@ const ACTION_OPTIONS = [
 ];
 
 const ActivityLogAdmin = () => {
-  // 1. Logic & Data Hook
-  // Note: We map 'entityFilter' to 'type' as per your service requirements
+  // Logic & Data Hook consuming the unwrapped service data
   const {
     data: logs,
     loading,

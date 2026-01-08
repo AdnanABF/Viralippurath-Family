@@ -109,7 +109,10 @@ export class NotificationsService {
       entityUuid: notification.uuid,
     });
 
-    return notification;
+    return {
+      data: notification,
+      message: 'Notification created successfully',
+    };
   }
 
   async update(
@@ -134,7 +137,10 @@ export class NotificationsService {
       entityUuid: updated.uuid,
     });
 
-    return updated;
+    return {
+      data: updated,
+      message: 'Notification updated successfully',
+    };
   }
 
   async remove(uuid: string, admin: { userUuid: string; username: string }) {
@@ -153,7 +159,10 @@ export class NotificationsService {
       entityUuid: res.uuid,
     });
 
-    return { deleted: true };
+    return {
+      data: { success: true },
+      message: 'Notification removed successfully',
+    };
   }
 
   // ===== PUBLIC =====

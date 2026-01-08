@@ -100,7 +100,10 @@ export class EventsService {
       entityUuid: newEvent.uuid,
     });
 
-    return newEvent;
+    return {
+      data: newEvent,
+      message: 'Event created successfully',
+    };
   }
 
   async update(
@@ -125,7 +128,10 @@ export class EventsService {
       entityUuid: updatedEvent.uuid,
     });
 
-    return updatedEvent;
+    return {
+      data: updatedEvent,
+      message: 'Event details updated successfully',
+    };
   }
 
   async remove(uuid: string, admin: { userUuid: string; username: string }) {
@@ -146,7 +152,10 @@ export class EventsService {
       entityUuid: deletedEvent.uuid,
     });
 
-    return { deleted: true };
+    return {
+      data: { success: true },
+      message: 'Event deleted successfully',
+    };
   }
 
   async findPublished(

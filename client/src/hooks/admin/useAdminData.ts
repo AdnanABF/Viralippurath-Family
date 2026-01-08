@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
-// Generic types to make this work for any entity (Events, Magazine, etc.)
+// 1. Types stay the same, but notice that our interceptor
+// now returns this exact shape directly.
 interface PaginationMeta {
   totalPages: number;
   totalItems: number;
@@ -13,13 +14,12 @@ interface FetchResponse<T> {
   meta: PaginationMeta;
 }
 
-// These are the filters common to all your admin pages
 interface AdminFilters {
   status?: string;
   search?: string;
   startDate?: string;
   endDate?: string;
-  [key: string]: any; // Allows for extra filters like 'category'
+  [key: string]: any;
 }
 
 export function useAdminData<T>(
@@ -30,7 +30,6 @@ export function useAdminData<T>(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Pagination & Filter State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<AdminFilters>(initialFilters);
@@ -46,17 +45,31 @@ export function useAdminData<T>(
       setLoading(true);
       setError(false);
       try {
-        const response = await fetchFn({
+        // 2. The key change: 'response' is now the UNWRAPPED data
+        // because of the interceptor in api.ts
+        const result = await fetchFn({
           page,
           limit: size,
           ...currentFilters,
         });
-        setData(response.data);
-        setMeta(response.meta);
-        setCurrentPage(response.meta.currentPage);
-      } catch (err) {
+
+        // Defensive check to ensure we have the expected structure
+        if (result && result.data) {
+          setData(result.data);
+          setMeta(
+            result.meta || { totalPages: 1, totalItems: 0, currentPage: 1 }
+          );
+          setCurrentPage(result.meta?.currentPage || 1);
+        } else if (Array.isArray(result)) {
+          // Fallback for cases where the API might return just an array
+          // even when we expected a paginated object
+          setData(result);
+        }
+      } catch (err: any) {
         setError(true);
-        toast.error("Failed to fetch data");
+        // Note: Your interceptor might already show a toast,
+        // but keeping this here is a good fallback for network errors.
+        if (!err.response) toast.error("Connection lost. Please try again.");
       } finally {
         setLoading(false);
       }

@@ -12,7 +12,8 @@ export class DashboardController {
 
   /**
    * GET /admin/dashboard/stats
-   * Returns a summary of all published content for the dashboard cards
+   * Returns a summary of all published content for the dashboard cards.
+   * Access is restricted to SUPER_ADMIN and ADMIN roles.
    */
   @Get('stats')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)

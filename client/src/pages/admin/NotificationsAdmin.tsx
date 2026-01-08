@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 // Types and services
 import type {
@@ -92,15 +91,13 @@ const NotificationsAdmin = () => {
       if ("uuid" in data && data.uuid) {
         const { uuid, ...payload } = data;
         await notificationsAdminService.update(uuid, payload);
-        toast.success("Notification updated successfully");
       } else {
         await notificationsAdminService.create(data as AdminNotificationDraft);
-        toast.success("Notification created successfully");
       }
       setEditing(null);
       refresh();
     } catch {
-      // API error handling
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsSaving(false);
     }
@@ -111,10 +108,9 @@ const NotificationsAdmin = () => {
     setIsDeleting(true);
     try {
       await notificationsAdminService.remove(deleteTarget.uuid);
-      toast.success("Notification deleted successfully");
       refresh();
     } catch {
-      // API error handling
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);

@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 // Create the express instance for Vercel
 const server = express();
@@ -31,6 +33,12 @@ async function setupApp(app: INestApplication) {
       transform: true,
     }),
   );
+
+  // 4. Register the Global Exception Filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // 5. Register the Global Success Interceptor
+  app.useGlobalInterceptors(new TransformInterceptor());
 }
 
 /**

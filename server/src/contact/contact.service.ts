@@ -30,7 +30,10 @@ export class ContactService {
     // 1. Honeypot check (Silent fail for bots)
     if (website) {
       this.logger.warn(`Bot detected: ${dto.email}`);
-      return { status: 'success' };
+      return {
+        data: { status: 'success' },
+        message: 'Message sent successfully',
+      };
     }
 
     try {
@@ -63,10 +66,14 @@ export class ContactService {
       const newContact = new this.contactModel(contactData);
       await newContact.save();
 
-      return { status: 'success', id: emailResponse.data?.id };
+      return {
+        data: { id: emailResponse.data?.id },
+        message:
+          'Your message has been sent successfully. We will get back to you soon!',
+      };
     } catch (error) {
       this.logger.error(`Failed to process contact form: ${error.message}`);
-      // Throwing this ensures the frontend receives a 500 error and triggers toast.error
+      // The Global Exception Filter will catch this and format the error for the frontend toast
       throw new InternalServerErrorException(
         'Could not send message. Please try again later.',
       );

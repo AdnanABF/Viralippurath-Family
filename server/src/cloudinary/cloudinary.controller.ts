@@ -8,11 +8,17 @@ import { Roles } from '../auth/roles.decorator';
 export class CloudinaryController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
+  /**
+   * GET /cloudinary/sign
+   * Generates a secure signature for client-side uploads to Cloudinary.
+   * Restricts access to ADMIN and SUPER_ADMIN.
+   * * @param folder - The target folder in Cloudinary (e.g., 'magazines', 'gallery')
+   */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('sign')
   async getSignature(@Query('folder') folder: string) {
-    // We pass the folder dynamically so we can use this for 'magazines', 'gallery', etc.
+    // Standardized response is handled by the service and the TransformInterceptor
     return await this.cloudinaryService.generateSignature(folder || 'general');
   }
 }

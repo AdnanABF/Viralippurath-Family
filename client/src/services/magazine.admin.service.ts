@@ -6,21 +6,23 @@ import type {
   PaginatedMagazines,
 } from "../types/magazine.admin";
 
+/**
+ * Service handling Admin-only Magazine operations.
+ * api.ts now automatically unwraps 'response.data.data' and handles success toasts.
+ */
 export const magazineAdminService = {
   /**
    * Fetches magazines for the admin view with filters and pagination
    */
   async getAll(params?: MagazineQueryParams): Promise<PaginatedMagazines> {
-    const { data } = await api.get("/magazine/admin", { params });
-    return data;
+    return await api.get("/magazine/admin", { params });
   },
 
   /**
    * Creates a new magazine entry
    */
   async create(payload: AdminMagazineDraft): Promise<AdminMagazine> {
-    const { data } = await api.post("/magazine", payload);
-    return data;
+    return await api.post("/magazine", payload);
   },
 
   /**
@@ -30,11 +32,10 @@ export const magazineAdminService = {
     uuid: string,
     magazine: Partial<AdminMagazineDraft> & { uuid?: string }
   ): Promise<AdminMagazine> {
-    // Clean up internal keys if they exist
+    // Clean up internal keys if they exist to prevent backend validation errors
     const { uuid: _, file: __, ...cleanPayload } = magazine;
 
-    const { data } = await api.patch(`/magazine/${uuid}`, cleanPayload);
-    return data;
+    return await api.patch(`/magazine/${uuid}`, cleanPayload);
   },
 
   /**
