@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -10,6 +10,8 @@ import { CreateActivityLogDto } from './dto/create-activity-log.dto';
 
 @Injectable()
 export class ActivityLogService {
+  private readonly logger = new Logger(ActivityLogService.name);
+
   constructor(
     @InjectModel(ActivityLog.name)
     private activityLogModel: Model<ActivityLogDocument>,
@@ -18,11 +20,13 @@ export class ActivityLogService {
   /**
    * Creates a new activity log entry.
    */
-  async create(
-    createActivityLogDto: CreateActivityLogDto,
-  ): Promise<ActivityLog> {
-    const newLog = new this.activityLogModel(createActivityLogDto);
-    return newLog.save();
+  async create(createActivityLogDto: CreateActivityLogDto) {
+    try {
+      const newLog = new this.activityLogModel(createActivityLogDto);
+      return newLog.save();
+    } catch (err) {
+      this.logger.error(`Failed to save the log : ${err.message}`, err);
+    }
   }
 
   /**

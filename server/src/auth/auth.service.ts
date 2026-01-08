@@ -18,7 +18,7 @@ export class AuthService {
    * Returns standardized data with a success message.
    */
   async login(username: string, password: string) {
-    const admin = await this.adminService.findByUsername(username);
+    const admin = await this.adminService.findByUsername(username, true);
 
     // Using generic error to prevent account enumeration
     if (!admin || !admin.isActive) {
