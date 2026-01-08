@@ -1,88 +1,111 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
+// Types and services
 import type {
   AdminMagazine,
   AdminMagazineDraft,
 } from "../../types/magazine.admin";
 import { magazineAdminService } from "../../services/magazine.admin.service";
 import { cloudinaryUploadService } from "../../services/cloudinary.service";
+import { useAdminData } from "../../hooks/admin/useAdminData";
+
+// Magazine specific components
 import MagazineTable from "../../components/admin/magazine/MagazineTable";
 import MagazineForm from "../../components/admin/magazine/MagazineForm";
-import Modal from "../../components/ui/Modal";
-import ConfirmModal from "../../components/ui/ConfirmModal";
-import EmptyState from "../../components/ui/EmptyState";
-import toast from "react-hot-toast";
+
+// UI Components
+import {
+  Modal,
+  ConfirmModal,
+  EmptyState,
+  Pagination,
+  AdminHeader,
+  AdminMultiSearch,
+  AdminDateRange,
+  AdminSelect,
+  PrimaryButton,
+  ResetButton,
+  AdminLoading,
+  AdminError,
+  AdminControlGroup,
+} from "../../components/ui";
+
+const STATUS_OPTIONS = [
+  { label: "All Status", value: "ALL" },
+  { label: "Published", value: "PUBLISHED" },
+  { label: "Draft", value: "DRAFT" },
+];
+
+const defaultMagazineValues = {
+  uuid: "",
+  title: "",
+  publishedDate: new Date().toISOString(),
+  status: "DRAFT",
+};
 
 const MagazineAdmin = () => {
-  const [items, setItems] = useState<AdminMagazine[]>([]);
+  // 1. Data Logic Hook
+  const {
+    data: items,
+    loading,
+    error,
+    meta,
+    currentPage,
+    pageSize,
+    setPageSize,
+    filters,
+    setFilters,
+    handlePageChange,
+    reset,
+    refresh,
+  } = useAdminData<AdminMagazine>(magazineAdminService.getAll, {
+    status: "ALL",
+    search: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  // 2. Action States
   const [editing, setEditing] = useState<AdminMagazine | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     uuid: string;
     title: string;
   } | null>(null);
 
-  const loadMagazines = async () => {
-    setLoading(true);
-    setError(false);
-    try {
-      const data = await magazineAdminService.getAll();
-      setItems(data);
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadMagazines();
-  }, []);
-
-  //Handles both Create and Update operations.
+  // 3. Handlers
   const handleSave = async (data: any) => {
     setIsSaving(true);
-
     try {
       let uploadResults = {};
 
-      // Upload file to cloudinary if file exists
+      // Handle Cloudinary PDF upload if a new file is provided
       if (data.file) {
         toast.loading("Uploading PDF to cloud...", { id: "upload-toast" });
-
         uploadResults = await cloudinaryUploadService.uploadFile(
           data.file,
           "magazines"
         );
-
         toast.success("PDF uploaded successfully", { id: "upload-toast" });
       }
 
-      //Prepare the clean payload (strings only)
-      const { file, ...formFields } = data; // Remove the File object
-      const finalPayload = {
-        ...formFields,
-        ...uploadResults, // Spread pdfUrl and cloudinaryPublicId if they exist
-      };
+      const { file, ...formFields } = data;
+      const finalPayload = { ...formFields, ...uploadResults };
 
-      // Send data to backend to save in DB
       if (data.uuid) {
-        // Update existing
         await magazineAdminService.update(data.uuid, finalPayload);
         toast.success("Magazine updated successfully");
       } else {
-        // Create new
         await magazineAdminService.create(finalPayload as AdminMagazineDraft);
         toast.success("Magazine created successfully");
       }
 
       setEditing(null);
-      loadMagazines();
+      refresh();
     } catch (err) {
-      // Logic for specific error messages can be added here
-      // if not handled by your axios interceptor
+      toast.error("An error occurred during save", { id: "upload-toast" });
     } finally {
       setIsSaving(false);
     }
@@ -90,15 +113,13 @@ const MagazineAdmin = () => {
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-
     setIsDeleting(true);
-
     try {
       await magazineAdminService.remove(deleteTarget.uuid);
       toast.success("Magazine deleted successfully");
-      loadMagazines();
+      refresh();
     } catch {
-      // Handled globally in api.ts
+      /* Handled globally */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -107,24 +128,76 @@ const MagazineAdmin = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-serif text-stone-900">Manage Magazines</h1>
-        <button
-          onClick={() =>
-            setEditing({
-              title: "",
-              publishedDate: new Date().toISOString(),
-              status: "DRAFT",
-            } as AdminMagazine)
-          }
-          className="w-full sm:w-auto bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm hover:bg-amber-800 transition-all active:scale-95"
-        >
-          Create New Magazine
-        </button>
-      </div>
+      <AdminHeader
+        title="Manage Magazines"
+        description="Digital archive of family publications."
+      >
+        <AdminMultiSearch
+          value={filters.search || ""}
+          onChange={(val) => setFilters((prev) => ({ ...prev, search: val }))}
+          placeholder="Search by title..."
+        />
 
-      {/* Create / Edit Modal */}
+        <AdminDateRange
+          start={filters.startDate || ""}
+          end={filters.endDate || ""}
+          onStartChange={(val) =>
+            setFilters((prev) => ({ ...prev, startDate: val }))
+          }
+          onEndChange={(val) =>
+            setFilters((prev) => ({ ...prev, endDate: val }))
+          }
+        />
+
+        <AdminControlGroup>
+          <AdminSelect
+            value={filters.status || "ALL"}
+            onChange={(val) => setFilters((prev) => ({ ...prev, status: val }))}
+            options={STATUS_OPTIONS}
+          />
+          <ResetButton onClick={reset} />
+          <PrimaryButton
+            label="Add New Magazine"
+            onClick={() => setEditing(defaultMagazineValues as AdminMagazine)}
+          />
+        </AdminControlGroup>
+      </AdminHeader>
+
+      {/* Main Content Area */}
+      {loading ? (
+        <AdminLoading message="Loading Magazines..." />
+      ) : error ? (
+        <AdminError title="Unable to load magazines" onRetry={refresh} />
+      ) : items.length === 0 ? (
+        <EmptyState
+          title="No magazines found"
+          description="Adjust your filters or upload a new issue."
+        />
+      ) : (
+        <>
+          <MagazineTable
+            items={items}
+            onEdit={setEditing}
+            onDelete={(uuid) => {
+              const m = items.find((x) => x.uuid === uuid);
+              if (m) setDeleteTarget({ uuid: m.uuid, title: m.title });
+            }}
+            disabled={isDeleting || isSaving}
+          />
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={meta.totalPages}
+            totalItems={meta.totalItems}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={setPageSize}
+            isLoading={loading}
+          />
+        </>
+      )}
+
+      {/* Modals */}
       <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
         {editing && (
           <MagazineForm
@@ -136,55 +209,11 @@ const MagazineAdmin = () => {
         )}
       </Modal>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700"></div>
-          <p className="mt-4 text-stone-500 font-medium">Loading archives...</p>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !loading && (
-        <div className="p-8 bg-white border border-stone-200 rounded-2xl text-center shadow-sm">
-          <p className="text-stone-800 font-serif text-lg mb-1">
-            Something went wrong
-          </p>
-          <p className="text-stone-500 text-sm">
-            We couldn't load the magazines. Please try again later.
-          </p>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && !error && items.length === 0 && (
-        <EmptyState
-          title="No magazines yet"
-          description="Create your first magazine to get started."
-        />
-      )}
-
-      {/* Data Table */}
-      {!loading && !error && items.length > 0 && (
-        <MagazineTable
-          items={items}
-          onEdit={(m) => setEditing(m)}
-          onDelete={(uuid) => {
-            const m = items.find((x) => x.uuid === uuid);
-            if (m) {
-              setDeleteTarget({ uuid: m.uuid, title: m.title });
-            }
-          }}
-          disabled={isDeleting || isSaving}
-        />
-      )}
-
-      {/* Delete Confirmation */}
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete Magazine?"
+        title="Delete Magazine Issue?"
         description={
-          deleteTarget ? (
+          deleteTarget && (
             <span>
               Are you sure you want to delete{" "}
               <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
@@ -192,9 +221,9 @@ const MagazineAdmin = () => {
               </span>
               ? This action cannot be undone.
             </span>
-          ) : undefined
+          )
         }
-        confirmText="Delete"
+        confirmText="Delete Issue"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         isLoading={isDeleting}

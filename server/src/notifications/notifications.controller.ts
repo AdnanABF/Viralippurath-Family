@@ -9,6 +9,8 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Request,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification-dto';
@@ -31,8 +33,24 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
-  async getAllAdmin() {
-    return await this.notificationsService.findAllAdmin();
+  async getAllAdmin(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('status') status?: string,
+    @Query('priority') priority?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return await this.notificationsService.findAllAdmin({
+      page: page ?? 1,
+      limit: limit ?? 10,
+      status,
+      priority,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

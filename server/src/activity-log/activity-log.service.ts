@@ -28,28 +28,52 @@ export class ActivityLogService {
   /**
    * Fetches paginated activities with metadata and multi-filter support.
    */
-  async getPaginatedActivities(
-    page: number = 1,
-    limit: number = 10,
-    entityType?: string,
-    action?: ActivityAction,
-  ) {
+  async getPaginatedActivities(query: {
+    page?: number;
+    limit?: number;
+    entityType?: string;
+    action?: ActivityAction;
+    startDate?: string; // Expecting ISO string or YYYY-MM-DD
+    endDate?: string; // Expecting ISO string or YYYY-MM-DD
+  }) {
+    const {
+      page = 1,
+      limit = 10,
+      entityType,
+      action,
+      startDate,
+      endDate,
+    } = query;
     const skip = (page - 1) * limit;
 
-    const query: Record<string, any> = {};
+    const filters: any = {};
 
     if (entityType && entityType !== 'ALL') {
-      query.entityType = entityType;
+      filters.entityType = entityType;
     }
 
     if (action && action.toString() !== 'ALL') {
-      query.action = action;
+      filters.action = action;
+    }
+
+    if (startDate || endDate) {
+      filters.createdAt = {};
+      if (startDate) {
+        filters.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        // We set the end date to the very end of the day (23:59:59)
+        // to ensure events on that day are included
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filters.createdAt.$lte = end;
+      }
     }
 
     // Execute count and data fetch in parallel
     const [data, totalItems] = await Promise.all([
       this.activityLogModel
-        .find(query)
+        .find(filters)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -57,7 +81,7 @@ export class ActivityLogService {
           'uuid adminUserName action entityType entityTitle createdAt -_id',
         )
         .exec(),
-      this.activityLogModel.countDocuments(query).exec(),
+      this.activityLogModel.countDocuments(filters).exec(),
     ]);
 
     const totalPages = Math.ceil(totalItems / limit);

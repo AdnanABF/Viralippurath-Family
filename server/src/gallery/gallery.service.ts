@@ -30,8 +30,77 @@ export class GalleryService {
 
   // ===== ADMIN METHODS =====
 
-  async findAllAdmin() {
-    return await this.galleryModel.find().sort({ createdAt: -1 }).exec();
+  async findAllAdmin(query: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    album?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      album,
+      search,
+      startDate,
+      endDate,
+    } = query;
+
+    const skip = (page - 1) * limit;
+    const filters: any = {};
+
+    // 1. Exact Match Filters
+    if (status && status !== 'ALL') {
+      filters.status = status;
+    }
+    if (album && album !== 'ALL') {
+      filters.album = album;
+    }
+
+    // 2. Search Logic (Caption or Album)
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      filters.$or = [{ caption: searchRegex }, { album: searchRegex }];
+    }
+
+    // 3. Date Range Logic (createdAt)
+    if (startDate || endDate) {
+      filters.createdAt = {};
+      if (startDate) {
+        filters.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filters.createdAt.$lte = end;
+      }
+    }
+
+    const [data, totalItems] = await Promise.all([
+      this.galleryModel
+        .find(filters)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.galleryModel.countDocuments(filters).exec(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      meta: {
+        totalItems,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages,
+        currentPage: Number(page),
+      },
+    };
   }
 
   async create(

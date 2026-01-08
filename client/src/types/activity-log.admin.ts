@@ -17,3 +17,12 @@ export interface PaginatedActivityResponse {
     currentPage: number;
   };
 }
+
+export interface ActivityLogQueryParams {
+  page?: number;
+  limit?: number;
+  type?: string;
+  action?: string;
+  startDate?: string;
+  endDate?: string;
+}

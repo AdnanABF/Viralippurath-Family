@@ -18,9 +18,71 @@ export class EventsService {
     private readonly activityLogService: ActivityLogService,
   ) {}
 
-  // ADMIN
-  async findAllAdmin() {
-    return await this.eventModel.find().sort({ startDateTime: -1 }).exec();
+  // ADMIN - Paginated with Multi-field Search, Filters, and Date Range
+  async findAllAdmin(query: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    startDate?: string; // Expecting ISO string or YYYY-MM-DD
+    endDate?: string; // Expecting ISO string or YYYY-MM-DD
+  }) {
+    const { page = 1, limit = 10, status, search, startDate, endDate } = query;
+    const skip = (page - 1) * limit;
+
+    const filters: any = {};
+
+    // 1. Status Filter
+    if (status && status !== 'ALL') filters.status = status;
+
+    // 2. Multi-field Search (Title, Description, or Type)
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      filters.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { type: searchRegex },
+        { location: searchRegex },
+      ];
+    }
+
+    // 3. Date Range Filter
+    if (startDate || endDate) {
+      filters.startDateTime = {};
+      if (startDate) {
+        filters.startDateTime.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        // We set the end date to the very end of the day (23:59:59)
+        // to ensure events on that day are included
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filters.startDateTime.$lte = end;
+      }
+    }
+
+    const [data, totalItems] = await Promise.all([
+      this.eventModel
+        .find(filters)
+        .sort({ startDateTime: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.eventModel.countDocuments(filters).exec(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      meta: {
+        totalItems,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages,
+        currentPage: Number(page),
+      },
+    };
   }
 
   async create(
@@ -29,7 +91,6 @@ export class EventsService {
   ) {
     const newEvent = await this.eventModel.create(dto);
 
-    // Record Activity
     await this.activityLogService.create({
       adminUuid: admin.userUuid,
       adminUserName: admin.username,
@@ -55,7 +116,6 @@ export class EventsService {
       throw new NotFoundException(`Event with UUID ${uuid} not found`);
     }
 
-    // Record Activity
     await this.activityLogService.create({
       adminUuid: admin.userUuid,
       adminUserName: admin.username,
@@ -77,7 +137,6 @@ export class EventsService {
       throw new NotFoundException(`Event with UUID ${uuid} not found`);
     }
 
-    // Record Activity
     await this.activityLogService.create({
       adminUuid: admin.userUuid,
       adminUserName: admin.username,
@@ -90,9 +149,14 @@ export class EventsService {
     return { deleted: true };
   }
 
-  // ===== PUBLIC =====
-  async findPublished(type: 'upcoming' | 'past' | 'ongoing' = 'upcoming') {
+  async findPublished(
+    type: 'upcoming' | 'past' | 'ongoing' = 'upcoming',
+    page: number = 1,
+    limit: number = 10,
+  ) {
     const now = new Date();
+    const skip = (page - 1) * limit;
+
     let query: any = { status: EventStatus.PUBLISHED };
     let sortOrder: any = { startDateTime: 1 };
 
@@ -112,12 +176,28 @@ export class EventsService {
         break;
     }
 
-    return this.eventModel
-      .find(query)
-      .select(
-        'uuid title description startDateTime endDateTime type location -_id',
-      )
-      .sort(sortOrder)
-      .exec();
+    const [data, totalItems] = await Promise.all([
+      this.eventModel
+        .find(query)
+        .select(
+          'uuid title description startDateTime endDateTime type location -_id',
+        )
+        .sort(sortOrder)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.eventModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        totalItems,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: Number(page),
+      },
+    };
   }
 }

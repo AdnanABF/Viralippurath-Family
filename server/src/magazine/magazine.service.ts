@@ -36,11 +36,62 @@ export class MagazineService {
   }
 
   // ===== ADMIN METHODS =====
-  async findAllAdmin() {
-    return await this.magazineModel
-      .find()
-      .sort({ publishedDate: -1, createdAt: -1 })
-      .exec();
+  async findAllAdmin(query: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const { page = 1, limit = 10, status, search, startDate, endDate } = query;
+
+    const skip = (page - 1) * limit;
+    const filters: any = {};
+
+    // 1. Status Filter
+    if (status && status !== 'ALL') {
+      filters.status = status;
+    }
+
+    // 2. Keyword Search (Title)
+    if (search) {
+      filters.title = { $regex: search, $options: 'i' };
+    }
+
+    // 3. Date Range Filter (on publishedDate)
+    if (startDate || endDate) {
+      filters.publishedDate = {};
+      if (startDate) {
+        filters.publishedDate.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filters.publishedDate.$lte = end;
+      }
+    }
+
+    const [data, totalItems] = await Promise.all([
+      this.magazineModel
+        .find(filters)
+        .sort({ publishedDate: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.magazineModel.countDocuments(filters).exec(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        totalItems,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: Number(page),
+      },
+    };
   }
 
   async create(
