@@ -31,14 +31,18 @@ export class AdminController {
 
   @Post()
   @Roles(AdminRole.SUPER_ADMIN)
-  async create(@Body() createDto: CreateAdminDto) {
-    return await this.adminService.createAdmin(createDto);
+  async create(@Body() createDto: CreateAdminDto, @Request() req) {
+    return await this.adminService.createAdmin(createDto, req.user);
   }
 
   @Patch(':uuid')
   @Roles(AdminRole.SUPER_ADMIN)
-  async update(@Param('uuid') uuid: string, @Body() updateDto: UpdateAdminDto) {
-    return await this.adminService.updateAdmin(uuid, updateDto);
+  async update(
+    @Param('uuid') uuid: string,
+    @Body() updateDto: UpdateAdminDto,
+    @Request() req,
+  ) {
+    return await this.adminService.updateAdmin(uuid, updateDto, req.user);
   }
 
   @Delete(':uuid')
@@ -50,6 +54,6 @@ export class AdminController {
         'Self-deletion is not permitted. You cannot remove your own account.',
       );
     }
-    return await this.adminService.removeAdmin(uuid);
+    return await this.adminService.removeAdmin(uuid, req.user);
   }
 }
