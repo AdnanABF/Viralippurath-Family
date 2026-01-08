@@ -3,6 +3,7 @@ import api from "../../services/api";
 import EventsHeader from "../../components/events/EventsHeader";
 import EventsTimeline from "../../components/events/EventsTimeline";
 import type { PublicEvent } from "../../types/event.public";
+import toast from "react-hot-toast";
 
 const Events = () => {
   const [events, setEvents] = useState<PublicEvent[]>([]);
@@ -20,7 +21,7 @@ const Events = () => {
         );
         setOngoingEvents(response.data);
       } catch (err) {
-        console.error("Failed to fetch ongoing events", err);
+        toast.error("Failed to fetch ongoing events");
       }
     };
     fetchOngoing();

@@ -15,3 +15,25 @@ export type AdminMagazineDraft = {
   pdfUrl?: string;
   cloudinaryPublicId?: string;
 };
+
+// Interface for Magazine-specific query filters
+export interface MagazineQueryParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+// Interface for the paginated response
+export interface PaginatedMagazines {
+  data: AdminMagazine[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}

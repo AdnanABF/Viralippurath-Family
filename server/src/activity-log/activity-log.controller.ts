@@ -29,13 +29,17 @@ export class ActivityLogController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('type') type?: string,
     @Query('action') action?: ActivityAction,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.activityLogService.getPaginatedActivities(
-      page || 1,
-      limit || 10,
-      type,
+    return this.activityLogService.getPaginatedActivities({
+      page: page ?? 1,
+      limit: limit ?? 10,
+      entityType: type,
       action,
-    );
+      startDate,
+      endDate,
+    });
   }
 
   /**

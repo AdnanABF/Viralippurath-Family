@@ -9,6 +9,8 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Request,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { MagazineService } from './magazine.service';
 import { CreateMagazineDto } from './dto/create-magazine.dto';
@@ -31,8 +33,22 @@ export class MagazineController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
-  async getAllAdmin() {
-    return await this.magazineService.findAllAdmin();
+  async getAllAdmin(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return await this.magazineService.findAllAdmin({
+      page: page ?? 1,
+      limit: limit ?? 10,
+      status,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
