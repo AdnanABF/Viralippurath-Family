@@ -39,6 +39,7 @@ export class EventsController {
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Get('admin')
   async getAllAdmin(
+    @Request() req,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('status') status?: string,
@@ -53,6 +54,7 @@ export class EventsController {
       search,
       startDate,
       endDate,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 

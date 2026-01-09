@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { CloudinaryService } from './cloudinary.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -17,8 +17,11 @@ export class CloudinaryController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('sign')
-  async getSignature(@Query('folder') folder: string) {
+  async getSignature(@Request() req, @Query('folder') folder: string) {
     // Standardized response is handled by the service and the TransformInterceptor
-    return await this.cloudinaryService.generateSignature(folder || 'general');
+    return await this.cloudinaryService.generateSignature(
+      folder || 'general',
+      req?.user?.uuid,
+    );
   }
 }

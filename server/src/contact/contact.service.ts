@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { Contact } from './schemas/contact.schema';
 import { CreateContactDto } from './dto/create-contact.dto';
+import { SystemLogService } from '../system-log/system-log.service';
 
 @Injectable()
 export class ContactService {
@@ -18,6 +19,7 @@ export class ContactService {
   constructor(
     @InjectModel(Contact.name) private contactModel: Model<Contact>,
     private configService: ConfigService,
+    private readonly systemLogService: SystemLogService,
   ) {
     this.resend = new Resend(
       this.configService.getOrThrow<string>('RESEND_API_KEY'),
@@ -60,7 +62,7 @@ export class ContactService {
 
       // 3. Only if Resend didn't throw an error, save to Database
       if (emailResponse.error) {
-        throw new Error(emailResponse.error.message);
+        throw new Error(`Resend Error: ${emailResponse.error.message}`);
       }
 
       const newContact = new this.contactModel(contactData);
@@ -72,11 +74,44 @@ export class ContactService {
           'Your message has been sent successfully. We will get back to you soon!',
       };
     } catch (error) {
-      this.logger.error(`Failed to process contact form: ${error.message}`);
-      // The Global Exception Filter will catch this and format the error for the frontend toast
+      // Log the full technical details to the DB
+      await this.handleError(
+        error,
+        'POST',
+        '/public/contact',
+        contactData,
+        'GUEST',
+      );
+
       throw new InternalServerErrorException(
         'Could not send message. Please try again later.',
       );
     }
+  }
+
+  /**
+   * Helper method to record system logs for Contact operations
+   */
+  private async handleError(
+    error: any,
+    method: string,
+    path: string,
+    payload: any,
+    userUuid?: string,
+  ) {
+    this.logger.error(
+      `${method} ${path} failed: ${error.message}`,
+      error.stack,
+    );
+
+    await this.systemLogService.log({
+      errorCode: error.code?.toString() || error.name || 'EXTERNAL_API_ERROR',
+      message: error.message,
+      stack: error.stack,
+      path,
+      method,
+      payload,
+      userUuid: userUuid || 'SYSTEM',
+    });
   }
 }

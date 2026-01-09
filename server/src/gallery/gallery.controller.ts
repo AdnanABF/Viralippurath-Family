@@ -37,6 +37,7 @@ export class GalleryController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('admin')
   async getAllAdmin(
+    @Request() req,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('status') status?: string,
@@ -53,6 +54,7 @@ export class GalleryController {
       search,
       startDate,
       endDate,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 

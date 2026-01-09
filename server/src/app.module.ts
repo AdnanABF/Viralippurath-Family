@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -15,6 +16,9 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ActivityLogController } from './activity-log/activity-log.controller';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SystemLogModule } from './system-log/system-log.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 @Module({
   imports: [
@@ -55,8 +59,19 @@ import { DashboardModule } from './dashboard/dashboard.module';
     CloudinaryModule,
     ActivityLogModule,
     DashboardModule,
+    SystemLogModule,
   ],
   controllers: [AppController, ActivityLogController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER, // Global exception filter registered
+      useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR, // Global success response interceptor registered
+      useClass: TransformInterceptor,
+    },
+  ],
 })
 export class AppModule {}

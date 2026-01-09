@@ -33,12 +33,6 @@ async function setupApp(app: INestApplication) {
       transform: true,
     }),
   );
-
-  // 4. Register the Global Exception Filter
-  app.useGlobalFilters(new HttpExceptionFilter());
-
-  // 5. Register the Global Success Interceptor
-  app.useGlobalInterceptors(new TransformInterceptor());
 }
 
 /**

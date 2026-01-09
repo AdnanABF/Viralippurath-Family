@@ -4,6 +4,7 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { ActivityLogService } from './activity-log.service';
 import { ActivityLog, ActivityAction } from './schemas/activity-log.schema';
@@ -25,6 +26,7 @@ export class ActivityLogController {
   @Get()
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   async getActivities(
+    @Request() req,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('type') type?: string,
@@ -39,6 +41,7 @@ export class ActivityLogController {
       action,
       startDate,
       endDate,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 
@@ -49,8 +52,12 @@ export class ActivityLogController {
   @Get('recent')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   async getRecent(
+    @Request() req,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ): Promise<ActivityLog[]> {
-    return this.activityLogService.getRecentActivities(limit || 10);
+    return this.activityLogService.getRecentActivities(
+      limit || 10,
+      req?.user?.uuid,
+    );
   }
 }
