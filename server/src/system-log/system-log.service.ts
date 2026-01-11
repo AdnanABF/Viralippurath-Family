@@ -39,16 +39,51 @@ export class SystemLogService {
   async findAll(query: {
     page?: number;
     limit?: number;
-    errorCode?: string;
+    method?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
     correlationId?: string;
   }) {
-    const { page = 1, limit = 20, errorCode, correlationId } = query;
+    const {
+      page = 1,
+      limit = 20,
+      method,
+      search,
+      startDate,
+      endDate,
+      correlationId,
+    } = query;
     const skip = (page - 1) * limit;
 
     const filters: any = {};
-    if (errorCode) filters.errorCode = errorCode;
-    // Added ability to filter by correlationId to see all logs for one request
-    if (correlationId) filters.correlationId = correlationId;
+
+    if (correlationId) {
+      filters.correlationId = { $regex: correlationId, $options: 'i' };
+    }
+
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      filters.$or = [
+        { message: searchRegex },
+        { path: searchRegex },
+        { errorCode: searchRegex },
+        { userUuid: searchRegex },
+        { method: searchRegex },
+      ];
+    }
+
+    if (method && method.toString() !== 'ALL') filters.method = method;
+
+    if (startDate || endDate) {
+      filters.createdAt = {};
+      if (startDate) filters.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filters.createdAt.$lte = end;
+      }
+    }
 
     const [data, totalItems] = await Promise.all([
       this.systemLogModel

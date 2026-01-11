@@ -20,8 +20,7 @@ export class ActivityLogController {
 
   /**
    * GET /admin/activities
-   * Supports pagination, entity type filtering, and action filtering
-   * Example: /admin/activities?page=1&limit=10&type=EVENT&action=DELETE
+   * Supports pagination, entity type filtering, action filtering, and correlationId searching
    */
   @Get()
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
@@ -33,6 +32,7 @@ export class ActivityLogController {
     @Query('action') action?: ActivityAction,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('correlationId') correlationId?: string,
   ) {
     return this.activityLogService.getPaginatedActivities({
       page: page ?? 1,
@@ -41,6 +41,7 @@ export class ActivityLogController {
       action,
       startDate,
       endDate,
+      correlationId,
       adminUserUuid: req?.user?.uuid,
     });
   }

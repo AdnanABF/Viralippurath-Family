@@ -57,8 +57,8 @@ export class ActivityLogService {
     action?: ActivityAction;
     startDate?: string;
     endDate?: string;
+    correlationId?: string;
     adminUserUuid?: string;
-    correlationId?: string; // Support filtering by ID
   }) {
     try {
       const {
@@ -75,7 +75,10 @@ export class ActivityLogService {
       const filters: any = {};
       if (entityType && entityType !== 'ALL') filters.entityType = entityType;
       if (action && action.toString() !== 'ALL') filters.action = action;
-      if (correlationId) filters.correlationId = correlationId;
+      
+      if (correlationId) {
+        filters.correlationId = { $regex: correlationId, $options: 'i' };
+      }
 
       if (startDate || endDate) {
         filters.createdAt = {};

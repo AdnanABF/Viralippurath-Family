@@ -18,6 +18,7 @@ import { UpdateNotificationDto } from './dto/update-notification-dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { AdminRole } from '../admin/admin.schema';
 
 @Controller('notifications')
 export class NotificationsController {
@@ -31,7 +32,7 @@ export class NotificationsController {
 
   // ===== ADMIN =====
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Get('admin')
   async getAllAdmin(
     @Request() req,
@@ -56,14 +57,14 @@ export class NotificationsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post()
   async create(@Body() dto: CreateNotificationDto, @Request() req) {
     return await this.notificationsService.create(dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Patch(':uuid')
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
@@ -74,7 +75,7 @@ export class NotificationsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Delete(':uuid')
   async remove(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
