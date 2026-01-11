@@ -15,7 +15,7 @@ import {
   ActivityAction,
   EntityType,
 } from '../activity-log/schemas/activity-log.schema';
-import { AdminRole } from 'src/admin/admin.schema';
+import { AdminRole } from '../admin/admin.schema';
 
 @Injectable()
 export class SystemLogService {
