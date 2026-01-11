@@ -1,7 +1,9 @@
 import { Filter } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // Types and services
+import api from "../../services/api";
 import type { SystemLog } from "../../types/system-log.admin";
 import { systemLogAdminService } from "../../services/system-log.admin.service";
 import { useAdminData } from "../../hooks/admin/useAdminData";
@@ -39,6 +41,7 @@ const SystemLogAdmin = () => {
   const {
     data: logs,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -49,7 +52,7 @@ const SystemLogAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<SystemLog>(systemLogAdminService.getAll, {
+  } = useAdminData<SystemLog>("system-logs", systemLogAdminService.getAll, {
     method: "ALL",
     errorCode: "",
     startDate: "",
@@ -75,6 +78,7 @@ const SystemLogAdmin = () => {
       // Success toast is now handled globally by api.ts interceptor
       await systemLogAdminService.cleanup();
       refresh(); // Reload data via hook
+      refreshStatus;
     } catch {
       /* api.ts handles global error reporting via toast.error */
     } finally {
@@ -83,11 +87,25 @@ const SystemLogAdmin = () => {
     }
   };
 
+  const { data: statusData, refetch: refreshStatus } = useQuery({
+    queryKey: ["cleanup-status"],
+    queryFn: async () => {
+      const res = (await api.get("/admin/system-logs/cleanup-status")) as any;
+      return {
+        canDelete: res.canDelete,
+        daysRemaining: res.daysRemaining,
+      };
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
   return (
     <div className="space-y-6">
       <AdminHeader
         title="System Logs"
         description="Monitor server errors, status codes, and request traces."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         {/* Multi field Search */}
         <AdminMultiSearch
@@ -147,6 +165,7 @@ const SystemLogAdmin = () => {
             onDelete={() => setDeleteTarget(true)}
             onViewDetails={(log) => setSelectedLog(log)}
             onFilterTrace={handleFilterTrace}
+            cleanupStatus={statusData || null}
           />
 
           <Pagination

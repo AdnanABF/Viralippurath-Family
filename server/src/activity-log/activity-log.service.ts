@@ -2,6 +2,8 @@ import {
   Injectable,
   Logger,
   InternalServerErrorException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -21,6 +23,8 @@ export class ActivityLogService {
   constructor(
     @InjectModel(ActivityLog.name)
     private activityLogModel: Model<ActivityLogDocument>,
+
+    @Inject(forwardRef(() => SystemLogService))
     private readonly systemLogService: SystemLogService,
   ) {}
 
@@ -75,7 +79,7 @@ export class ActivityLogService {
       const filters: any = {};
       if (entityType && entityType !== 'ALL') filters.entityType = entityType;
       if (action && action.toString() !== 'ALL') filters.action = action;
-      
+
       if (correlationId) {
         filters.correlationId = { $regex: correlationId, $options: 'i' };
       }
@@ -164,6 +168,18 @@ export class ActivityLogService {
     } catch (error) {
       await this.handleError(error, 'GET', `INTERNAL_COUNT_${type}`, { type });
       return 0;
+    }
+  }
+
+  async findLatest(filter: any) {
+    try {
+      return await this.activityLogModel
+        .findOne(filter)
+        .sort({ createdAt: -1 })
+        .exec();
+    } catch (err) {
+      await this.handleError(err, 'GET', 'findLatest', filter);
+      return null;
     }
   }
 

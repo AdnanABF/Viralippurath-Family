@@ -48,6 +48,7 @@ const EventsAdmin = () => {
   const {
     data: events,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -58,7 +59,7 @@ const EventsAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<AdminEvent>(eventsAdminService.getAll, {
+  } = useAdminData<AdminEvent>("events-admin", eventsAdminService.getAll, {
     status: "ALL",
     search: "",
     startDate: "",
@@ -116,6 +117,8 @@ const EventsAdmin = () => {
       <AdminHeader
         title="Manage Events"
         description="Search and organize family gatherings."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.search || ""}

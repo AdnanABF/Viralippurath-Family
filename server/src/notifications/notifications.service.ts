@@ -179,7 +179,9 @@ export class NotificationsService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to update notification');
     }
   }
@@ -216,7 +218,9 @@ export class NotificationsService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to remove notification');
     }
   }

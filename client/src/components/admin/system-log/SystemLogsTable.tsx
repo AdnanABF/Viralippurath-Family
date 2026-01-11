@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Filter,
 } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
 import type { SystemLog } from "../../../types/system-log.admin";
 import { formatRelativeTime, formatFullDate } from "../../../utils/date";
 
@@ -19,6 +20,7 @@ interface Props {
   onDelete: () => void;
   onViewDetails: (log: SystemLog) => void;
   onFilterTrace: (correlationId: string) => void;
+  cleanupStatus: { canDelete: boolean; daysRemaining: number } | null;
 }
 
 const SystemLogsTable: React.FC<Props> = ({
@@ -26,7 +28,11 @@ const SystemLogsTable: React.FC<Props> = ({
   onDelete,
   onViewDetails,
   onFilterTrace,
+  cleanupStatus,
 }) => {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+
   const getStatusIcon = (code: string) => {
     if (code.startsWith("5"))
       return <ShieldAlert size={16} className="text-red-600" />;
@@ -52,12 +58,28 @@ const SystemLogsTable: React.FC<Props> = ({
         <h3 className="text-sm font-bold text-stone-700 uppercase tracking-wider flex items-center gap-2">
           <Terminal size={16} /> Technical Events
         </h3>
-        <button
-          onClick={() => onDelete()}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white border border-red-100 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition-all shadow-sm"
-        >
-          <Trash2 size={14} /> CLEAN OLD LOGS
-        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => onDelete()}
+            disabled={!cleanupStatus || !cleanupStatus.canDelete}
+            title={
+              !cleanupStatus?.canDelete
+                ? `Available in ${cleanupStatus?.daysRemaining} days`
+                : "Clear logs older than 30 days"
+            }
+            className={`flex items-center gap-2 px-3 py-1.5 border font-bold text-[10px] rounded-lg transition-all shadow-sm
+              ${
+                cleanupStatus?.canDelete
+                  ? "bg-white border-red-100 text-red-600 hover:bg-red-50"
+                  : "bg-stone-50 border-stone-200 text-stone-400 cursor-not-allowed"
+              }`}
+          >
+            <Trash2 size={14} />
+            {cleanupStatus?.canDelete
+              ? "CLEAN OLD LOGS"
+              : `LOCKED (${cleanupStatus?.daysRemaining}DAYS REMAINING)`}
+          </button>
+        )}
       </div>
 
       {/* --- MOBILE VIEW: Card Stack (lg hidden) --- */}

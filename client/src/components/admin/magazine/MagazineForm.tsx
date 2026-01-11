@@ -5,6 +5,7 @@ import type {
   AdminMagazineDraft,
   MagazineStatus,
 } from "../../../types/magazine.admin";
+import { PrimaryButton, SecondaryButton } from "../../ui";
 
 interface Props {
   initial?: AdminMagazine;
@@ -163,35 +164,19 @@ const MagazineForm: React.FC<Props> = ({
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
-        <button
-          type="button"
-          disabled={isLoading}
+        <SecondaryButton
+          variant="form"
           onClick={onCancel}
-          className="order-2 sm:order-1 px-6 py-3 rounded-xl text-stone-600 border border-stone-300
-           hover:bg-stone-100 disabled:bg-stone-400 transition font-medium disabled:opacity-50 disabled:text-white
-           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
           disabled={isLoading}
-          className="order-1 sm:order-2 px-8 py-3 rounded-xl bg-amber-700 text-white
-           hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/20 active:scale-[0.98] disabled:bg-stone-400 flex items-center justify-center gap-2
-           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-        >
-          {isLoading ? (
-            <>
-              {/* Ensure the spinner is a span or has inline-block properties */}
-              <span className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-              </span>
-              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
-            </>
-          ) : (
-            <span>{initial?.uuid ? "Update Magazine" : "Create Magazine"}</span>
-          )}
-        </button>
+          label="Cancel"
+        />
+        <PrimaryButton
+          type="submit"
+          variant="form"
+          label={initial?.uuid ? "Update Magazine" : "Create Magazine"}
+          isLoading={isLoading}
+          loadingLabel={initial?.uuid ? "Updating..." : "Creating..."}
+        />
       </div>
     </form>
   );

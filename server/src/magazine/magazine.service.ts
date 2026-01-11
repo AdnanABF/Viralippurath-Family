@@ -215,7 +215,9 @@ export class MagazineService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to update magazine issue');
     }
   }
@@ -259,7 +261,9 @@ export class MagazineService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to remove magazine issue');
     }
   }

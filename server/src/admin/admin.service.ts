@@ -4,11 +4,13 @@ import {
   BadRequestException,
   ConflictException,
   InternalServerErrorException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Admin, AdminDocument } from './admin.schema';
+import { ConfigService } from '@nestjs/config';
+import { Admin, AdminDocument, AdminRole } from './admin.schema';
 import * as bcrypt from 'bcrypt';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { SystemLogService } from '../system-log/system-log.service';
@@ -20,13 +22,17 @@ import {
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
+  private readonly creatorUuid: string;
 
   constructor(
     @InjectModel(Admin.name)
     private adminModel: Model<AdminDocument>,
+    private configService: ConfigService,
     private readonly activityLogService: ActivityLogService,
     private readonly systemLogService: SystemLogService,
-  ) {}
+  ) {
+    this.creatorUuid = this.configService.get<string>('SYSTEM_CREATOR_UUID')!;
+  }
 
   async findByUsername(username: string, isActive: boolean = true) {
     return await this.adminModel.findOne({ username, isActive }).exec();
@@ -39,22 +45,75 @@ export class AdminService {
         throw new NotFoundException(`Admin with UUID ${uuid} not found`);
       return admin;
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
       await this.handleError(error, 'GET', `/admin/${uuid}`, { uuid });
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Error retrieving admin profile');
     }
   }
 
-  async findAll() {
+  async findAll(query: {
+    page: number;
+    limit: number;
+    role?: string;
+    status?: string;
+    search?: string;
+    adminUserUuid?: string;
+  }) {
     try {
-      return await this.adminModel
-        .find()
-        .select('-passwordHash -refreshTokenHash')
-        .sort({ createdAt: -1 })
-        .lean()
-        .exec();
+      const { page, limit, role, status, search } = query;
+      const skip = (page - 1) * limit;
+
+      const filters: any = {};
+      if (role && role !== 'ALL') {
+        filters.role = role;
+      }
+
+      if (status && status !== 'ALL') {
+        filters.isActive = status == 'ACTIVE' ? true : false;
+      }
+
+      if (search) {
+        const searchRegex = { $regex: search, $options: 'i' };
+        filters.$or = [{ username: searchRegex }, { fullName: searchRegex }];
+      }
+
+      const [admins, totalItems] = await Promise.all([
+        this.adminModel
+          .find(filters)
+          .select('-passwordHash -refreshTokenHash')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .select('username fullName role isActive uuid lastLogin -_id')
+          .exec(),
+        this.adminModel.countDocuments(filters),
+      ]);
+
+      const data = admins.map((admin) => ({
+        ...admin.toObject(),
+        isCreator: admin.uuid === this.creatorUuid,
+      }));
+
+      return {
+        data,
+        meta: {
+          totalItems,
+          itemCount: data.length,
+          itemsPerPage: limit,
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: Number(page),
+        },
+      };
     } catch (error) {
-      await this.handleError(error, 'GET', '/admin', null);
+      await this.handleError(
+        error,
+        'GET',
+        '/admin',
+        query,
+        query.adminUserUuid,
+      );
       throw new InternalServerErrorException('Failed to fetch admin list');
     }
   }
@@ -115,10 +174,7 @@ export class AdminService {
         admin.userUuid,
       );
 
-      if (
-        error instanceof ConflictException ||
-        error instanceof BadRequestException
-      ) {
+      if (error.getStatus && typeof error.getStatus === 'function') {
         throw error;
       }
 
@@ -137,6 +193,26 @@ export class AdminService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (uuid === this.creatorUuid && admin.userUuid != this.creatorUuid) {
+        throw new ForbiddenException(
+          'Security Constraint: The System Creator account is immutable and cannot be deleted.',
+        );
+      }
+
+      if (uuid === admin.userUuid) {
+        if (updateData.isActive === false) {
+          throw new BadRequestException(
+            'Security Constraint: You cannot deactivate your own account. Contact another Super Admin if needed.',
+          );
+        }
+
+        if (updateData.role && updateData.role !== AdminRole.SUPER_ADMIN) {
+          throw new BadRequestException(
+            'Security Constraint: You cannot change your own role. Another Super Admin must perform this action.',
+          );
+        }
+      }
+
       if (updateData.username) {
         const userExists = await this.findByUsername(
           updateData.username,
@@ -186,10 +262,7 @@ export class AdminService {
         admin.userUuid,
       );
 
-      if (
-        error instanceof ConflictException ||
-        error instanceof NotFoundException
-      ) {
+      if (error.getStatus && typeof error.getStatus === 'function') {
         throw error;
       }
 
@@ -202,6 +275,34 @@ export class AdminService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (uuid === this.creatorUuid) {
+        throw new ForbiddenException(
+          'Access Denied: The System Creator account can only be modified by itself.',
+        );
+      }
+
+      if (uuid === admin.userUuid) {
+        throw new BadRequestException(
+          'Self-deletion is not permitted. You cannot remove your own account.',
+        );
+      }
+
+      const adminToDelete = await this.adminModel.findOne({ uuid });
+      if (!adminToDelete) throw new NotFoundException(`Admin not found`);
+
+      if (adminToDelete.role === AdminRole.SUPER_ADMIN) {
+        const superAdminCount = await this.adminModel.countDocuments({
+          role: AdminRole.SUPER_ADMIN,
+          isActive: true,
+        });
+
+        if (superAdminCount <= 1) {
+          throw new BadRequestException(
+            'Security Constraint: Cannot delete the last remaining Super Admin. Promote another user first.',
+          );
+        }
+      }
+
       const deletedAdmin = await this.adminModel
         .findOneAndDelete({ uuid })
         .exec();
@@ -231,7 +332,10 @@ export class AdminService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Failed to remove admin account');
     }
   }

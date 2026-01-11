@@ -1,9 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SystemLog, SystemLogDocument } from './schemas/system-log.schema';
 import { CreateSystemLogDto } from './dto/create-system-log.dto';
 import { getCorrelationId } from '../common/correlation/correlation.storage';
+import { ActivityLogService } from '../activity-log/activity-log.service';
+import {
+  ActivityAction,
+  EntityType,
+} from '../activity-log/schemas/activity-log.schema';
+import { AdminRole } from 'src/admin/admin.schema';
 
 @Injectable()
 export class SystemLogService {
@@ -12,6 +24,9 @@ export class SystemLogService {
   constructor(
     @InjectModel(SystemLog.name)
     private systemLogModel: Model<SystemLogDocument>,
+
+    @Inject(forwardRef(() => ActivityLogService))
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   /**
@@ -107,11 +122,89 @@ export class SystemLogService {
     };
   }
 
-  async cleanOldLogs() {
+  /**
+   * Checks if the Super Admin is allowed to perform a cleanup.
+   * Logic: Must be 30 days since the last recorded cleanup activity.
+   */
+  async getCleanupStatus(admin: {
+    userUuid: string;
+    username: string;
+    role: string;
+  }) {
+    try {
+      // 1. Find the most recent "Delete Old system logs" activity
+      const lastCleanup = await this.activityLogService.findLatest({
+        action: ActivityAction.DELETE,
+        entityType: EntityType.SYSTEM_LOG,
+        entityUuid: 'SYSTEM_CLEANUP',
+      });
+
+      if (!lastCleanup) {
+        return { canDelete: true, lastCleanup: null, daysRemaining: 0 };
+      }
+
+      const lastCleanupDoc = lastCleanup as any;
+
+      const now = new Date();
+      const lastDate = new Date(lastCleanupDoc.createdAt);
+      const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const cooldownPeriod = 30;
+      const canDelete = diffDays >= cooldownPeriod;
+
+      return {
+        canDelete,
+        lastCleanup: lastDate,
+        daysRemaining: canDelete ? 0 : cooldownPeriod - diffDays,
+      };
+    } catch (err) {
+      this.log({
+        errorCode: '500',
+        message: err.message,
+        stack: err.stack,
+        path: 'admin/syslem-logs/cleanupstatus',
+        method: 'cleanUpStatus',
+        userUuid: admin.userUuid,
+      });
+    }
+  }
+
+  async cleanOldLogs(admin: {
+    userUuid: string;
+    username: string;
+    role: string;
+  }) {
+    if (admin.role !== AdminRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only Super Admins can clear system logs');
+    }
+
+    const status = await this.getCleanupStatus(admin);
+    if (!status?.canDelete) {
+      throw new ForbiddenException(
+        `Cleanup cooldown active. Please wait ${status?.daysRemaining} more days.`,
+      );
+    }
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return this.systemLogModel
+
+    const result = await this.systemLogModel
       .deleteMany({ createdAt: { $lt: thirtyDaysAgo } })
       .exec();
+
+    await this.activityLogService.create({
+      adminUuid: admin.userUuid,
+      adminUserName: admin.username,
+      action: ActivityAction.DELETE,
+      entityType: EntityType.SYSTEM_LOG,
+      entityTitle: 'Delete Old system logs',
+      entityUuid: 'SYSTEM_CLEANUP',
+    });
+
+    return {
+      message: 'Successfully cleared logs older than 30 days',
+      deletedCount: result.deletedCount,
+    };
   }
 }

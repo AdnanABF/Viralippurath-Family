@@ -16,6 +16,7 @@ export enum EntityType {
   NOTIFICATION = 'NOTIFICATION',
   GALLERY = 'GALLERY',
   ADMIN = 'ADMIN',
+  SYSTEM_LOG = 'SYSTEM_LOG',
 }
 
 @Schema({ timestamps: true })

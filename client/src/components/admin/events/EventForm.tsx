@@ -8,6 +8,7 @@ import {
   toDateTimeInputValue,
   nowDateTimeInputValue,
 } from "../../../utils/date";
+import { PrimaryButton, SecondaryButton } from "../../ui";
 
 interface Props {
   initial?: AdminEvent;
@@ -192,34 +193,19 @@ const EventForm: React.FC<Props> = ({
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
-        <button
-          type="button"
-          disabled={isLoading}
+        <SecondaryButton
+          variant="form"
           onClick={onCancel}
-          className="order-2 sm:order-1 w-full sm:w-auto px-6 py-3 rounded-xl text-stone-600 border border-stone-300
-                     hover:bg-stone-100 disabled:opacity-50 transition font-medium disabled:bg-stone-400 disabled:text-white 
-                     focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
           disabled={isLoading}
-          className="order-1 sm:order-2 w-full sm:w-auto px-8 py-3 rounded-xl bg-amber-700 text-white
-           hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/20 active:scale-[0.98] disabled:bg-stone-400 flex items-center justify-center gap-2
-            focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-        >
-          {isLoading ? (
-            <>
-              <span className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-              </span>
-              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
-            </>
-          ) : (
-            <span>{initial?.uuid ? "Update Event" : "Save Event"}</span>
-          )}
-        </button>
+          label="Cancel"
+        />
+        <PrimaryButton
+          type="submit"
+          variant="form"
+          label={initial?.uuid ? "Update Event" : "Save Event"}
+          isLoading={isLoading}
+          loadingLabel={initial?.uuid ? "Updating..." : "Creating..."}
+        />
       </div>
     </form>
   );

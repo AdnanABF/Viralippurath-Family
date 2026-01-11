@@ -154,7 +154,9 @@ export class GalleryService {
         admin.userUuid,
       );
 
-      if (error instanceof BadRequestException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to upload gallery item');
     }
   }
@@ -216,7 +218,9 @@ export class GalleryService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to update gallery item');
     }
   }
@@ -257,7 +261,9 @@ export class GalleryService {
         admin.userUuid,
       );
 
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to remove gallery item');
     }
   }

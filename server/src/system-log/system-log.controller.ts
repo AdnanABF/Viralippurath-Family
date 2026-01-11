@@ -5,6 +5,7 @@ import {
   Query,
   ParseIntPipe,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { SystemLogService } from './system-log.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -48,13 +49,19 @@ export class SystemLogController {
    * DELETE /system-log/cleanup
    * Restricted to SUPER_ADMIN only for safety
    */
+  @Get('cleanup-status')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
+  async getCleanupStatus(@Request() req: any) {
+    return await this.systemLogService.getCleanupStatus(req.user);
+  }
+
+  /**
+   * DELETE /system-log/cleanup
+   * Restricted to SUPER_ADMIN only for safety
+   */
   @Delete('cleanup')
   @Roles(AdminRole.SUPER_ADMIN)
-  async cleanup() {
-    const result = await this.systemLogService.cleanOldLogs();
-    return {
-      message: 'Successfully cleared logs older than 30 days',
-      deletedCount: result.deletedCount,
-    };
+  async cleanup(@Request() req) {
+    return await this.systemLogService.cleanOldLogs(req.user);
   }
 }

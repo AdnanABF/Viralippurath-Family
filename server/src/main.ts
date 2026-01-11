@@ -23,6 +23,7 @@ async function setupApp(app: INestApplication) {
   app.enableCors({
     origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : [],
     credentials: true,
+    maxAge: 86400,
   });
 
   // 3. Global Validation Pipes

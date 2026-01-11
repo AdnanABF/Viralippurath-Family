@@ -49,6 +49,7 @@ const MagazineAdmin = () => {
   const {
     data: items,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -59,12 +60,16 @@ const MagazineAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<AdminMagazine>(magazineAdminService.getAll, {
-    status: "ALL",
-    search: "",
-    startDate: "",
-    endDate: "",
-  });
+  } = useAdminData<AdminMagazine>(
+    "magazine-admin",
+    magazineAdminService.getAll,
+    {
+      status: "ALL",
+      search: "",
+      startDate: "",
+      endDate: "",
+    }
+  );
 
   // 2. Action States
   const [editing, setEditing] = useState<AdminMagazine | null>(null);
@@ -130,6 +135,8 @@ const MagazineAdmin = () => {
       <AdminHeader
         title="Manage Magazines"
         description="Digital archive of family publications."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.search || ""}

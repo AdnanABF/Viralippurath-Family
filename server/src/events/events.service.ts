@@ -181,7 +181,9 @@ export class EventsService {
         dto,
         admin.userUuid,
       );
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to update event');
     }
   }
@@ -217,7 +219,9 @@ export class EventsService {
         null,
         admin.userUuid,
       );
-      if (error instanceof NotFoundException) throw error;
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
       throw new InternalServerErrorException('Failed to delete event');
     }
   }

@@ -55,6 +55,7 @@ const NotificationsAdmin = () => {
   const {
     data: items,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -65,13 +66,17 @@ const NotificationsAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<AdminNotification>(notificationsAdminService.getAll, {
-    status: "ALL",
-    priority: "ALL",
-    search: "",
-    startDate: "",
-    endDate: "",
-  });
+  } = useAdminData<AdminNotification>(
+    "notification-admin",
+    notificationsAdminService.getAll,
+    {
+      status: "ALL",
+      priority: "ALL",
+      search: "",
+      startDate: "",
+      endDate: "",
+    }
+  );
 
   // 2. Local Action States
   const [editing, setEditing] = useState<AdminNotification | null>(null);
@@ -122,6 +127,8 @@ const NotificationsAdmin = () => {
       <AdminHeader
         title="Manage Notifications"
         description="Broadcast updates and alerts to the family."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.search || ""}

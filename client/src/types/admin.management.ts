@@ -6,7 +6,8 @@ export interface AdminUser {
   fullName: string;
   role: AdminRole;
   isActive: boolean;
-  lastLogin?: string; // Date string from backend
+  lastLogin?: string;
+  isCreator?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,4 +24,23 @@ export interface AdminUserDraft {
 // For updates (all optional, includes optional password)
 export interface AdminUserUpdate extends Partial<AdminUserDraft> {
   uuid: string;
+}
+
+export interface PaginatedAdmins {
+  data: AdminUser[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}
+
+export interface AdminQueryParams {
+  page?: number;
+  limit?: number;
+  role?: string;
+  status?: string;
+  search?: string;
 }

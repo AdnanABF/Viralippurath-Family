@@ -41,6 +41,7 @@ const ActivityLogAdmin = () => {
   const {
     data: logs,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -51,7 +52,7 @@ const ActivityLogAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<ActivityLog>(activityAdminService.getAll, {
+  } = useAdminData<ActivityLog>("activity-logs", activityAdminService.getAll, {
     type: "ALL",
     action: "ALL",
     startDate: "",
@@ -64,6 +65,8 @@ const ActivityLogAdmin = () => {
       <AdminHeader
         title="Activity Log"
         description="Track all administrative actions."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.correlationId || ""}
