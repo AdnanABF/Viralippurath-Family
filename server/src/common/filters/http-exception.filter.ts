@@ -7,19 +7,22 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { SystemLogService } from '../../system-log/system-log.service'; // Adjust path
+import { SystemLogService } from '../../system-log/system-log.service';
+import { getCorrelationId } from '../correlation/correlation.storage';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
-  // Inject SystemLogService to record "unhandled" or "global" errors
   constructor(private readonly systemLogService: SystemLogService) {}
 
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+
+    // Retrieve the correlation ID for this request
+    const correlationId = getCorrelationId();
 
     const status =
       exception instanceof HttpException
@@ -62,6 +65,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message: Array.isArray(message) ? message[0] : message,
       path: request.url,
+      correlationId,
       timestamp: new Date().toISOString(),
     });
   }

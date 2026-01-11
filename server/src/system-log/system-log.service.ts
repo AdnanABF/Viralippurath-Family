@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SystemLog, SystemLogDocument } from './schemas/system-log.schema';
 import { CreateSystemLogDto } from './dto/create-system-log.dto';
+import { getCorrelationId } from '../common/correlation/correlation.storage';
 
 @Injectable()
 export class SystemLogService {
@@ -15,11 +16,17 @@ export class SystemLogService {
 
   /**
    * Internal method used to record an error or system event.
-   * Can be called from any service or the Global Exception Filter.
    */
   async log(dto: CreateSystemLogDto): Promise<void> {
     try {
-      const newLog = new this.systemLogModel(dto);
+      // Automatically retrieve the Correlation ID from AsyncLocalStorage
+      const correlationId = getCorrelationId();
+
+      const newLog = new this.systemLogModel({
+        ...dto,
+        correlationId, // Attach the ID if it exists
+      });
+
       await newLog.save();
     } catch (err) {
       this.logger.error(`Failed to log the error : ${err.message}`, err);
@@ -29,17 +36,24 @@ export class SystemLogService {
   /**
    * Admin method to retrieve paginated logs for the dashboard.
    */
-  async findAll(query: { page?: number; limit?: number; errorCode?: string }) {
-    const { page = 1, limit = 20, errorCode } = query;
+  async findAll(query: {
+    page?: number;
+    limit?: number;
+    errorCode?: string;
+    correlationId?: string;
+  }) {
+    const { page = 1, limit = 20, errorCode, correlationId } = query;
     const skip = (page - 1) * limit;
 
     const filters: any = {};
     if (errorCode) filters.errorCode = errorCode;
+    // Added ability to filter by correlationId to see all logs for one request
+    if (correlationId) filters.correlationId = correlationId;
 
     const [data, totalItems] = await Promise.all([
       this.systemLogModel
         .find(filters)
-        .sort({ createdAt: -1 }) // Newest logs first
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -58,9 +72,6 @@ export class SystemLogService {
     };
   }
 
-  /**
-   * Optional: Clear logs older than 30 days to keep DB size manageable.
-   */
   async cleanOldLogs() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

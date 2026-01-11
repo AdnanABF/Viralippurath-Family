@@ -6,36 +6,39 @@ export type SystemLogDocument = SystemLog & Document;
 
 @Schema({ timestamps: true, collection: 'system_logs' })
 export class SystemLog {
-  @Prop({ default: randomUUID(), unique: true, required: true })
+  @Prop({ default: () => randomUUID(), unique: true, required: true })
   uuid: string;
 
   @Prop({ required: true })
-  errorCode: string; // e.g., '500', 'E11000', '409'
+  errorCode: string;
 
   @Prop({ required: true })
-  message: string; // Friendly error message or error description
+  message: string;
 
   @Prop({ required: false })
-  stack: string; // The full technical stack trace
+  stack: string;
 
   @Prop({ required: true })
-  path: string; // The API endpoint (e.g., /api/events)
+  path: string;
 
   @Prop({ required: true })
-  method: string; // HTTP Method: GET, POST, PUT, DELETE
+  method: string;
 
   @Prop({ type: Object, required: false })
-  payload: any; // The request body or params that caused the error
+  payload: any;
 
   @Prop({ required: false })
-  userUuid: string; // The ID of the user who was logged in (if any)
+  userUuid: string;
 
   @Prop({ required: false })
-  ipAddress: string; // IP of the requester for security auditing
+  ipAddress: string;
+
+  @Prop({ required: false })
+  correlationId: string;
 }
 
 export const SystemLogSchema = SchemaFactory.createForClass(SystemLog);
 
-// Add an index for performance when searching logs by date or type
 SystemLogSchema.index({ createdAt: -1 });
 SystemLogSchema.index({ errorCode: 1 });
+SystemLogSchema.index({ correlationId: 1 });

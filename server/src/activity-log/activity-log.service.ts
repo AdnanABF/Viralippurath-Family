@@ -12,6 +12,7 @@ import {
 } from './schemas/activity-log.schema';
 import { CreateActivityLogDto } from './dto/create-activity-log.dto';
 import { SystemLogService } from '../system-log/system-log.service';
+import { getCorrelationId } from '../common/correlation/correlation.storage';
 
 @Injectable()
 export class ActivityLogService {
@@ -28,11 +29,15 @@ export class ActivityLogService {
    */
   async create(createActivityLogDto: CreateActivityLogDto) {
     try {
-      const newLog = new this.activityLogModel(createActivityLogDto);
+      const correlationId = getCorrelationId(); // Get ID from storage
+
+      const newLog = new this.activityLogModel({
+        ...createActivityLogDto,
+        correlationId, // Attach it to the activity log
+      });
+
       return await newLog.save();
     } catch (error) {
-      // We log the error but don't necessarily want to throw and crash
-      // the primary action (like event creation) just because the log failed.
       await this.handleError(
         error,
         'POST',
@@ -53,6 +58,7 @@ export class ActivityLogService {
     startDate?: string;
     endDate?: string;
     adminUserUuid?: string;
+    correlationId?: string; // Support filtering by ID
   }) {
     try {
       const {
@@ -62,12 +68,14 @@ export class ActivityLogService {
         action,
         startDate,
         endDate,
+        correlationId,
       } = query;
       const skip = (page - 1) * limit;
 
       const filters: any = {};
       if (entityType && entityType !== 'ALL') filters.entityType = entityType;
       if (action && action.toString() !== 'ALL') filters.action = action;
+      if (correlationId) filters.correlationId = correlationId;
 
       if (startDate || endDate) {
         filters.createdAt = {};
@@ -86,7 +94,7 @@ export class ActivityLogService {
           .skip(skip)
           .limit(limit)
           .select(
-            'uuid adminUserName action entityType entityTitle createdAt -_id',
+            'uuid adminUserName action entityType entityTitle correlationId createdAt -_id',
           )
           .exec(),
         this.activityLogModel.countDocuments(filters).exec(),
@@ -127,7 +135,7 @@ export class ActivityLogService {
         .sort({ createdAt: -1 })
         .limit(limit)
         .select(
-          'uuid adminUserName action entityType entityTitle createdAt -_id',
+          'uuid adminUserName action entityType entityTitle correlationId createdAt -_id',
         )
         .exec();
     } catch (error) {
@@ -138,7 +146,7 @@ export class ActivityLogService {
         { limit },
         adminUserUuid,
       );
-      return []; // Return empty array so dashboard doesn't crash
+      return [];
     }
   }
 
@@ -151,7 +159,6 @@ export class ActivityLogService {
         .countDocuments({ entityType: type })
         .exec();
     } catch (error) {
-      // In count methods, we usually log and return 0
       await this.handleError(error, 'GET', `INTERNAL_COUNT_${type}`, { type });
       return 0;
     }
