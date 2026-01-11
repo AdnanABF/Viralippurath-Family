@@ -1,12 +1,15 @@
 import api from "./api";
 import type { DashboardStats } from "../types/dashboard.admin";
 
+/**
+ * Service for fetching administrative overview data.
+ */
 export const dashboardAdminService = {
   /**
-   * Fetches the counts for the dashboard cards
+   * Fetches the counts for the dashboard cards.
+   * api.ts automatically unwraps 'response.data.data'.
    */
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const { data } = await api.get<DashboardStats>("/admin/dashboard/stats");
-    return data;
+    return (await api.get<DashboardStats>("/admin/dashboard/stats")) as any;
   },
 };

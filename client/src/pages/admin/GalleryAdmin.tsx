@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 // Types and services
 import type { AdminGalleryItem } from "../../types/gallery.admin";
@@ -47,6 +46,7 @@ const GalleryAdmin = () => {
   const {
     data: items,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -57,13 +57,17 @@ const GalleryAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<AdminGalleryItem>(galleryAdminService.getAll, {
-    status: "ALL",
-    album: "ALL",
-    search: "",
-    startDate: "",
-    endDate: "",
-  });
+  } = useAdminData<AdminGalleryItem>(
+    "gallery-admin",
+    galleryAdminService.getAll,
+    {
+      status: "ALL",
+      album: "ALL",
+      search: "",
+      startDate: "",
+      endDate: "",
+    }
+  );
 
   // 2. Local UI States
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
@@ -80,16 +84,16 @@ const GalleryAdmin = () => {
     try {
       const uuid = editing?.uuid;
       if (uuid && uuid !== "") {
+        // Success toast is now handled globally by api.ts interceptor
         await galleryAdminService.update(uuid, formData);
-        toast.success("Image updated successfully");
       } else {
+        // Success toast is now handled globally by api.ts interceptor
         await galleryAdminService.create(formData);
-        toast.success("Image added to gallery");
       }
       setEditing(null);
       refresh();
     } catch {
-      /* API handles global error reporting */
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsSaving(false);
     }
@@ -99,11 +103,11 @@ const GalleryAdmin = () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
+      // Success toast is now handled globally by api.ts interceptor
       await galleryAdminService.remove(deleteTarget.uuid);
-      toast.success("Image deleted successfully");
       refresh();
     } catch {
-      /* API handles global error reporting */
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -115,6 +119,8 @@ const GalleryAdmin = () => {
       <AdminHeader
         title="Manage Gallery"
         description="Organize family photos and albums."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.search || ""}

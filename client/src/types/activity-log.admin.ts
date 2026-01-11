@@ -4,6 +4,7 @@ export interface ActivityLog {
   action: "CREATE" | "UPDATE" | "DELETE";
   entityType: "EVENT" | "MAGAZINE" | "NOTIFICATION" | "GALLERY" | "ADMIN";
   entityTitle: string;
+  correlationId?: string;
   createdAt: string;
 }
 
@@ -25,4 +26,5 @@ export interface ActivityLogQueryParams {
   action?: string;
   startDate?: string;
   endDate?: string;
+  correlationId?: string;
 }

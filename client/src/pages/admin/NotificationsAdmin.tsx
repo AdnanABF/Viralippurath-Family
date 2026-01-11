@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 // Types and services
 import type {
@@ -56,6 +55,7 @@ const NotificationsAdmin = () => {
   const {
     data: items,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -66,13 +66,17 @@ const NotificationsAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<AdminNotification>(notificationsAdminService.getAll, {
-    status: "ALL",
-    priority: "ALL",
-    search: "",
-    startDate: "",
-    endDate: "",
-  });
+  } = useAdminData<AdminNotification>(
+    "notification-admin",
+    notificationsAdminService.getAll,
+    {
+      status: "ALL",
+      priority: "ALL",
+      search: "",
+      startDate: "",
+      endDate: "",
+    }
+  );
 
   // 2. Local Action States
   const [editing, setEditing] = useState<AdminNotification | null>(null);
@@ -92,15 +96,13 @@ const NotificationsAdmin = () => {
       if ("uuid" in data && data.uuid) {
         const { uuid, ...payload } = data;
         await notificationsAdminService.update(uuid, payload);
-        toast.success("Notification updated successfully");
       } else {
         await notificationsAdminService.create(data as AdminNotificationDraft);
-        toast.success("Notification created successfully");
       }
       setEditing(null);
       refresh();
     } catch {
-      // API error handling
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsSaving(false);
     }
@@ -111,10 +113,9 @@ const NotificationsAdmin = () => {
     setIsDeleting(true);
     try {
       await notificationsAdminService.remove(deleteTarget.uuid);
-      toast.success("Notification deleted successfully");
       refresh();
     } catch {
-      // API error handling
+      /* api.ts handles global error reporting via toast.error */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -126,6 +127,8 @@ const NotificationsAdmin = () => {
       <AdminHeader
         title="Manage Notifications"
         description="Broadcast updates and alerts to the family."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.search || ""}

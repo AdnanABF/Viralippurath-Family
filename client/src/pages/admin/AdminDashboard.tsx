@@ -5,6 +5,7 @@ import QuickActions from "../../components/admin/dashboard/QuickActions";
 import RecentActivity from "../../components/admin/dashboard/RecentActivity";
 import { dashboardAdminService } from "../../services/dashboard.service";
 import { useAuth } from "../../context/AuthContext";
+import { AdminError } from "../../components/ui";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -14,17 +15,20 @@ const AdminDashboard = () => {
     data: stats,
     isLoading,
     isError,
+    refetch,
   } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: dashboardAdminService.getDashboardStats,
   });
 
-  // 2. Handle Error State (Optional but recommended)
+  // 2. Handle Error State
   if (isError) {
     return (
-      <div className="p-6 text-red-600 bg-red-50 rounded-lg border border-red-100">
-        Error loading dashboard statistics. Please try refreshing the page.
-      </div>
+      <AdminError
+        title="Unable to load overview"
+        message="There was a connection error. Please refresh the page to try again."
+        onRetry={() => refetch()}
+      />
     );
   }
 

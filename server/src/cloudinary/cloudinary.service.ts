@@ -1,52 +1,77 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   v2 as cloudinary,
   UploadApiResponse,
   UploadApiErrorResponse,
 } from 'cloudinary';
+import { SystemLogService } from '../system-log/system-log.service';
 const toStream = require('buffer-to-stream');
 
 @Injectable()
 export class CloudinaryService {
-  constructor(private configService: ConfigService) {}
+  private readonly logger = new Logger(CloudinaryService.name);
 
-  async generateSignature(folder: string = 'general') {
-    const timestamp = Math.round(new Date().getTime() / 1000);
-    const prefix =
-      this.configService.get<string>('CLOUDINARY_FOLDER_PREFIX') || 'app';
-    const folderPath = `${prefix}/${folder}`;
+  constructor(
+    private configService: ConfigService,
+    private readonly systemLogService: SystemLogService,
+  ) {}
 
-    // Get the secret and ensure it's treated as a string
-    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
+  /**
+   * Generates a signature for secure client-side uploads.
+   */
+  async generateSignature(folder: string = 'general', adminUserUuid?: string) {
+    try {
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const prefix =
+        this.configService.get<string>('CLOUDINARY_FOLDER_PREFIX') || 'app';
+      const folderPath = `${prefix}/${folder}`;
+      const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
 
-    if (!apiSecret) {
-      throw new Error(
-        'CLOUDINARY_API_SECRET is not defined in environment variables',
+      if (!apiSecret) {
+        throw new Error('CLOUDINARY_API_SECRET is missing in environment');
+      }
+
+      const signature = cloudinary.utils.api_sign_request(
+        { folder: folderPath, timestamp },
+        apiSecret,
+      );
+
+      return {
+        data: {
+          signature,
+          timestamp,
+          cloudName: this.configService.get<string>('CLOUDINARY_NAME'),
+          apiKey: this.configService.get<string>('CLOUDINARY_API_KEY'),
+          folder: folderPath,
+        },
+        message: 'Upload signature generated successfully',
+      };
+    } catch (error) {
+      await this.handleError(
+        error,
+        'GET',
+        'CLOUDINARY_SIGNATURE',
+        { folder },
+        adminUserUuid,
+      );
+      throw new InternalServerErrorException(
+        'Failed to generate upload signature',
       );
     }
-
-    const signature = await cloudinary.utils.api_sign_request(
-      {
-        folder: folderPath,
-        timestamp: timestamp,
-      },
-      apiSecret,
-    );
-
-    return {
-      signature,
-      timestamp,
-      cloudName: this.configService.get<string>('CLOUDINARY_NAME'),
-      apiKey: this.configService.get<string>('CLOUDINARY_API_KEY'),
-      folder: folderPath,
-    };
   }
 
+  /**
+   * Internal helper to upload files directly from the server buffer.
+   */
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'general',
-    // Added resourceType parameter to handle different file kinds
     resourceType: 'auto' | 'image' | 'video' | 'raw' = 'auto',
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
     const prefix =
@@ -57,18 +82,25 @@ export class CloudinaryService {
         {
           folder: `${prefix}/${folder}`,
           resource_type: resourceType,
-          // This ensures the filename is somewhat preserved in Cloudinary
           public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
         },
-        (error, result) => {
-          if (error) return reject(error);
+        async (error, result) => {
+          if (error) {
+            await this.handleError(error, 'POST', 'CLOUDINARY_UPLOAD', {
+              folder,
+              fileName: file.originalname,
+            });
+            return reject(error);
+          }
 
           if (!result) {
-            return reject(
-              new BadRequestException(
-                'Cloudinary upload failed: No result returned',
-              ),
+            const noResultErr = new Error(
+              'Cloudinary upload returned no result',
             );
+            await this.handleError(noResultErr, 'POST', 'CLOUDINARY_UPLOAD', {
+              folder,
+            });
+            return reject(noResultErr);
           }
 
           resolve(result);
@@ -79,20 +111,54 @@ export class CloudinaryService {
     });
   }
 
+  /**
+   * Internal helper to delete assets from Cloudinary.
+   */
   async deleteFile(
     publicId: string,
     resourceType: string = 'image',
   ): Promise<any> {
     return new Promise((resolve, reject) => {
-      // For PDFs/Raw files, Cloudinary sometimes needs the resource_type specified to delete
       cloudinary.uploader.destroy(
         publicId,
         { resource_type: resourceType },
-        (error, result) => {
-          if (error) return reject(error);
+        async (error, result) => {
+          if (error) {
+            await this.handleError(error, 'DELETE', 'CLOUDINARY_DELETE', {
+              publicId,
+            });
+            return reject(error);
+          }
           resolve(result);
         },
       );
+    });
+  }
+
+  /**
+   * Helper method to record system logs for Cloudinary operations
+   */
+  private async handleError(
+    error: any,
+    method: string,
+    path: string,
+    payload: any,
+    userUuid?: string,
+  ) {
+    this.logger.error(
+      `${method} ${path} failed: ${error.message}`,
+      error.stack,
+    );
+
+    await this.systemLogService.log({
+      errorCode:
+        error.http_code?.toString() || error.name || 'CLOUDINARY_ERROR',
+      message: error.message,
+      stack: error.stack,
+      path,
+      method,
+      payload,
+      userUuid: userUuid || 'SYSTEM_CLOUD',
     });
   }
 }

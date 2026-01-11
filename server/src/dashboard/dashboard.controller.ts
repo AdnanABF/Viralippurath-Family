@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -12,11 +12,12 @@ export class DashboardController {
 
   /**
    * GET /admin/dashboard/stats
-   * Returns a summary of all published content for the dashboard cards
+   * Returns a summary of all published content for the dashboard cards.
+   * Access is restricted to SUPER_ADMIN and ADMIN roles.
    */
   @Get('stats')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
-  async getStats() {
-    return this.dashboardService.getSummaryStats();
+  async getStats(@Request() req) {
+    return this.dashboardService.getSummaryStats(req?.user?.uuid);
   }
 }

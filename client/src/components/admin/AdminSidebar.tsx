@@ -48,6 +48,7 @@ const AdminSidebar = () => {
         className={`
         flex flex-row items-center justify-around w-full px-2
         lg:flex-col lg:space-y-2 lg:flex-1 lg:px-4 lg:justify-start
+        overflow-x-scroll scroll-smooth
       `}
       >
         {loading ? (

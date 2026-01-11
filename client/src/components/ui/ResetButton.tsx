@@ -1,4 +1,4 @@
-import { RotateCw } from "lucide-react";
+import { FunnelX } from "lucide-react";
 
 interface ResetButtonProps {
   onClick: () => void;
@@ -13,7 +13,7 @@ const ResetButton = ({
   title = "Reset Filters",
   className = "",
   disabled = false,
-  icon = <RotateCw size={18} />,
+  icon = <FunnelX size={18} />,
 }: ResetButtonProps) => (
   <button
     onClick={onClick}

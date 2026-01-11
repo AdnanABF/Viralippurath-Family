@@ -1,7 +1,8 @@
-import { PenLine, Trash2, Shield, Clock } from "lucide-react";
+import { Shield, ShieldCheck, Clock } from "lucide-react";
 import type { AdminUser } from "../../../types/admin.management";
 import AdminStatusBadge from "./AdminStatusBadge";
 import { formatDateTime } from "../../../utils/date";
+import { DeleteButton, EditButton } from "../../ui";
 
 interface Props {
   admins: AdminUser[];
@@ -23,6 +24,7 @@ const AdminsTable: React.FC<Props> = ({
       {/* --- MOBILE VIEW: Admin User Cards --- */}
       <div className="grid grid-cols-1 gap-4 lg:hidden">
         {admins.map((admin) => {
+          const isCreator = admin.isCreator;
           const isSelf = admin.uuid === currentUserUuid;
           return (
             <div
@@ -48,9 +50,15 @@ const AdminsTable: React.FC<Props> = ({
                   <div>
                     <h3 className="font-bold text-stone-900 flex items-center gap-2">
                       {admin.fullName}
+                      {isCreator && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-md border border-amber-200">
+                          <ShieldCheck size={12} />
+                          Founder
+                        </span>
+                      )}
                       {isSelf && (
                         <span className="text-[10px] bg-amber-700 text-white px-1.5 py-0.5 rounded uppercase font-bold">
-                          Me
+                          You
                         </span>
                       )}
                     </h3>
@@ -78,20 +86,20 @@ const AdminsTable: React.FC<Props> = ({
               </div>
 
               <div className="flex gap-2">
-                <button
-                  disabled={disabled}
-                  onClick={() => onEdit(admin)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium active:bg-stone-50 transition-colors"
-                >
-                  <PenLine size={14} /> Edit
-                </button>
-                <button
-                  disabled={disabled || isSelf}
-                  onClick={() => onDelete(admin.uuid)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-100 bg-red-50 text-red-600 text-sm font-medium active:bg-red-100 disabled:opacity-50 transition-colors"
-                >
-                  <Trash2 size={14} /> Delete
-                </button>
+                {(!isCreator || (isCreator && isSelf)) && (
+                  <EditButton
+                    disabled={disabled}
+                    onClick={() => onEdit(admin)}
+                    variant="mobile"
+                  />
+                )}
+                {!isCreator && (
+                  <DeleteButton
+                    disabled={disabled || isSelf}
+                    onClick={() => onDelete(admin.uuid)}
+                    variant="mobile"
+                  />
+                )}
               </div>
             </div>
           );
@@ -114,6 +122,7 @@ const AdminsTable: React.FC<Props> = ({
             </thead>
             <tbody className="divide-y divide-stone-100">
               {admins.map((admin) => {
+                const isCreator = admin.isCreator;
                 const isSelf = admin.uuid === currentUserUuid;
                 return (
                   <tr
@@ -123,8 +132,14 @@ const AdminsTable: React.FC<Props> = ({
                     <td className="p-4 font-medium text-stone-900">
                       <div className="flex items-center gap-2">
                         {admin.fullName}
+                        {isCreator && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-md border border-amber-200">
+                            <ShieldCheck size={12} />
+                            Founder
+                          </span>
+                        )}
                         {isSelf && (
-                          <span className="text-[10px] bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
+                          <span className="text-[10px] bg-amber-700 text-white px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
                             You
                           </span>
                         )}
@@ -147,32 +162,32 @@ const AdminsTable: React.FC<Props> = ({
                     <td className="p-4 text-sm text-stone-500">
                       {admin.lastLogin
                         ? formatDateTime(admin.lastLogin)
-                        : "Never"}
+                        : "Never logged in"}
                     </td>
                     <td className="p-4">
                       <AdminStatusBadge isActive={admin.isActive} />
                     </td>
                     <td className="p-4 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button
-                          disabled={disabled}
-                          onClick={() => onEdit(admin)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-stone-700 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <PenLine size={14} /> <span>Edit</span>
-                        </button>
-                        <button
-                          disabled={disabled || isSelf}
-                          onClick={() => onDelete(admin.uuid)}
-                          title={
-                            isSelf
-                              ? "You cannot delete your own account"
-                              : "Delete Admin"
-                          }
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all disabled:bg-stone-100 disabled:text-stone-400 disabled:border-stone-200 disabled:cursor-not-allowed min-w-21.25"
-                        >
-                          <Trash2 size={14} /> <span>Delete</span>
-                        </button>
+                        {(!isCreator || (isCreator && isSelf)) && (
+                          <EditButton
+                            disabled={disabled}
+                            onClick={() => onEdit(admin)}
+                            variant="normal"
+                          />
+                        )}
+                        {!isCreator && (
+                          <DeleteButton
+                            disabled={disabled || isSelf}
+                            onClick={() => onDelete(admin.uuid)}
+                            variant="normal"
+                            title={
+                              isSelf
+                                ? "You cannot delete your own account"
+                                : "Delete Admin"
+                            }
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>

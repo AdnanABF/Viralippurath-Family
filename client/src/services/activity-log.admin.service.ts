@@ -5,6 +5,10 @@ import type {
   ActivityLogQueryParams,
 } from "../types/activity-log.admin";
 
+/**
+ * Service for auditing administrative actions across the portal.
+ * api.ts automatically unwraps 'response.data.data'.
+ */
 export const activityAdminService = {
   /**
    * Fetches paginated activity logs with optional filtering.
@@ -12,20 +16,18 @@ export const activityAdminService = {
   async getAll(
     params?: ActivityLogQueryParams
   ): Promise<PaginatedActivityResponse> {
-    const { data } = await api.get<PaginatedActivityResponse>(
-      "/admin/activities",
-      { params }
-    );
-    return data;
+    return (await api.get<PaginatedActivityResponse>("/admin/activities", {
+      params,
+    })) as any;
   },
 
   /**
    * Fetches only the most recent logs using the dedicated lightweight endpoint.
+   * Useful for the Dashboard 'Recent Activity' widget.
    */
   async getRecent(limit: number = 5): Promise<ActivityLog[]> {
-    const { data } = await api.get<ActivityLog[]>(`/admin/activities/recent`, {
+    return (await api.get<ActivityLog[]>(`/admin/activities/recent`, {
       params: { limit },
-    });
-    return data;
+    })) as any;
   },
 };

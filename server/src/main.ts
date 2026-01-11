@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 // Create the express instance for Vercel
 const server = express();
@@ -21,6 +23,7 @@ async function setupApp(app: INestApplication) {
   app.enableCors({
     origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : [],
     credentials: true,
+    maxAge: 86400,
   });
 
   // 3. Global Validation Pipes

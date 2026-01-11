@@ -19,16 +19,41 @@ api.interceptors.request.use((config) => {
 });
 
 /**
- * Response Interceptor: Handle Token Refreshing (401) and Global Errors (429, 500)
+ * Response Interceptor
  */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // correlationId is now part of the envelope
+    const { success, message, correlationId, ...payload } = response.data;
+
+    // 2. Automated Success Toasts
+    // We only show toasts for mutations (POST, PATCH, DELETE)
+    const isMutation = ["post", "patch", "delete"].includes(
+      response.config.method || ""
+    );
+    const skipToast = response.config.headers?.["x-skip-toast"] === "true";
+
+    if (success && isMutation && message && !skipToast) {
+      toast.success(message);
+    }
+
+    // 3. Clean Return Logic
+    // If the payload only has a 'data' key (e.g. for arrays or single primitives), return that value.
+    const payloadKeys = Object.keys(payload);
+    if (payloadKeys.length === 1 && payloadKeys[0] === "data") {
+      return payload.data;
+    }
+
+    // Otherwise, return the whole payload (e.g. { data: [], meta: {} })
+    // This ensures pagination 'meta' is preserved and returned.
+    return payload;
+  },
   async (error) => {
     const originalRequest = error.config;
-    // Use optional chaining safely for status
     const status = error.response?.status;
+    const skipToast = originalRequest?.headers?.["x-skip-toast"] === "true";
 
-    // 1. Handle 401 Unauthorized
+    // 1. Handle 401 Unauthorized (Token Refresh Logic)
     if (
       status === 401 &&
       !originalRequest._retry &&
@@ -38,25 +63,26 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem("refreshToken");
-        const userUuid = getUserIdFromToken(); // Decodes 'sub' from the current token
+        const userUuid = getUserIdFromToken();
 
         if (!refreshToken || !userUuid) {
-          logout(); // Redirects to login and clears storage
+          logout();
           return Promise.reject(error);
         }
 
-        // Attempt to get a new token pair using userId and refreshToken
+        // Standard Axios call (not 'api' instance) to avoid infinite loops
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
           { userUuid, refreshToken }
         );
 
-        // Update local storage with new rotated tokens
-        localStorage.setItem("accessToken", res.data.accessToken);
-        localStorage.setItem("refreshToken", res.data.refreshToken);
+        // Note: Access tokens now arrive in res.data.data.accessToken due to backend changes
+        const { accessToken, refreshToken: newRefreshToken } = res.data.data;
 
-        // Optimization: Ensure the retry uses the fresh instance config
-        originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", newRefreshToken);
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         logout();
@@ -64,44 +90,50 @@ api.interceptors.response.use(
       }
     }
 
-    // 2. Global Error Toast Handling
+    // 2. Global Error Handling with Correlation ID support
     if (
       !originalRequest?._retry ||
       !originalRequest.url?.includes("/auth/refresh")
     ) {
-      // Skip toast for 401s that are about to be retried
-      if (status === 401 && !originalRequest._retry)
-        return Promise.reject(error);
-
-      if (status === 429 && originalRequest.url?.includes("/auth/login")) {
+      if ((status === 401 && !originalRequest._retry) || skipToast) {
         return Promise.reject(error);
       }
 
-      let message = "Something went wrong";
+      let errorMessage = "An unexpected error occurred";
+      // Extract correlationId from the backend error response
+      const correlationId = error.response?.data?.correlationId;
 
       if (status === 429) {
-        message = "Too many requests. Please slow down.";
-      } else if (status && status < 500) {
-        const backendMessage = error?.response?.data?.message;
+        errorMessage = "Too many requests. Please try again in a minute.";
+      } else if (error.response?.data?.message) {
+        // Capture the standard message from our GlobalExceptionFilter
+        const backendMessage = error.response.data.message;
+        errorMessage = Array.isArray(backendMessage)
+          ? backendMessage[0]
+          : backendMessage;
 
-        if (backendMessage) {
-          let finalMessage = Array.isArray(backendMessage)
-            ? backendMessage[0]
-            : backendMessage;
-
-          if (finalMessage.includes("should not exist")) {
-            finalMessage = "Invalid data submitted. Please check the form.";
-          }
-
-          message = finalMessage;
+        // Final safety check for technical strings if the backend missed them
+        if (errorMessage.includes("should not exist")) {
+          errorMessage = "Invalid data submitted. Please check the form.";
         }
-      } else if (status >= 500) {
-        message = "Server error. Please try again later.";
       } else if (error.code === "ECONNABORTED") {
-        message = "Request timed out. Check your connection.";
+        errorMessage = "Connection timed out. Please check your internet.";
+      } else if (status >= 500) {
+        errorMessage = "Server is currently unavailable. Please try later.";
       }
 
-      toast.error(message);
+      let finalToastMessage = errorMessage;
+
+      if (correlationId && status >= 500) {
+        finalToastMessage = `${errorMessage}\nRequest ID: ${correlationId}`;
+      }
+
+      toast.error(finalToastMessage, {
+        duration: status >= 500 ? 6000 : 4000,
+        // Optional: you can add a style object here if you want it to look distinct
+        style:
+          status >= 500 ? { border: "1px solid #ff4b4b", padding: "16px" } : {},
+      });
     }
 
     return Promise.reject(error);

@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -15,10 +16,13 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ActivityLogController } from './activity-log/activity-log.controller';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SystemLogModule } from './system-log/system-log.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 @Module({
   imports: [
-    // MUST be first
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -27,24 +31,19 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 100, // High default limit for general use
+        limit: 100,
       },
     ]),
-
-    // MUST come before EventsModule
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const uri = config.get<string>('MONGODB_URI');
-
         if (!uri) {
           throw new Error('MONGODB_URI is not defined');
         }
-
         return { uri };
       },
     }),
-
     EventsModule,
     AuthModule,
     AdminModule,
@@ -55,8 +54,25 @@ import { DashboardModule } from './dashboard/dashboard.module';
     CloudinaryModule,
     ActivityLogModule,
     DashboardModule,
+    SystemLogModule,
   ],
   controllers: [AppController, ActivityLogController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER, // Global exception filter registered
+      useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR, // Global success response interceptor registered
+      useClass: TransformInterceptor,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply CorrelationIdMiddleware to all routes ('*')
+    // This ensures every request gets a unique ID before hitting controllers
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

@@ -1,23 +1,29 @@
 import api from "./api";
-import type { AdminUser, AdminUserDraft } from "../types/admin.management";
+import type {
+  AdminQueryParams,
+  AdminUser,
+  AdminUserDraft,
+  PaginatedAdmins,
+} from "../types/admin.management";
 
+/**
+ * Service handling system admin user management.
+ * api.ts now automatically unwraps 'response.data.data'.
+ */
 export const adminManagementService = {
-  async getAll(): Promise<AdminUser[]> {
-    const { data } = await api.get("/admin");
-    return data;
+  async getAll(params?: AdminQueryParams): Promise<PaginatedAdmins> {
+    return await api.get("/admin", { params });
   },
 
   async create(payload: AdminUserDraft): Promise<AdminUser> {
-    const { data } = await api.post("/admin", payload);
-    return data;
+    return (await api.post<AdminUser>("/admin", payload)) as any;
   },
 
   async update(
     uuid: string,
     payload: Partial<AdminUserDraft>
   ): Promise<AdminUser> {
-    const { data } = await api.patch(`/admin/${uuid}`, payload);
-    return data;
+    return (await api.patch<AdminUser>(`/admin/${uuid}`, payload)) as any;
   },
 
   async remove(uuid: string): Promise<void> {

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import SecondaryButton from "./SecondaryButton";
+import PrimaryButton from "./PrimaryButton";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -42,29 +44,17 @@ const ConfirmModal = ({
         )}
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            disabled={isLoading}
+          <SecondaryButton
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {cancelText}
-          </button>
-
-          <button
-            type="button"
             disabled={isLoading}
+            label={cancelText}
+          />
+          <PrimaryButton
+            variant="danger"
+            label={confirmText}
             onClick={onConfirm}
-            className="min-w-25 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all font-medium shadow-sm active:scale-95 disabled:bg-red-400 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-              </>
-            ) : (
-              confirmText
-            )}
-          </button>
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>
