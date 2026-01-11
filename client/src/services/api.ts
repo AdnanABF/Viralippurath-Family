@@ -19,12 +19,12 @@ api.interceptors.request.use((config) => {
 });
 
 /**
- * Response Interceptor: Handle Token Refreshing, Data Unwrapping, and Global Toasts
+ * Response Interceptor
  */
 api.interceptors.response.use(
   (response) => {
-    // 1. Destructure the envelope: success, message, and the rest (payload)
-    const { success, message, ...payload } = response.data;
+    // correlationId is now part of the envelope
+    const { success, message, correlationId, ...payload } = response.data;
 
     // 2. Automated Success Toasts
     // We only show toasts for mutations (POST, PATCH, DELETE)
@@ -90,17 +90,18 @@ api.interceptors.response.use(
       }
     }
 
-    // 2. Global Error Handling (Standardized)
+    // 2. Global Error Handling with Correlation ID support
     if (
       !originalRequest?._retry ||
       !originalRequest.url?.includes("/auth/refresh")
     ) {
-      // We don't toast if it's a 401 being retried or if the request explicitly asks to skip toasts
       if ((status === 401 && !originalRequest._retry) || skipToast) {
         return Promise.reject(error);
       }
 
       let errorMessage = "An unexpected error occurred";
+      // Extract correlationId from the backend error response
+      const correlationId = error.response?.data?.correlationId;
 
       if (status === 429) {
         errorMessage = "Too many requests. Please try again in a minute.";
@@ -121,7 +122,18 @@ api.interceptors.response.use(
         errorMessage = "Server is currently unavailable. Please try later.";
       }
 
-      toast.error(errorMessage);
+      let finalToastMessage = errorMessage;
+
+      if (correlationId && status >= 500) {
+        finalToastMessage = `${errorMessage}\nRequest ID: ${correlationId}`;
+      }
+
+      toast.error(finalToastMessage, {
+        duration: status >= 500 ? 6000 : 4000,
+        // Optional: you can add a style object here if you want it to look distinct
+        style:
+          status >= 500 ? { border: "1px solid #ff4b4b", padding: "16px" } : {},
+      });
     }
 
     return Promise.reject(error);

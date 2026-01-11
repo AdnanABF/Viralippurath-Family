@@ -18,13 +18,14 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { AdminRole } from '../admin/admin.schema';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post()
   async create(@Body() dto: CreateEventDto, @Request() req) {
     if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
@@ -36,9 +37,10 @@ export class EventsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Get('admin')
   async getAllAdmin(
+    @Request() req,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('status') status?: string,
@@ -53,11 +55,12 @@ export class EventsController {
       search,
       startDate,
       endDate,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Patch(':uuid')
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
@@ -75,7 +78,7 @@ export class EventsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Delete(':uuid')
   async remove(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,

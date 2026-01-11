@@ -18,6 +18,7 @@ import { UpdateMagazineDto } from './dto/update-magazine.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { AdminRole } from '../admin/admin.schema';
 
 @Controller('magazine')
 export class MagazineController {
@@ -31,9 +32,10 @@ export class MagazineController {
 
   // ===== ADMIN =====
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Get('admin')
   async getAllAdmin(
+    @Request() req,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('status') status?: string,
@@ -48,18 +50,19 @@ export class MagazineController {
       search,
       startDate,
       endDate,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post()
   async create(@Body() dto: CreateMagazineDto, @Request() req) {
     return await this.magazineService.create(dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Patch(':uuid')
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
@@ -70,7 +73,7 @@ export class MagazineController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Delete(':uuid')
   async remove(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,

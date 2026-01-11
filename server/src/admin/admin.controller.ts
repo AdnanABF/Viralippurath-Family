@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
   BadRequestException,
@@ -25,8 +26,22 @@ export class AdminController {
 
   @Get()
   @Roles(AdminRole.SUPER_ADMIN)
-  async getAllAdmins() {
-    return await this.adminService.findAll();
+  async getAllAdmins(
+    @Request() req,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('role') role?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    return await this.adminService.findAll({
+      page: Number(page),
+      limit: Number(limit),
+      role,
+      status,
+      search,
+      adminUserUuid: req?.user?.uuid,
+    });
   }
 
   @Post()
@@ -48,12 +63,6 @@ export class AdminController {
   @Delete(':uuid')
   @Roles(AdminRole.SUPER_ADMIN)
   async remove(@Param('uuid') uuid: string, @Request() req) {
-    const currentUser = req.user;
-    if (uuid === currentUser.uuid) {
-      throw new BadRequestException(
-        'Self-deletion is not permitted. You cannot remove your own account.',
-      );
-    }
     return await this.adminService.removeAdmin(uuid, req.user);
   }
 }

@@ -5,8 +5,11 @@ import type {
   AdminRole,
 } from "../../../types/admin.management";
 
+import { PrimaryButton, SecondaryButton } from "../../ui";
+
 interface Props {
   initial?: AdminUser;
+  currentUserUuid?: string;
   onSave: (admin: AdminUser | AdminUserDraft) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -14,6 +17,7 @@ interface Props {
 
 const AdminUserForm: React.FC<Props> = ({
   initial,
+  currentUserUuid,
   onSave,
   onCancel,
   isLoading,
@@ -23,6 +27,8 @@ const AdminUserForm: React.FC<Props> = ({
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<AdminRole>(initial?.role ?? "ADMIN");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+
+  const isSelf = initial?.uuid === currentUserUuid;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,10 +121,10 @@ const AdminUserForm: React.FC<Props> = ({
               Role
             </label>
             <select
-              disabled={isLoading}
+              disabled={isLoading || isSelf}
               value={role}
               onChange={(e) => setRole(e.target.value as AdminRole)}
-              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none"
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none disabled:bg-stone-400 disabled:text-white disabled:opacity-50 disabled:font-bold"
             >
               <option value="ADMIN">Admin</option>
               <option value="SUPER_ADMIN">Super Admin</option>
@@ -131,10 +137,10 @@ const AdminUserForm: React.FC<Props> = ({
               Account Status
             </label>
             <select
-              disabled={isLoading}
+              disabled={isLoading || isSelf}
               value={isActive ? "true" : "false"}
               onChange={(e) => setIsActive(e.target.value === "true")}
-              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none"
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none disabled:bg-stone-400 disabled:text-white disabled:opacity-50 disabled:font-bold"
             >
               <option value="true">Active (Has Access)</option>
               <option value="false">Disabled (No Access)</option>
@@ -145,34 +151,19 @@ const AdminUserForm: React.FC<Props> = ({
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
-        <button
-          type="button"
-          disabled={isLoading}
+        <SecondaryButton
+          variant="form"
           onClick={onCancel}
-          className="order-2 sm:order-1 px-6 py-3 rounded-xl text-stone-600 border border-stone-300 font-medium active:bg-stone-50
-           hover:bg-stone-100 transition disabled:bg-stone-400 disabled:text-white disabled:opacity-50 
-           focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
           disabled={isLoading}
-          className="order-1 sm:order-2 px-8 py-3 rounded-xl bg-amber-700 text-white
-           hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/10 active:scale-[0.98] disabled:bg-stone-400 flex items-center justify-center gap-2
-            focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-        >
-          {isLoading ? (
-            <>
-              <span className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-              </span>
-              <span>{initial?.uuid ? "Updating..." : "Creating..."}</span>
-            </>
-          ) : (
-            <span>{initial?.uuid ? "Update Account" : "Save Account"}</span>
-          )}
-        </button>
+          label="Cancel"
+        />
+        <PrimaryButton
+          type="submit"
+          variant="form"
+          label={initial?.uuid ? "Update Account" : "Save Account"}
+          isLoading={isLoading}
+          loadingLabel={initial?.uuid ? "Updating..." : "Creating..."}
+        />
       </div>
     </form>
   );

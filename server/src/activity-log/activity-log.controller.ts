@@ -4,6 +4,7 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { ActivityLogService } from './activity-log.service';
 import { ActivityLog, ActivityAction } from './schemas/activity-log.schema';
@@ -19,18 +20,19 @@ export class ActivityLogController {
 
   /**
    * GET /admin/activities
-   * Supports pagination, entity type filtering, and action filtering
-   * Example: /admin/activities?page=1&limit=10&type=EVENT&action=DELETE
+   * Supports pagination, entity type filtering, action filtering, and correlationId searching
    */
   @Get()
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   async getActivities(
+    @Request() req,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('type') type?: string,
     @Query('action') action?: ActivityAction,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('correlationId') correlationId?: string,
   ) {
     return this.activityLogService.getPaginatedActivities({
       page: page ?? 1,
@@ -39,6 +41,8 @@ export class ActivityLogController {
       action,
       startDate,
       endDate,
+      correlationId,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 
@@ -49,8 +53,12 @@ export class ActivityLogController {
   @Get('recent')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   async getRecent(
+    @Request() req,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ): Promise<ActivityLog[]> {
-    return this.activityLogService.getRecentActivities(limit || 10);
+    return this.activityLogService.getRecentActivities(
+      limit || 10,
+      req?.user?.uuid,
+    );
   }
 }

@@ -1,4 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -7,6 +13,8 @@ import {
   ActivityAction,
 } from './schemas/activity-log.schema';
 import { CreateActivityLogDto } from './dto/create-activity-log.dto';
+import { SystemLogService } from '../system-log/system-log.service';
+import { getCorrelationId } from '../common/correlation/correlation.storage';
 
 @Injectable()
 export class ActivityLogService {
@@ -15,6 +23,9 @@ export class ActivityLogService {
   constructor(
     @InjectModel(ActivityLog.name)
     private activityLogModel: Model<ActivityLogDocument>,
+
+    @Inject(forwardRef(() => SystemLogService))
+    private readonly systemLogService: SystemLogService,
   ) {}
 
   /**
@@ -22,10 +33,21 @@ export class ActivityLogService {
    */
   async create(createActivityLogDto: CreateActivityLogDto) {
     try {
-      const newLog = new this.activityLogModel(createActivityLogDto);
-      return newLog.save();
-    } catch (err) {
-      this.logger.error(`Failed to save the log : ${err.message}`, err);
+      const correlationId = getCorrelationId(); // Get ID from storage
+
+      const newLog = new this.activityLogModel({
+        ...createActivityLogDto,
+        correlationId, // Attach it to the activity log
+      });
+
+      return await newLog.save();
+    } catch (error) {
+      await this.handleError(
+        error,
+        'POST',
+        'INTERNAL_SERVICE_LOG',
+        createActivityLogDto,
+      );
     }
   }
 
@@ -39,82 +61,151 @@ export class ActivityLogService {
     action?: ActivityAction;
     startDate?: string;
     endDate?: string;
+    correlationId?: string;
+    adminUserUuid?: string;
   }) {
-    const {
-      page = 1,
-      limit = 10,
-      entityType,
-      action,
-      startDate,
-      endDate,
-    } = query;
-    const skip = (page - 1) * limit;
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        entityType,
+        action,
+        startDate,
+        endDate,
+        correlationId,
+      } = query;
+      const skip = (page - 1) * limit;
 
-    const filters: any = {};
+      const filters: any = {};
+      if (entityType && entityType !== 'ALL') filters.entityType = entityType;
+      if (action && action.toString() !== 'ALL') filters.action = action;
 
-    if (entityType && entityType !== 'ALL') {
-      filters.entityType = entityType;
-    }
-
-    if (action && action.toString() !== 'ALL') {
-      filters.action = action;
-    }
-
-    if (startDate || endDate) {
-      filters.createdAt = {};
-      if (startDate) {
-        filters.createdAt.$gte = new Date(startDate);
+      if (correlationId) {
+        filters.correlationId = { $regex: correlationId, $options: 'i' };
       }
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        filters.createdAt.$lte = end;
+
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.$gte = new Date(startDate);
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          filters.createdAt.$lte = end;
+        }
       }
+
+      const [data, totalItems] = await Promise.all([
+        this.activityLogModel
+          .find(filters)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .select(
+            'uuid adminUserName action entityType entityTitle correlationId createdAt -_id',
+          )
+          .exec(),
+        this.activityLogModel.countDocuments(filters).exec(),
+      ]);
+
+      return {
+        data,
+        meta: {
+          totalItems,
+          itemCount: data.length,
+          itemsPerPage: limit,
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: Number(page),
+        },
+      };
+    } catch (error) {
+      await this.handleError(
+        error,
+        'GET',
+        '/admin/activity-logs',
+        query,
+        query.adminUserUuid,
+      );
+      throw new InternalServerErrorException('Failed to fetch activity logs');
     }
-
-    const [data, totalItems] = await Promise.all([
-      this.activityLogModel
-        .find(filters)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .select(
-          'uuid adminUserName action entityType entityTitle createdAt -_id',
-        )
-        .exec(),
-      this.activityLogModel.countDocuments(filters).exec(),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      meta: {
-        totalItems,
-        itemCount: data.length,
-        itemsPerPage: limit,
-        totalPages,
-        currentPage: Number(page),
-      },
-    };
   }
 
   /**
    * Fetches recent activities for the admin dashboard.
    */
-  async getRecentActivities(limit: number = 10): Promise<ActivityLog[]> {
-    return this.activityLogModel
-      .find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .select('uuid adminUserName action entityType entityTitle createdAt -_id')
-      .exec();
+  async getRecentActivities(
+    limit: number = 10,
+    adminUserUuid?: string,
+  ): Promise<ActivityLog[]> {
+    try {
+      return await this.activityLogModel
+        .find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select(
+          'uuid adminUserName action entityType entityTitle correlationId createdAt -_id',
+        )
+        .exec();
+    } catch (error) {
+      await this.handleError(
+        error,
+        'GET',
+        '/admin/dashboard/recent-activity',
+        { limit },
+        adminUserUuid,
+      );
+      return [];
+    }
   }
 
   /**
    * Get activity count for a specific entity type
    */
   async getCountByType(type: string): Promise<number> {
-    return this.activityLogModel.countDocuments({ entityType: type }).exec();
+    try {
+      return await this.activityLogModel
+        .countDocuments({ entityType: type })
+        .exec();
+    } catch (error) {
+      await this.handleError(error, 'GET', `INTERNAL_COUNT_${type}`, { type });
+      return 0;
+    }
+  }
+
+  async findLatest(filter: any) {
+    try {
+      return await this.activityLogModel
+        .findOne(filter)
+        .sort({ createdAt: -1 })
+        .exec();
+    } catch (err) {
+      await this.handleError(err, 'GET', 'findLatest', filter);
+      return null;
+    }
+  }
+
+  /**
+   * Helper method to record system logs for Activity Log failures
+   */
+  private async handleError(
+    error: any,
+    method: string,
+    path: string,
+    payload: any,
+    userUuid?: string,
+  ) {
+    this.logger.error(
+      `${method} ${path} failed: ${error.message}`,
+      error.stack,
+    );
+
+    await this.systemLogService.log({
+      errorCode: error.code?.toString() || error.name || 'LOGGING_ERROR',
+      message: error.message,
+      stack: error.stack,
+      path,
+      method,
+      payload,
+      userUuid: userUuid || 'SYSTEM_LOGGER',
+    });
   }
 }

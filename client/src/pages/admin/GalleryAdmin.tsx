@@ -46,6 +46,7 @@ const GalleryAdmin = () => {
   const {
     data: items,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -56,13 +57,17 @@ const GalleryAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<AdminGalleryItem>(galleryAdminService.getAll, {
-    status: "ALL",
-    album: "ALL",
-    search: "",
-    startDate: "",
-    endDate: "",
-  });
+  } = useAdminData<AdminGalleryItem>(
+    "gallery-admin",
+    galleryAdminService.getAll,
+    {
+      status: "ALL",
+      album: "ALL",
+      search: "",
+      startDate: "",
+      endDate: "",
+    }
+  );
 
   // 2. Local UI States
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
@@ -114,6 +119,8 @@ const GalleryAdmin = () => {
       <AdminHeader
         title="Manage Gallery"
         description="Organize family photos and albums."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
         <AdminMultiSearch
           value={filters.search || ""}

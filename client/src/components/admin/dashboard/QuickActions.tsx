@@ -5,6 +5,7 @@ import {
   Image as ImageIcon,
   BookOpen,
   UserPlus,
+  Terminal,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -18,7 +19,7 @@ const QuickActions: React.FC = () => {
     {
       label: "New Event",
       icon: PlusCircle,
-      path: "/admin/events", // Usually triggers the 'Add' modal/form in that page
+      path: "/admin/events",
       color: "text-blue-600",
       bg: "bg-blue-50",
     },
@@ -66,17 +67,30 @@ const QuickActions: React.FC = () => {
           </button>
         ))}
 
-        {isSuperAdmin && (
+        <div className="col-span-2 flex flex-col gap-2 mt-2">
+          {/* System Logs Action */}
           <button
-            onClick={() => navigate("/admin/management")}
-            className="col-span-2 flex items-center justify-center gap-3 p-4 mt-2 rounded-xl bg-amber-700 text-white
+            onClick={() => navigate("/admin/system-log")}
+            className="flex items-center justify-center gap-3 p-3 rounded-xl border border-stone-200 text-stone-700 
+               hover:bg-stone-50 transition font-bold text-sm shadow-sm active:scale-[0.98]"
+          >
+            <Terminal size={18} className="text-stone-500" />
+            <span>System Error Logs</span>
+          </button>
+
+          {/* Admin Management Action */}
+          {isSuperAdmin && (
+            <button
+              onClick={() => navigate("/admin/management")}
+              className="col-span-2 flex items-center justify-center gap-3 p-4 mt-2 rounded-xl bg-amber-700 text-white
            hover:bg-amber-800 transition font-bold shadow-lg shadow-amber-900/20 active:scale-[0.98] disabled:bg-stone-400
             focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
-          >
-            <UserPlus size={18} />
-            <span className="text-sm font-bold">Manage Admin Team</span>
-          </button>
-        )}
+            >
+              <UserPlus size={18} />
+              <span className="text-sm font-bold">Manage Admin Team</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

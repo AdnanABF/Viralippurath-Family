@@ -1,14 +1,8 @@
-import {
-  PenLine,
-  Trash2,
-  ArrowRight,
-  CheckCircle2,
-  Calendar,
-  MapPin,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Calendar, MapPin } from "lucide-react";
 import type { AdminEvent } from "../../../types/event.admin";
 import EventStatusBadge from "./EventStatusBadge";
 import { formatDateTime } from "../../../utils/date";
+import { DeleteButton, EditButton } from "../../ui";
 
 interface Props {
   events: AdminEvent[];
@@ -111,20 +105,16 @@ const EventsTable: React.FC<Props> = ({
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
+                <EditButton
                   disabled={disabled}
                   onClick={() => onEdit(event)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-stone-200 text-stone-700 font-medium hover:bg-stone-50 active:scale-95 transition-all disabled:opacity-50"
-                >
-                  <PenLine size={16} /> Edit
-                </button>
-                <button
+                  variant="mobile"
+                />
+                <DeleteButton
                   disabled={disabled}
                   onClick={() => onDelete(event.uuid)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-red-100 bg-red-50 text-red-600 font-medium active:scale-95 transition-all disabled:opacity-50"
-                >
-                  <Trash2 size={16} /> Delete
-                </button>
+                  variant="mobile"
+                />
               </div>
             </div>
           );
@@ -210,20 +200,16 @@ const EventsTable: React.FC<Props> = ({
 
                     <td className="p-4 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button
+                        <EditButton
                           disabled={disabled}
                           onClick={() => onEdit(event)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-stone-700 hover:bg-stone-50 hover:border-amber-700 hover:text-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                        <PenLine size={14} /> <span>Edit</span>
-                        </button>
-                        <button
+                          variant="normal"
+                        />
+                        <DeleteButton
                           disabled={disabled}
                           onClick={() => onDelete(event.uuid)}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-stone-200 text-red-600 hover:bg-red-50 hover:border-red-200 transition-all disabled:bg-stone-100 disabled:text-stone-400 disabled:border-stone-200 disabled:cursor-not-allowed min-w-21.25"
-                        >
-                        <Trash2 size={14} /> <span>Delete</span>
-                        </button>
+                          variant="normal"
+                        />
                       </div>
                     </td>
                   </tr>

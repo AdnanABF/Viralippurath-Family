@@ -16,6 +16,7 @@ export enum EntityType {
   NOTIFICATION = 'NOTIFICATION',
   GALLERY = 'GALLERY',
   ADMIN = 'ADMIN',
+  SYSTEM_LOG = 'SYSTEM_LOG',
 }
 
 @Schema({ timestamps: true })
@@ -44,10 +45,15 @@ export class ActivityLog {
   entityType: EntityType;
 
   @Prop({ required: true })
-  entityTitle: string; // The name of the item (e.g., "Sample Event")
+  entityTitle: string;
 
   @Prop({ required: false })
-  entityUuid?: string; // Optional: Link to the actual item if it still exists
+  entityUuid?: string;
+
+  @Prop({ required: false })
+  correlationId: string;
 }
 
 export const ActivityLogSchema = SchemaFactory.createForClass(ActivityLog);
+
+ActivityLogSchema.index({ correlationId: 1 });

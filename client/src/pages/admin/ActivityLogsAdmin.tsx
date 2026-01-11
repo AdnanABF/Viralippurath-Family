@@ -18,6 +18,8 @@ import {
   ResetButton,
   AdminLoading,
   AdminError,
+  AdminMultiSearch,
+  AdminControlGroup,
 } from "../../components/ui";
 
 const ENTITY_OPTIONS = [
@@ -36,10 +38,10 @@ const ACTION_OPTIONS = [
 ];
 
 const ActivityLogAdmin = () => {
-  // Logic & Data Hook consuming the unwrapped service data
   const {
     data: logs,
     loading,
+    isRefreshing,
     error,
     meta,
     currentPage,
@@ -50,50 +52,65 @@ const ActivityLogAdmin = () => {
     handlePageChange,
     reset,
     refresh,
-  } = useAdminData<ActivityLog>(activityAdminService.getAll, {
+  } = useAdminData<ActivityLog>("activity-logs", activityAdminService.getAll, {
     type: "ALL",
     action: "ALL",
     startDate: "",
     endDate: "",
+    correlationId: "",
   });
 
   return (
     <div className="space-y-6">
       <AdminHeader
-        title="System Activity Log"
+        title="Activity Log"
         description="Track all administrative actions."
+        isRefreshing={isRefreshing}
+        onRefresh={refresh}
       >
-        <AdminSelect
-          value={filters.type || "ALL"}
-          onChange={(val) => setFilters((prev) => ({ ...prev, type: val }))}
-          options={ENTITY_OPTIONS}
-          icon={<Filter size={14} />}
-          selectClassName="font-medium pl-9 pr-8 py-2.5"
-        />
-
-        <AdminSelect
-          value={filters.action || "ALL"}
-          onChange={(val) => setFilters((prev) => ({ ...prev, action: val }))}
-          options={ACTION_OPTIONS}
-          icon={<Activity size={14} />}
-          selectClassName="font-medium pl-9 pr-8 py-2.5"
-        />
-
-        <AdminDateRange
-          start={filters.startDate || ""}
-          end={filters.endDate || ""}
-          onStartChange={(val) =>
-            setFilters((prev) => ({ ...prev, startDate: val }))
+        <AdminMultiSearch
+          value={filters.correlationId || ""}
+          onChange={(val) =>
+            setFilters((prev) => ({ ...prev, correlationId: val }))
           }
-          onEndChange={(val) =>
-            setFilters((prev) => ({ ...prev, endDate: val }))
-          }
+          placeholder="Search by Request ID..."
         />
 
-        <ResetButton
-          onClick={reset}
-          className="w-full sm:w-auto flex justify-center"
-        />
+        <AdminControlGroup>
+          <AdminSelect
+            value={filters.type || "ALL"}
+            onChange={(val) => setFilters((prev) => ({ ...prev, type: val }))}
+            options={ENTITY_OPTIONS}
+            icon={<Filter size={14} />}
+            selectClassName="font-medium pl-9 pr-8 py-2.5"
+          />
+
+          <AdminSelect
+            value={filters.action || "ALL"}
+            onChange={(val) => setFilters((prev) => ({ ...prev, action: val }))}
+            options={ACTION_OPTIONS}
+            icon={<Activity size={14} />}
+            selectClassName="font-medium pl-9 pr-8 py-2.5"
+          />
+        </AdminControlGroup>
+
+        <AdminControlGroup>
+          <AdminDateRange
+            start={filters.startDate || ""}
+            end={filters.endDate || ""}
+            onStartChange={(val) =>
+              setFilters((prev) => ({ ...prev, startDate: val }))
+            }
+            onEndChange={(val) =>
+              setFilters((prev) => ({ ...prev, endDate: val }))
+            }
+          />
+
+          <ResetButton
+            onClick={reset}
+            className="w-full sm:w-auto flex justify-center"
+          />
+        </AdminControlGroup>
       </AdminHeader>
 
       {/* Main Content Area */}

@@ -21,6 +21,7 @@ import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { AdminRole } from '../admin/admin.schema';
 
 @Controller('gallery')
 export class GalleryController {
@@ -34,9 +35,10 @@ export class GalleryController {
 
   // ===== ADMIN =====
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Get('admin')
   async getAllAdmin(
+    @Request() req,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('status') status?: string,
@@ -53,11 +55,12 @@ export class GalleryController {
       search,
       startDate,
       endDate,
+      adminUserUuid: req?.user?.uuid,
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post()
   @UseInterceptors(FileInterceptor('image'))
   async create(
@@ -69,7 +72,7 @@ export class GalleryController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Patch(':uuid')
   @UseInterceptors(FileInterceptor('image'))
   async update(
@@ -82,7 +85,7 @@ export class GalleryController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Delete(':uuid')
   async remove(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,

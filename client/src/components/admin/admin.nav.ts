@@ -6,6 +6,7 @@ import {
   Users,
   Bell,
   History,
+  Terminal,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -46,6 +47,11 @@ export const adminNav: NavItem[] = [
     label: "Activity Logs",
     path: "/admin/activity-log",
     icon: History,
+  },
+  {
+    label: "System Logs",
+    path: "/admin/system-log",
+    icon: Terminal,
   },
   {
     label: "Manage Admins",

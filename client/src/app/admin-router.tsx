@@ -9,6 +9,7 @@ import NotificationsAdmin from "../pages/admin/NotificationsAdmin";
 import AdminManagement from "../pages/admin/AdminManagement";
 import ActivityLogAdmin from "../pages/admin/ActivityLogsAdmin";
 import { useAuth } from "../context/AuthContext";
+import SystemLogAdmin from "../pages/admin/SystemLogsAdmin";
 
 const AdminRouter = () => {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ const AdminRouter = () => {
           <Route path="magazine" element={<MagazineAdmin />} />
           <Route path="notifications" element={<NotificationsAdmin />} />
           <Route path="activity-log" element={<ActivityLogAdmin />} />
+          <Route path="system-log" element={<SystemLogAdmin />} />
 
           <Route
             path="manage-admins"
