@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { publicService } from "../../services/public.service";
 import NotificationsHeader from "../../components/notifications/NotificationsHeader";
 import NotificationItem from "../../components/notifications/NotificationItem";
@@ -10,6 +11,8 @@ import type {
 import { AdminLoading, AdminError } from "../../components/ui";
 
 const Notifications = () => {
+  const { t } = useTranslation("notifications");
+
   const [activeCategory, setActiveCategory] = useState<
     NotificationCategory | "ALL"
   >("ALL");
@@ -30,11 +33,11 @@ const Notifications = () => {
   });
 
   const categories: { label: string; value: NotificationCategory | "ALL" }[] = [
-    { label: "All", value: "ALL" },
-    { label: "Urgent", value: "URGENT" },
-    { label: "General", value: "GENERAL" },
-    { label: "Magazines", value: "MAGAZINE" },
-    { label: "Events", value: "EVENT" },
+    { label: t("categories.all"), value: "ALL" },
+    { label: t("categories.urgent"), value: "URGENT" },
+    { label: t("categories.general"), value: "GENERAL" },
+    { label: t("categories.magazines"), value: "MAGAZINE" },
+    { label: t("categories.events"), value: "EVENT" },
   ];
 
   return (
@@ -76,15 +79,15 @@ const Notifications = () => {
               }`}
             />
             {showArchived
-              ? "Viewing old notifications"
-              : "Show old notifications"}
+              ? t("hide_old")
+              : t("show_old")}
           </button>
         </div>
 
         {isError ? (
           <AdminError
-            title="Unable to load notifications"
-            message="Please check back later for the latest family updates."
+            title={t("error_title")}
+            message={t("error_message")}
             onRetry={() => refetch()}
           />
         ) : (
@@ -95,8 +98,8 @@ const Notifications = () => {
               <div className="text-center py-24 bg-white rounded-3xl border border-stone-200 shadow-sm border-dashed">
                 <p className="text-stone-400 font-medium">
                   {showArchived
-                    ? "The archive is currently empty."
-                    : "No active notices in this category."}
+                    ? t("empty_archive")
+                    : t("no_notices")}
                 </p>
               </div>
             ) : (

@@ -19,6 +19,7 @@ import {
   TableGrid,
   type ColumnConfig,
 } from "../../ui";
+import TranslationIndicator from "../../ui/TranslationIndicator";
 
 interface Props {
   items: AdminNotification[];
@@ -68,13 +69,20 @@ const NotificationsTable: React.FC<Props> = ({
     {
       header: "Title",
       render: (n) => (
-        <div className="flex items-center gap-2">
-          {n.isPinned && (
-            <Pin size={14} className="text-amber-600 fill-amber-600 shrink-0" />
-          )}
-          <span className="font-medium text-stone-900 line-clamp-1">
-            {n.title}
-          </span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            {n.isPinned && (
+              <Pin
+                size={14}
+                className="text-amber-600 fill-amber-600 shrink-0"
+              />
+            )}
+            <span className="font-medium text-stone-900 line-clamp-1">
+              {n.title_en}
+            </span>
+          </div>
+          {/* Indicator if Malayalam translation exists */}
+          {n.title_ml && <TranslationIndicator label="ML Translated" />}
         </div>
       ),
     },
@@ -96,7 +104,9 @@ const NotificationsTable: React.FC<Props> = ({
       header: "Timeline",
       render: (n) => (
         <div className="flex flex-col text-sm leading-tight">
-          <span className="text-stone-600">Published: {formatDateTime(n.date)}</span>
+          <span className="text-stone-600">
+            Published: {formatDateTime(n.date)}
+          </span>
           <span className="text-amber-700 font-medium">
             Expires: {formatDateTime(n.expiresAt)}
           </span>
@@ -146,12 +156,13 @@ const NotificationsTable: React.FC<Props> = ({
             >
               {cat.icon} {cat.label}
             </div>
+            {n.title_ml && <TranslationIndicator label="ML Translated" />}
           </div>
         </div>
 
         <div>
           <h3 className="font-bold text-stone-900 leading-tight mb-2">
-            {n.title}
+            {n.title_en}
           </h3>
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-stone-400 text-[11px]">
@@ -185,7 +196,6 @@ const NotificationsTable: React.FC<Props> = ({
     <TableGrid
       data={items}
       columns={columns}
-      // Adjusted grid template for the removed column
       gridTemplate="grid-cols-[1.5fr_1fr_1.5fr_1fr_1fr]"
       keyExtractor={(n) => n.uuid}
       renderMobileCard={renderMobileCard}

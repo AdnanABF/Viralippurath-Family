@@ -14,11 +14,19 @@ import {
 export class CreateNotificationDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title_en: string;
+
+  @IsString()
+  @IsOptional()
+  title_ml?: string;
 
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content_en: string;
+
+  @IsString()
+  @IsOptional()
+  content_ml?: string;
 
   @IsDateString()
   @IsNotEmpty()
@@ -37,5 +45,6 @@ export class CreateNotificationDto {
   category?: NotificationCategory;
 
   @IsEnum(NotificationStatus)
+  @IsNotEmpty()
   status: NotificationStatus;
 }

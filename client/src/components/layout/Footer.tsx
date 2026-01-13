@@ -1,38 +1,40 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation("common");
+
   return (
     <footer className="bg-stone-100 border-t border-stone-200 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <div>
             <h3 className="font-serif text-xl font-bold text-stone-800 mb-4">
-              Viralippurath Family
+              {t("viralippurath_family")}
             </h3>
             <p className="text-stone-600 text-sm leading-relaxed">
-              Preserving our heritage, celebrating our unity, and nurturing
-              future generations.
+              {t("footer_message")}
             </p>
           </div>
 
           <div>
             <h4 className="text-stone-800 font-semibold mb-4 text-sm uppercase tracking-wider">
-              Quick Links
+              {t("quick_links")}
             </h4>
             <ul className="space-y-2 text-sm text-stone-600">
               <li>
                 <Link to="/gallery" className="hover:text-amber-700">
-                  Gallery
+                  {t("nav.gallery")}
                 </Link>
               </li>
               <li>
                 <Link to="/events" className="hover:text-amber-700">
-                  Events
+                  {t("nav.events")}
                 </Link>
               </li>
               <li>
                 <Link to="/about" className="hover:text-amber-700">
-                  About Us
+                  {t("nav.about_us")}
                 </Link>
               </li>
             </ul>
@@ -40,9 +42,11 @@ const Footer: React.FC = () => {
 
           <div>
             <h4 className="text-stone-800 font-semibold mb-4 text-sm uppercase tracking-wider">
-              Connect
+              {t("connect")}
             </h4>
-            <p className="text-stone-600 text-sm">Kerala, India</p>
+            <p className="text-stone-600 text-sm">
+              {t("kerala")}, {t("india")}{" "}
+            </p>
             <p className="text-stone-600 text-sm mt-2">
               viralippurathkudumbam@gmail.com
             </p>
@@ -50,8 +54,13 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-stone-200 flex flex-col md:flex-row justify-between items-center text-xs text-stone-500">
-          <p>&copy; {new Date().getFullYear()} Viralippurath Kudumbasamithi.</p>
-          <p className="mt-4 md:mt-0">Designed & Developed by Adnan Bin Farook.</p>
+          <p>
+            &copy; {new Date().getFullYear()}{" "}
+            {t("viralippurath_kudumbasamithi")}.
+          </p>
+          <p className="mt-4 md:mt-0">
+            Designed & Developed by Adnan Bin Farook.
+          </p>
         </div>
       </div>
     </footer>

@@ -62,7 +62,12 @@ export class NotificationsService {
 
       if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
-        filters.$or = [{ title: searchRegex }, { content: searchRegex }];
+        filters.$or = [
+          { title_en: searchRegex },
+          { title_ml: searchRegex },
+          { content_en: searchRegex },
+          { content_ml: searchRegex },
+        ];
       }
 
       if (startDate || endDate) {
@@ -78,7 +83,6 @@ export class NotificationsService {
       const [data, totalItems] = await Promise.all([
         this.notificationModel
           .find(filters)
-          // Custom Sort: 1. Pinned, 2. Urgent Category, 3. Date
           .sort({ isPinned: -1, category: -1, date: -1 })
           .skip(skip)
           .limit(limit)
@@ -120,7 +124,7 @@ export class NotificationsService {
         adminUserName: admin.username,
         action: ActivityAction.CREATE,
         entityType: EntityType.NOTIFICATION,
-        entityTitle: notification.title,
+        entityTitle: notification.title_en,
         entityUuid: notification.uuid,
       });
 
@@ -163,7 +167,7 @@ export class NotificationsService {
         adminUserName: admin.username,
         action: ActivityAction.UPDATE,
         entityType: EntityType.NOTIFICATION,
-        entityTitle: updated.title,
+        entityTitle: updated.title_en,
         entityUuid: updated.uuid,
       });
 
@@ -202,7 +206,7 @@ export class NotificationsService {
         adminUserName: admin.username,
         action: ActivityAction.DELETE,
         entityType: EntityType.NOTIFICATION,
-        entityTitle: res.title,
+        entityTitle: res.title_en,
         entityUuid: res.uuid,
       });
 
@@ -247,8 +251,9 @@ export class NotificationsService {
 
       return await this.notificationModel
         .find(filters)
-        .select('uuid title content date expiresAt category isPinned -_id')
-        // Implements: 1. Pinned+Urgent, 2. Pinned, 3. Urgent, 4. Date
+        .select(
+          'uuid title_en title_ml content_en content_ml date expiresAt category isPinned -_id',
+        )
         .sort({ isPinned: -1, category: -1, date: -1 })
         .exec();
     } catch (error) {

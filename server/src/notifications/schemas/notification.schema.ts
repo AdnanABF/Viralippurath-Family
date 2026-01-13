@@ -26,10 +26,16 @@ export class Notification {
   uuid: string;
 
   @Prop({ required: true, trim: true })
-  title: string;
+  title_en: string;
+
+  @Prop({ required: false, trim: true })
+  title_ml?: string;
 
   @Prop({ required: true, trim: true })
-  content: string;
+  content_en: string;
+
+  @Prop({ required: false, trim: true })
+  content_ml?: string;
 
   @Prop({ required: true })
   date: Date;

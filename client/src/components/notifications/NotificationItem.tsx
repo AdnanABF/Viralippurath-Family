@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Pin,
   BookOpen,
@@ -14,14 +15,21 @@ import type {
   NotificationCategory,
 } from "../../types/notification.public";
 import { formatDate } from "../../utils/date";
+import { getLocalized } from "../../utils/lang.utils";
 
 interface Props {
   notification: PublicNotification;
 }
 
 const NotificationItem: React.FC<Props> = ({ notification }) => {
+  const { t, i18n } = useTranslation("notifications");
   const [isExpanded, setIsExpanded] = useState(false);
+
   const formattedDate = formatDate(notification.date);
+
+  // Extract Localized Content
+  const displayTitle = getLocalized(notification, "title", i18n.language);
+  const displayContent = getLocalized(notification, "content", i18n.language);
 
   const isUrgent = notification.category === "URGENT";
   const isPinned = notification.isPinned;
@@ -48,28 +56,28 @@ const NotificationItem: React.FC<Props> = ({ notification }) => {
       case "MAGAZINE":
         return {
           icon: <BookOpen size={14} />,
-          label: "Magazine",
+          label: t("categories.magazines"),
           color: "text-blue-600",
           bg: "bg-blue-50",
         };
       case "EVENT":
         return {
           icon: <Calendar size={14} />,
-          label: "Event",
+          label: t("categories.events"),
           color: "text-emerald-600",
           bg: "bg-emerald-50",
         };
       case "URGENT":
         return {
           icon: <AlertTriangle size={14} />,
-          label: "Urgent",
+          label: t("categories.urgent"),
           color: "text-amber-600",
           bg: "bg-amber-50",
         };
       default:
         return {
           icon: <Bell size={14} />,
-          label: "General",
+          label: t("categories.general"),
           color: "text-stone-500",
           bg: "bg-stone-50",
         };
@@ -77,7 +85,7 @@ const NotificationItem: React.FC<Props> = ({ notification }) => {
   };
 
   const meta = getCategoryMeta(notification.category);
-  const isLongContent = notification.content.length > 280;
+  const isLongContent = displayContent.length > 280;
 
   return (
     <div
@@ -88,20 +96,19 @@ const NotificationItem: React.FC<Props> = ({ notification }) => {
         {isPinned && (
           <div className="bg-amber-600 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
             <Pin size={14} />
-            PINNED
+            {t("ui.pinned")}
           </div>
         )}
         {isUrgent && (
           <div className="bg-rose-600 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
             <OctagonAlert size={14} />
-            URGENT
+            {t("ui.urgent")}
           </div>
         )}
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <div className="flex items-center gap-2">
-          {/* Category Badge - hidden if Urgent because the top badge covers it */}
           {!isUrgent && (
             <div
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${meta.bg} ${meta.color}`}
@@ -112,18 +119,16 @@ const NotificationItem: React.FC<Props> = ({ notification }) => {
           )}
         </div>
 
-        {/* Date Stamp */}
         <span className="text-xs font-medium text-stone-400">
           {formattedDate}
         </span>
       </div>
 
-      {/* Content Section */}
       <div className="space-y-3">
         <h3
           className={`text-xl font-serif leading-tight transition-colors ${titleStyles()}`}
         >
-          {notification.title}
+          {displayTitle}
         </h3>
 
         <div className="relative">
@@ -132,10 +137,9 @@ const NotificationItem: React.FC<Props> = ({ notification }) => {
               !isExpanded && isLongContent ? "line-clamp-3 overflow-hidden" : ""
             }`}
           >
-            {notification.content}
+            {displayContent}
           </p>
 
-          {/* Read More Toggle */}
           {isLongContent && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
@@ -143,11 +147,11 @@ const NotificationItem: React.FC<Props> = ({ notification }) => {
             >
               {isExpanded ? (
                 <>
-                  Show Less <ChevronUp size={14} />
+                  {t("ui.show_less")} <ChevronUp size={14} />
                 </>
               ) : (
                 <>
-                  Read Full Message <ChevronDown size={14} />
+                  {t("ui.read_full")} <ChevronDown size={14} />
                 </>
               )}
             </button>

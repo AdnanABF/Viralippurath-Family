@@ -4,7 +4,9 @@ import type {
 } from "./notification.public";
 
 export type NotificationStatus = "DRAFT" | "PUBLISHED";
+
 export { type NotificationCategory };
+
 export type AdminNotification = PublicNotification & {
   status: NotificationStatus;
 };

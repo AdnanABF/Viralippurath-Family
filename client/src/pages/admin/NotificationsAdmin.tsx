@@ -45,8 +45,10 @@ const CATEGORY_OPTIONS = [
 
 const defaultNotificationValues = {
   uuid: "",
-  title: "",
-  content: "",
+  title_en: "",
+  title_ml: "",
+  content_en: "",
+  content_ml: "",
   date: "",
   status: "DRAFT",
   category: "GENERAL",
@@ -194,7 +196,8 @@ const NotificationsAdmin = () => {
             onEdit={setEditing}
             onDelete={(uuid) => {
               const item = items.find((n) => n.uuid === uuid);
-              if (item) setDeleteTarget({ uuid: item.uuid, title: item.title });
+              if (item)
+                setDeleteTarget({ uuid: item.uuid, title: item.title_en });
             }}
             disabled={isDeleting || isSaving}
           />
