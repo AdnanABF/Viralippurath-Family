@@ -2,8 +2,8 @@ import { useState } from "react";
 import type {
   AdminNotification,
   AdminNotificationDraft,
-  NotificationPriority,
   NotificationStatus,
+  NotificationCategory,
 } from "../../../types/notification.admin";
 import {
   toDateTimeInputValue,
@@ -24,13 +24,25 @@ const NotificationForm: React.FC<Props> = ({
   onCancel,
   isLoading,
 }) => {
+  const getDefaultExpiry = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return toDateTimeInputValue(d.toISOString());
+  };
+
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
-  const [priority, setPriority] = useState<NotificationPriority>(
-    initial?.priority ?? "NORMAL"
+  const [category, setCategory] = useState<NotificationCategory>(
+    initial?.category ?? "GENERAL"
   );
+  const [isPinned, setIsPinned] = useState(initial?.isPinned ?? false);
   const [date, setDate] = useState(
     initial?.date ? toDateTimeInputValue(initial.date) : nowDateTimeInputValue()
+  );
+  const [expiresAt, setExpiresAt] = useState(
+    initial?.expiresAt
+      ? toDateTimeInputValue(initial.expiresAt)
+      : getDefaultExpiry()
   );
   const [status, setStatus] = useState<NotificationStatus>(
     initial?.status ?? "DRAFT"
@@ -41,8 +53,10 @@ const NotificationForm: React.FC<Props> = ({
     const payload = {
       title,
       content,
-      priority,
+      category,
+      isPinned,
       date,
+      expiresAt,
       status,
     };
 
@@ -96,25 +110,45 @@ const NotificationForm: React.FC<Props> = ({
           />
         </div>
 
-        {/* Priority + Date */}
+        {/* Category + Pin Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-              Priority Level
+              Category
             </label>
             <select
-              value={priority}
+              value={category}
               disabled={isLoading}
               onChange={(e) =>
-                setPriority(e.target.value as NotificationPriority)
+                setCategory(e.target.value as NotificationCategory)
               }
               className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none"
             >
-              <option value="NORMAL">Normal</option>
-              <option value="HIGH">High (Urgent Alert)</option>
+              <option value="GENERAL">General</option>
+              <option value="MAGAZINE">Magazine</option>
+              <option value="EVENT">Event</option>
+              <option value="URGENT">Urgent (Red Alert)</option>
             </select>
           </div>
 
+          <div className="flex items-center md:pt-6">
+            <label className="pl-2 sm:pl-0 flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={isPinned}
+                disabled={isLoading}
+                onChange={(e) => setIsPinned(e.target.checked)}
+                className="w-8 h-8 rounded border-stone-300 text-amber-600 focus:ring-amber-600 transition-all"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-500 group-hover:text-amber-800 transition-colors">
+                Pin notification to top of the board
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* Publish Date + Expiry Date */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
               Publish Date & Time
@@ -128,9 +162,23 @@ const NotificationForm: React.FC<Props> = ({
               className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
             />
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Archive After (Expiry)
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+            />
+          </div>
         </div>
 
-        {/* Status */}
+        {/* Visibility Status */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
             Visibility Status

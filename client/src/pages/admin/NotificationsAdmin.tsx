@@ -35,10 +35,12 @@ const STATUS_OPTIONS = [
   { label: "Draft", value: "DRAFT" },
 ];
 
-const PRIORITY_OPTIONS = [
-  { label: "All Priority", value: "ALL" },
-  { label: "High", value: "HIGH" },
-  { label: "Normal", value: "NORMAL" },
+const CATEGORY_OPTIONS = [
+  { label: "All Category", value: "ALL" },
+  { label: "General", value: "GENERAL" },
+  { label: "Magazine", value: "MAGAZINE" },
+  { label: "Event", value: "EVENT" },
+  { label: "Urgent", value: "URGENT" },
 ];
 
 const defaultNotificationValues = {
@@ -46,8 +48,9 @@ const defaultNotificationValues = {
   title: "",
   content: "",
   date: "",
-  priority: "NORMAL",
   status: "DRAFT",
+  category: "GENERAL",
+  isPinned: false,
 };
 
 const NotificationsAdmin = () => {
@@ -71,7 +74,7 @@ const NotificationsAdmin = () => {
     notificationsAdminService.getAll,
     {
       status: "ALL",
-      priority: "ALL",
+      category: "ALL",
       search: "",
       startDate: "",
       endDate: "",
@@ -102,7 +105,7 @@ const NotificationsAdmin = () => {
       setEditing(null);
       refresh();
     } catch {
-      /* api.ts handles global error reporting via toast.error */
+      /* api.ts handles global error reporting */
     } finally {
       setIsSaving(false);
     }
@@ -115,7 +118,7 @@ const NotificationsAdmin = () => {
       await notificationsAdminService.remove(deleteTarget.uuid);
       refresh();
     } catch {
-      /* api.ts handles global error reporting via toast.error */
+      /* api.ts handles global error reporting */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -155,21 +158,23 @@ const NotificationsAdmin = () => {
           />
 
           <AdminSelect
-            value={filters.priority || "ALL"}
+            value={filters.category || "ALL"}
             onChange={(val) =>
-              setFilters((prev) => ({ ...prev, priority: val }))
+              setFilters((prev) => ({ ...prev, category: val }))
             }
-            options={PRIORITY_OPTIONS}
+            options={CATEGORY_OPTIONS}
           />
 
           <ResetButton onClick={reset} />
-          <PrimaryButton
-            label="Add Notification"
-            onClick={() =>
-              setEditing(defaultNotificationValues as AdminNotification)
-            }
-          />
         </AdminControlGroup>
+
+        <PrimaryButton
+          label="Add Notification"
+          className="w-full sm:w-auto"
+          onClick={() =>
+            setEditing(defaultNotificationValues as AdminNotification)
+          }
+        />
       </AdminHeader>
 
       {/* Main Table Area */}

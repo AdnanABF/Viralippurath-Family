@@ -31,7 +31,7 @@ const Events = () => {
         <EventsHeader />
 
         {/* --- Ongoing Events Section --- */}
-        {ongoingEvents.data.length > 0 && (
+        {ongoingEvents?.data?.length > 0 && (
           <div className="mb-16">
             <div className="flex items-center gap-3 mb-6">
               <span className="relative flex h-3 w-3">
@@ -42,7 +42,7 @@ const Events = () => {
                 Happening Now
               </h2>
             </div>
-            <EventsTimeline events={ongoingEvents.data} />
+            <EventsTimeline events={ongoingEvents?.data} />
           </div>
         )}
 
@@ -74,8 +74,8 @@ const Events = () => {
             message="We couldn't load the events. Please try again."
             onRetry={() => refetch()}
           />
-        ) : events.data.length > 0 ? (
-          <EventsTimeline events={events.data} />
+        ) : events?.data?.length > 0 ? (
+          <EventsTimeline events={events?.data} />
         ) : (
           <div className="text-center py-20 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
             <p className="text-stone-500 italic">
