@@ -9,9 +9,11 @@ export enum NotificationStatus {
   PUBLISHED = 'PUBLISHED',
 }
 
-export enum NotificationPriority {
-  HIGH = 'HIGH',
-  NORMAL = 'NORMAL',
+export enum NotificationCategory {
+  GENERAL = 'GENERAL',
+  MAGAZINE = 'MAGAZINE',
+  EVENT = 'EVENT',
+  URGENT = 'URGENT',
 }
 
 @Schema({ timestamps: true })
@@ -32,13 +34,21 @@ export class Notification {
   @Prop({ required: true })
   date: Date;
 
-  @Prop({
-    enum: NotificationPriority,
-    default: NotificationPriority.NORMAL,
-  })
-  priority: NotificationPriority;
+  @Prop({ required: true })
+  expiresAt: Date;
+
+  @Prop({ default: false })
+  isPinned: boolean;
 
   @Prop({
+    type: String,
+    enum: NotificationCategory,
+    default: NotificationCategory.GENERAL,
+  })
+  category: NotificationCategory;
+
+  @Prop({
+    type: String,
     enum: NotificationStatus,
     default: NotificationStatus.DRAFT,
   })

@@ -1,7 +1,14 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {
-  NotificationPriority,
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
+import {
   NotificationStatus,
+  NotificationCategory,
 } from '../schemas/notification.schema';
 
 export class CreateNotificationDto {
@@ -14,10 +21,20 @@ export class CreateNotificationDto {
   content: string;
 
   @IsDateString()
+  @IsNotEmpty()
   date: string;
 
-  @IsEnum(NotificationPriority)
-  priority: NotificationPriority;
+  @IsDateString()
+  @IsNotEmpty()
+  expiresAt: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isPinned?: boolean;
+
+  @IsEnum(NotificationCategory)
+  @IsOptional()
+  category?: NotificationCategory;
 
   @IsEnum(NotificationStatus)
   status: NotificationStatus;

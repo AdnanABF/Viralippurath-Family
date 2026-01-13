@@ -37,7 +37,7 @@ export class NotificationsService {
     page?: number;
     limit?: number;
     status?: string;
-    priority?: string;
+    category?: string;
     search?: string;
     startDate?: string;
     endDate?: string;
@@ -48,7 +48,7 @@ export class NotificationsService {
         page = 1,
         limit = 10,
         status,
-        priority,
+        category,
         search,
         startDate,
         endDate,
@@ -58,7 +58,7 @@ export class NotificationsService {
       const filters: any = {};
 
       if (status && status !== 'ALL') filters.status = status;
-      if (priority && priority !== 'ALL') filters.priority = priority;
+      if (category && category !== 'ALL') filters.category = category;
 
       if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
@@ -78,7 +78,8 @@ export class NotificationsService {
       const [data, totalItems] = await Promise.all([
         this.notificationModel
           .find(filters)
-          .sort({ date: -1, createdAt: -1 })
+          // Custom Sort: 1. Pinned, 2. Urgent Category, 3. Date
+          .sort({ isPinned: -1, category: -1, date: -1 })
           .skip(skip)
           .limit(limit)
           .exec(),
@@ -225,21 +226,37 @@ export class NotificationsService {
     }
   }
 
-  // ===== PUBLIC =====
-
-  async findPublished() {
+  // ===== PUBLIC
+  async findPublished(query?: { category?: string; showArchived?: boolean }) {
     try {
+      const now = new Date();
+      const filters: any = {
+        status: NotificationStatus.PUBLISHED,
+        date: { $lt: now },
+      };
+
+      if (query?.category && query.category !== 'ALL') {
+        filters.category = query.category;
+      }
+
+      if (query?.showArchived) {
+        filters.expiresAt = { $lt: now };
+      } else {
+        filters.expiresAt = { $gt: now };
+      }
+
       return await this.notificationModel
-        .find({ status: NotificationStatus.PUBLISHED })
-        .select('uuid title content date priority -_id')
-        .sort({ date: -1, createdAt: -1 })
+        .find(filters)
+        .select('uuid title content date expiresAt category isPinned -_id')
+        // Implements: 1. Pinned+Urgent, 2. Pinned, 3. Urgent, 4. Date
+        .sort({ isPinned: -1, category: -1, date: -1 })
         .exec();
     } catch (error) {
       await this.handleError(
         error,
         'GET',
         '/public/notifications',
-        null,
+        query,
         'GUEST',
       );
       throw new InternalServerErrorException('Failed to fetch notifications');
