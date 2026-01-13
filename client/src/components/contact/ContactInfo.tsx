@@ -1,6 +1,9 @@
 import { Mail, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ContactInfo = () => {
+  const { t } = useTranslation("common");
+
   return (
     <div className="space-y-8 mt-12">
       <div className="flex items-start">
@@ -8,7 +11,7 @@ const ContactInfo = () => {
           <Mail />
         </div>
         <div>
-          <h4 className="font-bold text-stone-800">Email Address</h4>
+          <h4 className="font-bold text-stone-800">{t("email_address")}</h4>
           <p className="text-stone-500">viralippurathkudumbam@gmail.com</p>
         </div>
       </div>
@@ -18,10 +21,8 @@ const ContactInfo = () => {
           <MapPin />
         </div>
         <div>
-          <h4 className="font-bold text-stone-800">Mookkuthala</h4>
-          <p className="text-stone-500">
-            Viralippurath House, Kerala, IN - 679574
-          </p>
+          <h4 className="font-bold text-stone-800">{t("mookkuthala")}</h4>
+          <p className="text-stone-500">{t("address")}</p>
         </div>
       </div>
     </div>
