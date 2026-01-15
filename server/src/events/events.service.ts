@@ -55,8 +55,10 @@ export class EventsService {
       if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
         filters.$or = [
-          { title: searchRegex },
-          { description: searchRegex },
+          { title_en: searchRegex },
+          { title_ml: searchRegex },
+          { description_en: searchRegex },
+          { description_ml: searchRegex },
           { type: searchRegex },
           { location: searchRegex },
         ];
@@ -116,7 +118,7 @@ export class EventsService {
         adminUserName: admin.username,
         action: ActivityAction.CREATE,
         entityType: EntityType.EVENT,
-        entityTitle: newEvent.title,
+        entityTitle: newEvent.title_en,
         entityUuid: newEvent.uuid,
       });
 
@@ -165,7 +167,7 @@ export class EventsService {
         adminUserName: admin.username,
         action: ActivityAction.UPDATE,
         entityType: EntityType.EVENT,
-        entityTitle: updatedEvent.title,
+        entityTitle: updatedEvent.title_en,
         entityUuid: updatedEvent.uuid,
       });
 
@@ -203,7 +205,7 @@ export class EventsService {
         adminUserName: admin.username,
         action: ActivityAction.DELETE,
         entityType: EntityType.EVENT,
-        entityTitle: deletedEvent.title,
+        entityTitle: deletedEvent.title_en,
         entityUuid: deletedEvent.uuid,
       });
 
@@ -258,7 +260,7 @@ export class EventsService {
         this.eventModel
           .find(query)
           .select(
-            'uuid title description startDateTime endDateTime type location -_id',
+            'uuid title_en title_ml description_en description_ml startDateTime endDateTime type location -_id',
           )
           .sort(sortOrder)
           .skip(skip)

@@ -1,13 +1,17 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { PublicEvent } from "../../types/event.public";
 import { formatDateTime, formatDate } from "../../utils/date";
 import { MapPin, Clock, ArrowRight } from "lucide-react";
+import { getLocalized } from "../../utils/lang.utils";
 
 interface Props {
   event: PublicEvent;
 }
 
 const EventCard: React.FC<Props> = ({ event }) => {
+  const { i18n } = useTranslation("events");
+
   const start = new Date(event.startDateTime);
   const end = new Date(event.endDateTime);
 
@@ -46,7 +50,7 @@ const EventCard: React.FC<Props> = ({ event }) => {
               )}
             </div>
             <h3 className="text-2xl font-serif text-stone-800">
-              {event.title}
+              {getLocalized(event, "title", i18n.language)}
             </h3>
           </div>
 
@@ -58,7 +62,7 @@ const EventCard: React.FC<Props> = ({ event }) => {
         </div>
 
         <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">
-          {event.description}
+          {getLocalized(event, "description", i18n.language)}
         </p>
 
         {event.location && (

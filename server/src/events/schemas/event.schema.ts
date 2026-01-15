@@ -15,10 +15,16 @@ export class Event {
   uuid: string;
 
   @Prop({ required: true, trim: true })
-  title: string;
+  title_en: string;
+
+  @Prop({ required: false, trim: true })
+  title_ml?: string;
 
   @Prop({ required: true })
-  description: string;
+  description_en: string;
+
+  @Prop({ required: false, trim: true })
+  description_ml?: string;
 
   @Prop({ required: true })
   type: string; // Gathering, Ceremony, Meeting, etc.

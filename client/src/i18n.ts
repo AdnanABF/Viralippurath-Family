@@ -14,7 +14,7 @@ i18n
     // Define namespaces
     // 'common' usually holds global UI like Nav, Footer, Buttons
     // 'notifications' holds page-specific text
-    ns: ["common", "notifications"],
+    ns: ["common", "notifications", "aboutus", "contact", "vision", "events"],
     defaultNS: "common",
 
     detection: {
