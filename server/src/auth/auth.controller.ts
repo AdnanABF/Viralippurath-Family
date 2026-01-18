@@ -1,6 +1,7 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
@@ -25,5 +26,17 @@ export class AuthController {
   @Post('refresh')
   async refresh(@Body() body: { userUuid: string; refreshToken: string }) {
     return await this.authService.refresh(body.userUuid, body.refreshToken);
+  }
+
+  /**
+   * POST /auth/logout
+   * Invalidates the user's session on the server side.
+   * Requires a valid JWT access token.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@Request() req: any) {
+    // The user object is attached to the request by the JwtStrategy
+    return await this.authService.logout(req.user.userUuid);
   }
 }

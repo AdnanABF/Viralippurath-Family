@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { isTokenValid } from "../utils/auth";
-import { clearAuthData } from "../utils/logout";
+import { authService } from "../services/auth.service";
 import type { AuthUser } from "../types/auth";
 
 type AuthContextType = {
@@ -9,7 +9,7 @@ type AuthContextType = {
   user: AuthUser | null;
   loading: boolean;
   login: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -55,12 +55,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = () => initAuth();
 
-  const logout = () => {
-    clearAuthData();
-    setIsAuthenticated(false);
-    setUser(null);
-    setLoading(false);
-    window.location.href = "/login";
+  /**
+   * Enhanced Logout:
+   * 1. Calls the backend to invalidate the session.
+   * 2. Clears local storage.
+   * 3. Resets local state.
+   * 4. Redirects to login with a full refresh for security.
+   */
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setIsAuthenticated(false);
+      setUser(null);
+      setLoading(false);
+      window.location.href = "/login";
+    }
   };
 
   useEffect(() => {

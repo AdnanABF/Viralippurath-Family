@@ -29,7 +29,6 @@ export class AuthService {
     try {
       const admin = await this.adminService.findByUsername(username, true);
 
-      // Using generic error to prevent account enumeration
       if (!admin || !admin.isActive) {
         throw new UnauthorizedException('Invalid credentials');
       }
@@ -39,7 +38,6 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      // Update last login timestamp
       admin.lastLogin = new Date();
       await admin.save();
 
@@ -61,7 +59,7 @@ export class AuthService {
   }
 
   /**
-   * Validates refresh token and issues a new pair.
+   * Validates refresh token, checks database expiry, and issues a new pair.
    */
   async refresh(userUuid: string, refreshToken: string) {
     try {
@@ -71,8 +69,19 @@ export class AuthService {
 
       const admin = await this.adminService.findByUuid(userUuid);
 
+      // Check if session exists in DB
       if (!admin || !admin.isActive || !admin.refreshTokenHash) {
         throw new UnauthorizedException('Invalid session');
+      }
+
+      // Check Database Expiry Date
+      if (
+        admin.refreshTokenExpiresAt &&
+        new Date() > admin.refreshTokenExpiresAt
+      ) {
+        // Token expired in DB, clean it up and reject
+        await this.adminService.clearRefreshToken(userUuid);
+        throw new UnauthorizedException('Session expired');
       }
 
       const isValid = await bcrypt.compare(
@@ -100,7 +109,20 @@ export class AuthService {
   }
 
   /**
-   * Generates Access and Refresh tokens.
+   * Invalidates a user session by clearing the refresh token from the database.
+   */
+  async logout(userUuid: string) {
+    try {
+      await this.adminService.clearRefreshToken(userUuid);
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      await this.handleError(error, 'POST', '/auth/logout', { userUuid });
+      throw new InternalServerErrorException('An error occurred during logout');
+    }
+  }
+
+  /**
+   * Generates Access and Refresh tokens with explicit DB expiry.
    */
   private async generateTokenPair(admin: any) {
     try {
@@ -119,7 +141,15 @@ export class AuthService {
       const refreshToken = randomBytes(64).toString('hex');
       const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
+      // Calculate Expiry Date for the Database
+      const expiresInStr = this.config.get<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+        '30d',
+      );
+      const expiryDate = this.calculateExpiryDate(expiresInStr);
+
       admin.refreshTokenHash = refreshTokenHash;
+      admin.refreshTokenExpiresAt = expiryDate;
       await admin.save();
 
       return {
@@ -138,8 +168,15 @@ export class AuthService {
   }
 
   /**
-   * Helper method to record technical system logs for Auth
+   * Simple helper to parse duration strings like "30d" or "7d" into a Date object.
    */
+  private calculateExpiryDate(expiresIn: string): Date {
+    const days = parseInt(expiresIn.replace('d', ''), 10);
+    const date = new Date();
+    date.setDate(date.getDate() + (isNaN(days) ? 30 : days));
+    return date;
+  }
+
   private async handleError(
     error: any,
     method: string,
@@ -157,7 +194,7 @@ export class AuthService {
       stack: error.stack,
       path,
       method,
-      payload, // Payload here is already masked in the calling methods (no passwords)
+      payload,
       userUuid: payload?.userUuid || 'SYSTEM_AUTH',
     });
   }

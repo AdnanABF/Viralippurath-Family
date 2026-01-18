@@ -178,7 +178,6 @@ export class AdminService {
         throw error;
       }
 
-      // Capture duplicate key error even if findByUsername missed it (race conditions)
       if (error.code === 11000) {
         throw new ConflictException('Username or email already exists');
       }
@@ -347,6 +346,32 @@ export class AdminService {
         isActive: true,
       })
       .exec();
+  }
+
+  /**
+   * Clears the refresh token hash and expiry from the database.
+   * Used during logout or session invalidation.
+   */
+  async clearRefreshToken(uuid: string): Promise<void> {
+    try {
+      await this.adminModel
+        .updateOne(
+          { uuid },
+          {
+            $set: {
+              refreshTokenHash: null,
+              refreshTokenExpiresAt: null,
+            },
+          },
+        )
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Failed to clear refresh token for user ${uuid}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Failed to invalidate session');
+    }
   }
 
   /**
