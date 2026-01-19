@@ -23,7 +23,7 @@ export class AuthService {
   ) {}
 
   /**
-   * Validates admin credentials and updates login metadata.
+   * Validates admin credentials and returns tokens + expiry info for cookies.
    */
   async login(username: string, password: string) {
     try {
@@ -41,10 +41,10 @@ export class AuthService {
       admin.lastLogin = new Date();
       await admin.save();
 
-      const tokens = await this.generateTokenPair(admin);
+      const tokenData = await this.generateTokenPair(admin);
 
       return {
-        data: tokens,
+        data: tokenData,
         message: 'Logged in successfully',
       };
     } catch (error) {
@@ -59,7 +59,7 @@ export class AuthService {
   }
 
   /**
-   * Validates refresh token, checks database expiry, and issues a new pair.
+   * Validates refresh token from cookie and issues a new pair.
    */
   async refresh(userUuid: string, refreshToken: string) {
     try {
@@ -92,10 +92,10 @@ export class AuthService {
         throw new UnauthorizedException('Invalid session');
       }
 
-      const tokens = await this.generateTokenPair(admin);
+      const tokenData = await this.generateTokenPair(admin);
 
       return {
-        data: tokens,
+        data: tokenData,
         message: 'Token refreshed successfully',
       };
     } catch (error) {
@@ -122,7 +122,8 @@ export class AuthService {
   }
 
   /**
-   * Generates Access and Refresh tokens with explicit DB expiry.
+   * Generates Access and Refresh tokens.
+   * Now returns metadata needed for HttpOnly cookie configuration.
    */
   private async generateTokenPair(admin: any) {
     try {
@@ -133,20 +134,25 @@ export class AuthService {
         fullName: admin.fullName,
       };
 
+      // Get expiry strings from config
+      const accessExpiresIn = this.config.get<string>(
+        'JWT_ACCESS_EXPIRES_IN',
+        '15m',
+      ) as any;
+      const refreshExpiresIn = this.config.get<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+        '30d',
+      ) as any;
+
       const accessToken = this.jwtService.sign(payload, {
         secret: this.config.get('JWT_SECRET'),
-        expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN'),
+        expiresIn: accessExpiresIn,
       });
 
       const refreshToken = randomBytes(64).toString('hex');
       const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
-      // Calculate Expiry Date for the Database
-      const expiresInStr = this.config.get<string>(
-        'JWT_REFRESH_EXPIRES_IN',
-        '30d',
-      );
-      const expiryDate = this.calculateExpiryDate(expiresInStr);
+      const expiryDate = this.calculateExpiryDate(refreshExpiresIn);
 
       admin.refreshTokenHash = refreshTokenHash;
       admin.refreshTokenExpiresAt = expiryDate;
@@ -155,9 +161,16 @@ export class AuthService {
       return {
         accessToken,
         refreshToken,
+        accessTokenExpiresIn: accessExpiresIn,
+        refreshTokenExpiresIn: refreshExpiresIn,
+        user: {
+          userUuid: admin.uuid,
+          username: admin.username,
+          role: admin.role,
+          fullName: admin.fullName,
+        },
       };
     } catch (error) {
-      // If token generation fails (e.g., JWT secret missing), this is a critical system error
       await this.handleError(error, 'INTERNAL', 'TOKEN_GENERATION', {
         username: admin.username,
       });

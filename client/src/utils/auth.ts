@@ -1,47 +1,46 @@
-import { jwtDecode } from "jwt-decode";
+import type { AuthUser } from "../types/auth";
 
-type JwtPayload = {
-  sub: string;
-  username: string;
-  role: string;
-  exp: number;
-  fullName: string;
-};
-
+/**
+ * Checks if a user session "hint" exists in local storage.
+ */
 export const isTokenValid = (): boolean => {
-  const token = localStorage.getItem("accessToken");
-  if (!token) return false;
-
-  try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    const now = Date.now() / 1000;
-    return decoded.exp > now + 10; // Add a 10-second buffer to prevent race conditions
-  } catch {
-    return false;
-  }
+  const userJson = localStorage.getItem("user");
+  return !!userJson;
 };
 
-export const getUserFromToken = () => {
-  const token = localStorage.getItem("accessToken");
-  if (!token) return null;
+/**
+ * Retrieves the user profile from local storage.
+ * Standardized to return AuthUser (which uses userUuid).
+ */
+export const getUserFromToken = (): AuthUser | null => {
+  const userJson = localStorage.getItem("user");
+  if (!userJson) return null;
 
   try {
-    return jwtDecode<JwtPayload>(token);
+    return JSON.parse(userJson);
   } catch {
     return null;
   }
 };
 
 /**
- * Specifically extracts the userId (sub) for the refresh call
+ * Specifically extracts the user identifier for the /auth/refresh call.
  */
 export const getUserIdFromToken = (): string | null => {
-  const token = localStorage.getItem("accessToken");
-  if (!token) return null;
-  try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    return decoded.sub;
-  } catch {
-    return null;
-  }
+  const user = getUserFromToken();
+  return user ? user.userUuid : null;
+};
+
+/**
+ * Helper to save user info to localStorage after login/refresh.
+ */
+export const saveUserToStorage = (user: AuthUser) => {
+  localStorage.setItem("user", JSON.stringify(user));
+};
+
+/**
+ * Helper to clear user info from localStorage.
+ */
+export const clearUserFromStorage = () => {
+  localStorage.removeItem("user");
 };

@@ -3,8 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import cookieParser from 'cookie-parser';
 
 // Create the express instance for Vercel
 const server = express();
@@ -18,15 +17,20 @@ async function setupApp(app: INestApplication) {
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 
-  // 2. CORS Configuration
+  // 2. Cookie Parser Middleware
+  // Required to read cookies from incoming requests
+  app.use(cookieParser());
+
+  // 3. CORS Configuration
   const corsOrigin = process.env.CORS_ORIGIN;
   app.enableCors({
+    // When using credentials: true, origin cannot be '*'
     origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : [],
-    credentials: true,
+    credentials: true, // Required for cookies to be sent/received
     maxAge: 86400,
   });
 
-  // 3. Global Validation Pipes
+  // 4. Global Validation Pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -24,15 +24,21 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Call the service (interceptor unwraps the response)
+      /**
+       * 1. Call the service.
+       * The backend sets HttpOnly cookies.
+       * The interceptor unwraps the response to give us { user: { ... } }
+       */
       const data = await authService.login({ username, password });
 
-      // 2. Save tokens from the unwrapped data
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      /**
+       * 2. Update context with user data.
+       * Note: We no longer manually save tokens to localStorage here.
+       * The 'login' function in AuthContext handles saving the non-sensitive
+       * user profile 'hint' to localStorage.
+       */
+      login(data.user);
 
-      // 3. Update context and navigate
-      login();
       navigate("/admin/dashboard", { replace: true });
     } catch (err: any) {
       // Logic for specific login error messaging

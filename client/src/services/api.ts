@@ -5,16 +5,15 @@ import { getUserIdFromToken } from "../utils/auth";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  // CRITICAL: Allows browser to send and receive cookies for cross-origin requests
+  withCredentials: true,
 });
 
 /**
- * Request Interceptor: Attach the current Access Token to every outgoing request
+ * Request Interceptor
+ * We no longer manually attach the Bearer token because it's now in an HttpOnly cookie.
  */
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -62,27 +61,26 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
         const userUuid = getUserIdFromToken();
 
-        if (!refreshToken || !userUuid) {
+        if (!userUuid) {
           logout();
           return Promise.reject(error);
         }
 
-        // Standard Axios call (not 'api' instance) to avoid infinite loops
-        const res = await axios.post(
+        /**
+         * We call the refresh endpoint.
+         * Note: We don't send the refreshToken in the body anymore;
+         * the browser automatically sends the 'refreshToken' cookie.
+         */
+        await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          { userUuid, refreshToken }
+          { userUuid },
+          { withCredentials: true } // Ensure cookies are sent with this manual call
         );
 
-        // Note: Access tokens now arrive in res.data.data.accessToken due to backend changes
-        const { accessToken, refreshToken: newRefreshToken } = res.data.data;
-
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", newRefreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        // Cookies are updated automatically by the Set-Cookie header in the response.
+        // We simply retry the original request.
         return api(originalRequest);
       } catch (refreshError) {
         logout();
