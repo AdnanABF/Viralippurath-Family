@@ -1,22 +1,26 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../services/auth.service";
 import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Determine where to send the user after successful login
+  const redirectUrl = location.state?.from?.pathname || "/admin/dashboard";
+
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/admin/dashboard", { replace: true });
+      navigate(redirectUrl, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +43,8 @@ const Login = () => {
        */
       login(data.user);
 
-      navigate("/admin/dashboard", { replace: true });
+      // Redirect to the intended page or dashboard
+      navigate(redirectUrl, { replace: true });
     } catch (err: any) {
       // Logic for specific login error messaging
       if (!err.response) {
