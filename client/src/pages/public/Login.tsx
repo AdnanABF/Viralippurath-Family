@@ -1,22 +1,26 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../services/auth.service";
 import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Determine where to send the user after successful login
+  const redirectUrl = location.state?.from?.pathname || "/admin/dashboard";
+
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/admin/dashboard", { replace: true });
+      navigate(redirectUrl, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,16 +28,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Call the service (interceptor unwraps the response)
+      /**
+       * 1. Call the service.
+       * The backend sets HttpOnly cookies.
+       * The interceptor unwraps the response to give us { user: { ... } }
+       */
       const data = await authService.login({ username, password });
 
-      // 2. Save tokens from the unwrapped data
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      /**
+       * 2. Update context with user data.
+       * Note: We no longer manually save tokens to localStorage here.
+       * The 'login' function in AuthContext handles saving the non-sensitive
+       * user profile 'hint' to localStorage.
+       */
+      login(data.user);
 
-      // 3. Update context and navigate
-      login();
-      navigate("/admin/dashboard", { replace: true });
+      // Redirect to the intended page or dashboard
+      navigate(redirectUrl, { replace: true });
     } catch (err: any) {
       // Logic for specific login error messaging
       if (!err.response) {

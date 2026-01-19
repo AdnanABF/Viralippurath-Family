@@ -3,30 +3,24 @@
  */
 export interface LoginCredentials {
   username: string;
-  password?: string; // Optional if using different auth methods later
+  password?: string;
 }
 
 /**
  * Shape of the response returned by your /auth/login endpoint.
- * This matches your api.ts unwrapping logic.
  */
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  user: {
-    uuid: string;
-    username: string;
-    fullName: string;
-    role: "ADMIN" | "SUPERADMIN" | "MEMBER";
-  };
+  user: AuthUser;
 }
 
 /**
- * Shape of the user stored in your AuthContext.
+ * Shape of the user stored in your AuthContext and LocalStorage.
  */
 export interface AuthUser {
-  uuid: string;
+  userUuid: string;
   username: string;
   fullName: string;
-  role: string;
+  role: "ADMIN" | "SUPER_ADMIN" | "MEMBER"; // Added underscore to match Guard logic
 }

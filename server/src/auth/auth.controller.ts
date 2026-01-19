@@ -1,29 +1,148 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  UseGuards,
+  Request,
+  Res,
+} from '@nestjs/common';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {}
+
+  /**
+   * GET /auth/me
+   * Returns the current user's profile based on the HttpOnly cookie.
+   * This is used by the frontend on app load to verify the session.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMe(@Request() req: any) {
+    // The JwtStrategy.validate() return value is available here as req.user
+    return {
+      data: {
+        user: req.user,
+      },
+    };
+  }
 
   /**
    * POST /auth/login
-   * Standard login endpoint with rate limiting to prevent brute-force attacks.
+   * Authenticates user and sets HttpOnly cookies.
    */
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
-  async login(@Body() body: { username: string; password: string }) {
-    return await this.authService.login(body.username, body.password);
+  async login(
+    @Body() body: { username: string; password: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(body.username, body.password);
+
+    this.setCookies(res, result.data);
+
+    return {
+      message: result.message,
+      data: { user: result.data.user },
+    };
   }
 
   /**
    * POST /auth/refresh
-   * Exchanges a refresh token for a new access/refresh token pair.
+   * Uses refresh token from cookie to issue new cookies.
    */
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   @Post('refresh')
-  async refresh(@Body() body: { userUuid: string; refreshToken: string }) {
-    return await this.authService.refresh(body.userUuid, body.refreshToken);
+  async refresh(
+    @Request() req: any,
+    @Body() body: { userUuid: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.['refreshToken'];
+    const userUuid = body.userUuid;
+
+    const result = await this.authService.refresh(userUuid, refreshToken);
+
+    this.setCookies(res, result.data);
+
+    return {
+      message: result.message,
+      data: { user: result.data.user },
+    };
+  }
+
+  /**
+   * POST /auth/logout
+   * Clears cookies and invalidates session.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.logout(req.user.userUuid);
+
+    this.clearCookies(res);
+
+    return result;
+  }
+
+  /**
+   * Helper to set secure HttpOnly cookies
+   */
+  private setCookies(res: Response, tokenData: any) {
+    const refreshMaxAge = this.parseDurationToMs(
+      tokenData.refreshTokenExpiresIn,
+    );
+    const accessMaxAge = this.parseDurationToMs(tokenData.accessTokenExpiresIn);
+
+    res.cookie('accessToken', tokenData.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: accessMaxAge,
+    });
+
+    res.cookie('refreshToken', tokenData.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: refreshMaxAge,
+    });
+  }
+
+  /**
+   * Helper to clear cookies on logout
+   */
+  private clearCookies(res: Response) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+  }
+
+  /**
+   * Simple helper to convert string duration to ms
+   */
+  private parseDurationToMs(duration: string): number {
+    if (typeof duration !== 'string') return 3600000;
+    const unit = duration.slice(-1);
+    const value = parseInt(duration.slice(0, -1));
+    switch (unit) {
+      case 'd':
+        return value * 24 * 60 * 60 * 1000;
+      case 'm':
+        return value * 60 * 1000;
+      case 's':
+        return value * 1000;
+      default:
+        return 3600000;
+    }
   }
 }

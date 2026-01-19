@@ -38,6 +38,9 @@ export class Admin {
   refreshTokenHash?: string;
 
   @Prop()
+  refreshTokenExpiresAt?: Date;
+
+  @Prop()
   lastLogin?: Date;
 }
 

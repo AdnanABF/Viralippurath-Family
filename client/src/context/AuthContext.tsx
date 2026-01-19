@@ -1,15 +1,27 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
-import { isTokenValid } from "../utils/auth";
-import { clearAuthData } from "../utils/logout";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import {
+  isTokenValid,
+  getUserFromToken,
+  saveUserToStorage,
+  clearUserFromStorage,
+} from "../utils/auth";
+import { authService } from "../services/auth.service";
+import api from "../services/api";
 import type { AuthUser } from "../types/auth";
 
 type AuthContextType = {
   isAuthenticated: boolean;
   user: AuthUser | null;
   loading: boolean;
-  login: () => void;
-  logout: () => void;
+  login: (userData: AuthUser) => void;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -17,59 +29,85 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(isTokenValid());
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize state
+  const [user, setUser] = useState<AuthUser | null>(getUserFromToken());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const initAuth = () => {
-    setLoading(true);
-    const isValid = isTokenValid();
-    setIsAuthenticated(isValid);
+  /**
+   * Fetches the current user session from the server.
+   */
+  const refreshUser = useCallback(async () => {
+    try {
+      // api.ts returns unwrapped body { user: { userUuid, ... } }
+      const response: any = await api.get("/auth/me");
 
-    if (isValid) {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        try {
-          const decoded = jwtDecode<{
-            sub: string;
-            username: string;
-            role: string;
-            fullName: string;
-          }>(token);
+      // Extract the user object
+      const userData: AuthUser = response.user || response;
 
-          setUser({
-            uuid: decoded.sub,
-            username: decoded.username,
-            role: decoded.role,
-            fullName: decoded.fullName || "Admin User",
-          });
-        } catch {
-          logout();
-        }
+      if (userData && userData.userUuid) {
+        setIsAuthenticated(true);
+        setUser(userData);
+        saveUserToStorage(userData);
+      } else {
+        throw new Error("Invalid session data: userUuid missing");
       }
-    } else {
+    } catch (error) {
+      clearUserFromStorage();
+      setIsAuthenticated(false);
       setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  }, []);
+
+  /**
+   * Initial check on app mount
+   */
+  const initAuth = useCallback(async () => {
+    const hasHint = isTokenValid();
+
+    if (hasHint) {
+      // If we have a hint, we still show loading until server confirms
+      await refreshUser();
+    } else {
+      // No hint, no need to wait for a network call
+      setLoading(false);
+    }
+  }, [refreshUser]);
+
+  /**
+   * Updated Login to expect the standardized AuthUser object
+   */
+  const login = (userData: AuthUser) => {
+    if (userData && userData.userUuid) {
+      saveUserToStorage(userData);
+      setIsAuthenticated(true);
+      setUser(userData);
+      setLoading(false);
+    }
   };
 
-  const login = () => initAuth();
-
-  const logout = () => {
-    clearAuthData();
-    setIsAuthenticated(false);
-    setUser(null);
-    setLoading(false);
-    window.location.href = "/login";
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+    } finally {
+      clearUserFromStorage();
+      setIsAuthenticated(false);
+      setUser(null);
+      setLoading(false);
+      window.location.href = "/login";
+    }
   };
 
   useEffect(() => {
     initAuth();
-  }, []);
+  }, [initAuth]);
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, loading, login, logout }}
+      value={{ isAuthenticated, user, loading, login, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>
