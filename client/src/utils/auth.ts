@@ -2,10 +2,20 @@ import type { AuthUser } from "../types/auth";
 
 /**
  * Checks if a user session "hint" exists in local storage.
+ * This is used to determine if we should show a loading spinner
+ * while validating the actual session cookie with the server.
  */
 export const isTokenValid = (): boolean => {
   const userJson = localStorage.getItem("user");
-  return !!userJson;
+  if (!userJson) return false;
+
+  try {
+    const user = JSON.parse(userJson);
+    // Ensure the hint contains the required identifier
+    return !!(user && user.userUuid);
+  } catch {
+    return false;
+  }
 };
 
 /**
@@ -17,14 +27,19 @@ export const getUserFromToken = (): AuthUser | null => {
   if (!userJson) return null;
 
   try {
-    return JSON.parse(userJson);
+    const user: AuthUser = JSON.parse(userJson);
+    if (user && user.userUuid) {
+      return user;
+    }
+    return null;
   } catch {
     return null;
   }
 };
 
 /**
- * Specifically extracts the user identifier for the /auth/refresh call.
+ * Specifically extracts the user identifier.
+ * Useful for logs or specific API calls that require the UUID.
  */
 export const getUserIdFromToken = (): string | null => {
   const user = getUserFromToken();
@@ -33,6 +48,7 @@ export const getUserIdFromToken = (): string | null => {
 
 /**
  * Helper to save user info to localStorage after login/refresh.
+ * We only save non-sensitive profile data here.
  */
 export const saveUserToStorage = (user: AuthUser) => {
   localStorage.setItem("user", JSON.stringify(user));

@@ -4,7 +4,7 @@ import { TriangleAlert } from "lucide-react";
 
 const Unauthorized = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
@@ -29,18 +29,30 @@ const Unauthorized = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={() => navigate("/admin/dashboard")}
-            className="px-6 py-2.5 bg-stone-900 text-white rounded-lg font-medium hover:bg-stone-800 transition-all active:scale-95"
-          >
-            Go to Dashboard
-          </button>
-          <button
-            onClick={logout}
-            className="px-6 py-2.5 bg-white text-stone-600 border border-stone-200 rounded-lg font-medium hover:bg-stone-50 transition-all active:scale-95"
-          >
-            Sign Out
-          </button>
+          {user ? (
+            <button
+              onClick={() => navigate("/admin/dashboard")}
+              className="px-6 py-2.5 bg-stone-900 text-white rounded-lg font-medium hover:bg-stone-800 transition-all active:scale-95"
+            >
+              Go to Dashboard
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate("/login")}
+              className="px-6 py-2.5 bg-amber-700 text-white rounded-lg font-medium hover:bg-amber-800 transition-all active:scale-95"
+            >
+              Back to Login
+            </button>
+          )}
+
+          {user && (
+            <button
+              onClick={logout}
+              className="px-6 py-2.5 bg-white text-stone-600 border border-stone-200 rounded-lg font-medium hover:bg-stone-50 transition-all active:scale-95"
+            >
+              Sign Out
+            </button>
+          )}
         </div>
 
         {/* Brand Footer */}

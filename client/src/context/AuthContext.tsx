@@ -29,11 +29,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Initialize state based on storage hint
-  const hasHint = isTokenValid();
-  const [loading, setLoading] = useState(hasHint);
-  const [isAuthenticated, setIsAuthenticated] = useState(hasHint);
+  // Initialize state
   const [user, setUser] = useState<AuthUser | null>(getUserFromToken());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   /**
    * Fetches the current user session from the server.
@@ -43,10 +42,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // api.ts returns unwrapped body { user: { userUuid, ... } }
       const response: any = await api.get("/auth/me");
 
-      // Extract the user object (checking for nested or direct response)
+      // Extract the user object
       const userData: AuthUser = response.user || response;
 
-      // Validation check using the standardized userUuid
       if (userData && userData.userUuid) {
         setIsAuthenticated(true);
         setUser(userData);
@@ -67,9 +65,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    * Initial check on app mount
    */
   const initAuth = useCallback(async () => {
-    if (isTokenValid()) {
+    const hasHint = isTokenValid();
+
+    if (hasHint) {
+      // If we have a hint, we still show loading until server confirms
       await refreshUser();
     } else {
+      // No hint, no need to wait for a network call
       setLoading(false);
     }
   }, [refreshUser]);
