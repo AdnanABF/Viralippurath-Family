@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -117,6 +118,12 @@ export class NotificationsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (new Date(dto.expiresAt) <= new Date(dto.date)) {
+        throw new BadRequestException(
+          'Expiry date must be equal to or after publish date',
+        );
+      }
+
       const notification = await this.notificationModel.create(dto);
 
       await this.activityLogService.create({
@@ -150,6 +157,14 @@ export class NotificationsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (dto.date && dto.expiresAt) {
+        if (new Date(dto.expiresAt) <= new Date(dto.date)) {
+          throw new BadRequestException(
+            'Expiry date must be equal to or after publish date',
+          );
+        }
+      }
+
       const updated = await this.notificationModel
         .findOneAndUpdate(
           { uuid },

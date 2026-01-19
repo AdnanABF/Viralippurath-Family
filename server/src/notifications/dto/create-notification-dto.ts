@@ -10,6 +10,7 @@ import {
   NotificationStatus,
   NotificationCategory,
 } from '../schemas/notification.schema';
+import { IsAfter } from '../../common/decorators/is-after.decorator';
 
 export class CreateNotificationDto {
   @IsString()
@@ -34,6 +35,9 @@ export class CreateNotificationDto {
 
   @IsDateString()
   @IsNotEmpty()
+  @IsAfter('date', {
+    message: 'Expiry date must be equal to or after publish date',
+  })
   expiresAt: string;
 
   @IsBoolean()

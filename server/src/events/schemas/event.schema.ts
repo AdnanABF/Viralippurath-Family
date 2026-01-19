@@ -35,13 +35,28 @@ export class Event {
   @Prop({
     required: true,
     validate: {
-      validator: function (this: any, value: Date) {
-        return value >= this.startDateTime;
+      validator: function (value: Date) {
+        // 'this' can be a Document or a Query
+        // For updates, we look into the update object
+        const startDateTime =
+          this instanceof Document
+            ? this.startDateTime
+            : (this as any).getUpdate().$set?.startDateTime ||
+              (this as any).getUpdate().startDateTime;
+
+        // If we are updating only the end date and not the start date,
+        // we might not have startDateTime in the update object.
+        // In that case, we can skip validation or fetch the doc (expensive).
+        // A better practice is to ensure both are sent or use a service-level check.
+
+        if (!startDateTime) return true;
+
+        return value >= startDateTime;
       },
       message: 'End date-time must be equal to or after start date-time',
     },
   })
-  endDateTime: Date; // New field
+  endDateTime: Date;
 
   @Prop({ required: true })
   location?: string;

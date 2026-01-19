@@ -75,6 +75,15 @@ const NotificationForm: React.FC<Props> = ({
     }
   };
 
+  const handleDateChange = (val: string) => {
+    setDate(val);
+    if (expiresAt < val) {
+      const d = new Date(val);
+      d.setDate(d.getDate() + 30);
+      setExpiresAt(toDateTimeInputValue(d.toISOString()));
+    }
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -200,7 +209,7 @@ const NotificationForm: React.FC<Props> = ({
               disabled={isLoading}
               type="datetime-local"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
             />
           </div>
@@ -214,6 +223,7 @@ const NotificationForm: React.FC<Props> = ({
               disabled={isLoading}
               type="datetime-local"
               value={expiresAt}
+              min={date}
               onChange={(e) => setExpiresAt(e.target.value)}
               className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
             />

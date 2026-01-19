@@ -3,6 +3,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
   ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -111,6 +112,10 @@ export class EventsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
+        throw new BadRequestException('End date cannot be before start date');
+      }
+
       const newEvent = await this.eventModel.create(dto);
 
       await this.activityLogService.create({
@@ -150,6 +155,12 @@ export class EventsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (dto.startDateTime && dto.endDateTime) {
+        if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
+          throw new BadRequestException('End date cannot be before start date');
+        }
+      }
+
       const updatedEvent = await this.eventModel
         .findOneAndUpdate(
           { uuid },
