@@ -21,6 +21,15 @@ const AdminDashboard = () => {
     queryFn: dashboardAdminService.getDashboardStats,
   });
 
+  // Helper to format the trend prop for StatsCard
+  const getTrendProps = (diff?: number) => {
+    if (diff === undefined || diff === 0) return undefined;
+    return {
+      value: Math.abs(diff).toString(),
+      isPositive: diff > 0,
+    };
+  };
+
   // 2. Handle Error State
   if (isError) {
     return (
@@ -56,25 +65,37 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
           label="Upcoming Events"
-          value={isLoading ? "..." : stats?.upcomingEvents.toString() || "0"}
+          value={
+            isLoading ? "..." : stats?.upcomingEvents.current.toString() || "0"
+          }
+          trend={getTrendProps(stats?.upcomingEvents.diff)}
           icon={Calendar}
           color="blue"
         />
         <StatsCard
           label="Magazine Issues"
-          value={isLoading ? "..." : stats?.totalMagazines.toString() || "0"}
+          value={
+            isLoading ? "..." : stats?.totalMagazines.current.toString() || "0"
+          }
+          trend={getTrendProps(stats?.totalMagazines.diff)}
           icon={BookOpen}
           color="stone"
         />
         <StatsCard
           label="Gallery Photos"
-          value={isLoading ? "..." : stats?.galleryPhotos.toString() || "0"}
+          value={
+            isLoading ? "..." : stats?.galleryPhotos.current.toString() || "0"
+          }
+          trend={getTrendProps(stats?.galleryPhotos.diff)}
           icon={ImageIcon}
           color="purple"
         />
         <StatsCard
           label="Active Alerts"
-          value={isLoading ? "..." : stats?.activeAlerts.toString() || "0"}
+          value={
+            isLoading ? "..." : stats?.activeAlerts.current.toString() || "0"
+          }
+          trend={getTrendProps(stats?.activeAlerts.diff)}
           icon={Bell}
           color="amber"
         />
