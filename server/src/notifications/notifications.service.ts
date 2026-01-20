@@ -71,14 +71,11 @@ export class NotificationsService {
         ];
       }
 
+      // Updated: Trust the ISO strings provided by the frontend
       if (startDate || endDate) {
         filters.date = {};
         if (startDate) filters.date.$gte = new Date(startDate);
-        if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          filters.date.$lte = end;
-        }
+        if (endDate) filters.date.$lte = new Date(endDate);
       }
 
       const [data, totalItems] = await Promise.all([
@@ -247,17 +244,14 @@ export class NotificationsService {
 
   // ===== PUBLIC
 
-  /**
-   * Fetches only the 3 most important/latest notifications for the home page.
-   */
   async getLatestThree() {
     try {
       const now = new Date();
       return await this.notificationModel
         .find({
           status: NotificationStatus.PUBLISHED,
-          date: { $lt: now },
-          expiresAt: { $gt: now }, // Only current (non-archived) ones
+          date: { $lte: now }, // Using $lte for safety to include "exactly now"
+          expiresAt: { $gt: now },
         })
         .select(
           'uuid title_en title_ml content_en content_ml date category isPinned -_id',
@@ -284,7 +278,7 @@ export class NotificationsService {
       const now = new Date();
       const filters: any = {
         status: NotificationStatus.PUBLISHED,
-        date: { $lt: now },
+        date: { $lte: now },
       };
 
       if (query?.category && query.category !== 'ALL') {
@@ -292,7 +286,7 @@ export class NotificationsService {
       }
 
       if (query?.showArchived) {
-        filters.expiresAt = { $lt: now };
+        filters.expiresAt = { $lte: now };
       } else {
         filters.expiresAt = { $gt: now };
       }

@@ -63,8 +63,8 @@ const NotificationForm: React.FC<Props> = ({
       content_ml: contentMl,
       category,
       isPinned,
-      date,
-      expiresAt,
+      date: new Date(date).toISOString(),
+      expiresAt: new Date(expiresAt).toISOString(),
       status,
     };
 
