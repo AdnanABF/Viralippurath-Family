@@ -49,6 +49,7 @@ const EventForm: React.FC<Props> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const payload = {
       title_en: titleEn,
       title_ml: titleMl,
@@ -56,8 +57,8 @@ const EventForm: React.FC<Props> = ({
       description_ml: descriptionMl,
       type,
       location,
-      startDateTime,
-      endDateTime,
+      startDateTime: new Date(startDateTime).toISOString(),
+      endDateTime: new Date(endDateTime).toISOString(),
       status,
     };
 
@@ -78,7 +79,6 @@ const EventForm: React.FC<Props> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      /* p-4 on mobile, p-8 on desktop to match the layout spacing */
       className="bg-white lg:bg-stone-50 border-x-0 sm:border border-stone-200 sm:rounded-2xl p-4 pt-0 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto"
     >
       <div className="sticky top-0 bg-white lg:bg-stone-50 pt-4 pb-4 sm:pt-0 z-10 border-b border-stone-100 mb-2">

@@ -37,7 +37,7 @@ export class EventsService {
     search?: string;
     startDate?: string;
     endDate?: string;
-    adminUserUuid?: string; // Passed for logging purposes
+    adminUserUuid?: string;
   }) {
     try {
       const {
@@ -68,11 +68,7 @@ export class EventsService {
       if (startDate || endDate) {
         filters.startDateTime = {};
         if (startDate) filters.startDateTime.$gte = new Date(startDate);
-        if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          filters.startDateTime.$lte = end;
-        }
+        if (endDate) filters.startDateTime.$lte = new Date(endDate);
       }
 
       const [data, totalItems] = await Promise.all([
@@ -112,11 +108,18 @@ export class EventsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
-      if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
+      const start = new Date(dto.startDateTime);
+      const end = new Date(dto.endDateTime);
+
+      if (end <= start) {
         throw new BadRequestException('End date cannot be before start date');
       }
 
-      const newEvent = await this.eventModel.create(dto);
+      const newEvent = await this.eventModel.create({
+        ...dto,
+        startDateTime: start,
+        endDateTime: end,
+      });
 
       await this.activityLogService.create({
         adminUuid: admin.userUuid,
@@ -155,16 +158,24 @@ export class EventsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
-      if (dto.startDateTime && dto.endDateTime) {
-        if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
-          throw new BadRequestException('End date cannot be before start date');
-        }
+      const updateData: any = { ...dto };
+
+      if (dto.startDateTime)
+        updateData.startDateTime = new Date(dto.startDateTime);
+      if (dto.endDateTime) updateData.endDateTime = new Date(dto.endDateTime);
+
+      // Logical Validation
+      const start = updateData.startDateTime;
+      const end = updateData.endDateTime;
+
+      if (start && end && end <= start) {
+        throw new BadRequestException('End date cannot be before start date');
       }
 
       const updatedEvent = await this.eventModel
         .findOneAndUpdate(
           { uuid },
-          { $set: dto },
+          { $set: updateData },
           { new: true, runValidators: true },
         )
         .exec();
@@ -291,7 +302,6 @@ export class EventsService {
         },
       };
     } catch (error) {
-      // For public routes, userUuid is likely undefined
       await this.handleError(
         error,
         'GET',

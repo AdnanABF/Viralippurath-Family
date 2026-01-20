@@ -127,6 +127,32 @@ const NotificationsAdmin = () => {
     }
   };
 
+  /**
+   * Helper to convert local date selection (YYYY-MM-DD)
+   * to exact UTC ISO strings for the API filter.
+   */
+  const handleDateFilterChange = (type: "start" | "end", dateVal: string) => {
+    if (!dateVal) {
+      setFilters((prev) => ({
+        ...prev,
+        [type === "start" ? "startDate" : "endDate"]: "",
+      }));
+      return;
+    }
+
+    const date = new Date(dateVal);
+    if (type === "start") {
+      date.setHours(0, 0, 0, 0); // Start of local day
+    } else {
+      date.setHours(23, 59, 59, 999); // End of local day
+    }
+
+    setFilters((prev) => ({
+      ...prev,
+      [type === "start" ? "startDate" : "endDate"]: date.toISOString(),
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <AdminHeader
@@ -142,14 +168,11 @@ const NotificationsAdmin = () => {
         />
 
         <AdminDateRange
-          start={filters.startDate || ""}
-          end={filters.endDate || ""}
-          onStartChange={(val) =>
-            setFilters((prev) => ({ ...prev, startDate: val }))
-          }
-          onEndChange={(val) =>
-            setFilters((prev) => ({ ...prev, endDate: val }))
-          }
+          // Display only the date part in the picker (YYYY-MM-DD)
+          start={filters.startDate ? filters.startDate.split("T")[0] : ""}
+          end={filters.endDate ? filters.endDate.split("T")[0] : ""}
+          onStartChange={(val) => handleDateFilterChange("start", val)}
+          onEndChange={(val) => handleDateFilterChange("end", val)}
         />
 
         <AdminControlGroup>
