@@ -7,6 +7,7 @@ import type {
 import {
   toDateTimeInputValue,
   nowDateTimeInputValue,
+  toUTCISO,
 } from "../../../utils/date";
 import { PrimaryButton, SecondaryButton } from "../../ui";
 
@@ -57,8 +58,8 @@ const EventForm: React.FC<Props> = ({
       description_ml: descriptionMl,
       type,
       location,
-      startDateTime: new Date(startDateTime).toISOString(),
-      endDateTime: new Date(endDateTime).toISOString(),
+      startDateTime: toUTCISO(startDateTime),
+      endDateTime: toUTCISO(endDateTime),
       status,
     };
 
