@@ -104,17 +104,19 @@ export class AuthController {
     );
     const accessMaxAge = this.parseDurationToMs(tokenData.accessTokenExpiresIn);
 
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
+
     res.cookie('accessToken', tokenData.accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: accessMaxAge,
     });
 
     res.cookie('refreshToken', tokenData.refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: refreshMaxAge,
     });
   }
@@ -123,8 +125,16 @@ export class AuthController {
    * Helper to clear cookies on logout
    */
   private clearCookies(res: Response) {
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+    };
+
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
   }
 
   /**
