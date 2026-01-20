@@ -70,7 +70,7 @@ const AdminDashboard = () => {
           label="Gallery Photos"
           value={isLoading ? "..." : stats?.galleryPhotos.toString() || "0"}
           icon={ImageIcon}
-          color="stone"
+          color="purple"
         />
         <StatsCard
           label="Active Alerts"
@@ -81,10 +81,10 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 order-2 lg:order-1">
           <RecentActivity />
         </div>
-        <div className="lg:sticky lg:top-24">
+        <div className="lg:sticky lg:top-24 order-1 lg:order-2">
           <QuickActions />
         </div>
       </div>
