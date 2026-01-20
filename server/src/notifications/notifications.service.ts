@@ -246,6 +246,39 @@ export class NotificationsService {
   }
 
   // ===== PUBLIC
+
+  /**
+   * Fetches only the 3 most important/latest notifications for the home page.
+   */
+  async getLatestThree() {
+    try {
+      const now = new Date();
+      return await this.notificationModel
+        .find({
+          status: NotificationStatus.PUBLISHED,
+          date: { $lt: now },
+          expiresAt: { $gt: now }, // Only current (non-archived) ones
+        })
+        .select(
+          'uuid title_en title_ml content_en content_ml date category isPinned -_id',
+        )
+        .sort({ isPinned: -1, category: -1, date: -1 })
+        .limit(3)
+        .exec();
+    } catch (error) {
+      await this.handleError(
+        error,
+        'GET',
+        '/public/notifications/latest',
+        null,
+        'GUEST',
+      );
+      throw new InternalServerErrorException(
+        'Failed to fetch home notifications',
+      );
+    }
+  }
+
   async findPublished(query?: { category?: string; showArchived?: boolean }) {
     try {
       const now = new Date();

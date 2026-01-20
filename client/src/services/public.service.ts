@@ -19,6 +19,12 @@ export const publicService = {
     return (await api.get<PublicMagazine[]>("/magazine/published")) as any;
   },
 
+  getLatestNotifications: async () => {
+    return (await api.get<PublicNotification[]>(
+      "/notifications/latest"
+    )) as any;
+  },
+
   getNotifications: async (params?: {
     category?: string;
     archived?: boolean;
