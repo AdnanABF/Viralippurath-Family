@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react"; // Import icons
 import { authService } from "../../services/auth.service";
 import { useAuth } from "../../context/AuthContext";
 
@@ -10,10 +11,10 @@ const Login = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Determine where to send the user after successful login
   const redirectUrl = location.state?.from?.pathname || "/admin/dashboard";
 
   useEffect(() => {
@@ -28,25 +29,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      /**
-       * 1. Call the service.
-       * The backend sets HttpOnly cookies.
-       * The interceptor unwraps the response to give us { user: { ... } }
-       */
       const data = await authService.login({ username, password });
-
-      /**
-       * 2. Update context with user data.
-       * Note: We no longer manually save tokens to localStorage here.
-       * The 'login' function in AuthContext handles saving the non-sensitive
-       * user profile 'hint' to localStorage.
-       */
       login(data.user);
-
-      // Redirect to the intended page or dashboard
       navigate(redirectUrl, { replace: true });
     } catch (err: any) {
-      // Logic for specific login error messaging
       if (!err.response) {
         setError("Network error. Please try again later.");
       } else if (err.response.status === 429) {
@@ -96,14 +82,24 @@ const Login = () => {
             <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
               Password
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-stone-200 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
+                placeholder="••••••••"
+              />
+              <button
+                type="button" // Important: keep as 'button' so it doesn't submit the form
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-stone-400 hover:text-amber-700 transition-colors focus:outline-none"
+                tabIndex={-1} // Skip in tab order to prioritize the login button
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

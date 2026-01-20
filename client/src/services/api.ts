@@ -51,13 +51,25 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
     const skipToast = originalRequest?.headers?.["x-skip-toast"] === "true";
+    const backendMessage = error.response?.data?.message;
 
-    // 1. Handle 401 Unauthorized (Token Refresh Logic)
+    // 1. Handle 401 Unauthorized (Token Refresh Logic OR Forced Logout)
     if (
       status === 401 &&
       !originalRequest._retry &&
       !originalRequest.url?.includes("/auth/refresh")
     ) {
+      // Check if the 401 is specifically due to deactivation
+      const isDeactivated =
+        typeof backendMessage === "string" &&
+        backendMessage.toLowerCase().includes("deactivated");
+
+      if (isDeactivated) {
+        toast.error(backendMessage, { duration: 5000 });
+        logout(); // Force immediate logout for deactivated accounts
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
@@ -70,19 +82,23 @@ api.interceptors.response.use(
 
         /**
          * We call the refresh endpoint.
-         * Note: We don't send the refreshToken in the body anymore;
-         * the browser automatically sends the 'refreshToken' cookie.
+         * The backend validateUserActive check also runs here.
+         * If the user is disabled, this call will fail and throw to the catch block.
          */
         await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
           { userUuid },
-          { withCredentials: true } // Ensure cookies are sent with this manual call
+          { withCredentials: true }
         );
 
-        // Cookies are updated automatically by the Set-Cookie header in the response.
-        // We simply retry the original request.
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
+        // If the refresh call returns 401 due to deactivation, show that message
+        const refreshMsg = refreshError.response?.data?.message;
+        if (refreshMsg?.toLowerCase().includes("deactivated")) {
+          toast.error(refreshMsg);
+        }
+
         logout();
         return Promise.reject(refreshError);
       }
@@ -98,19 +114,15 @@ api.interceptors.response.use(
       }
 
       let errorMessage = "An unexpected error occurred";
-      // Extract correlationId from the backend error response
       const correlationId = error.response?.data?.correlationId;
 
       if (status === 429) {
         errorMessage = "Too many requests. Please try again in a minute.";
-      } else if (error.response?.data?.message) {
-        // Capture the standard message from our GlobalExceptionFilter
-        const backendMessage = error.response.data.message;
+      } else if (backendMessage) {
         errorMessage = Array.isArray(backendMessage)
           ? backendMessage[0]
           : backendMessage;
 
-        // Final safety check for technical strings if the backend missed them
         if (errorMessage.includes("should not exist")) {
           errorMessage = "Invalid data submitted. Please check the form.";
         }
@@ -128,7 +140,6 @@ api.interceptors.response.use(
 
       toast.error(finalToastMessage, {
         duration: status >= 500 ? 6000 : 4000,
-        // Optional: you can add a style object here if you want it to look distinct
         style:
           status >= 500 ? { border: "1px solid #ff4b4b", padding: "16px" } : {},
       });
