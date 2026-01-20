@@ -13,7 +13,7 @@ const HeroSection = () => {
       />
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 className="text-5xl md:text-7xl font-serif text-white mb-6">
+        <h1 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-relaxed sm:leading-28">
           {t("title")}
         </h1>
 

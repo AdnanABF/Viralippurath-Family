@@ -1,5 +1,6 @@
 import AboutImage from "../../components/about/AboutImage";
 import AboutContent from "../../components/about/AboutContent";
+import Contact from "./Contact";
 
 const About = () => {
   return (
@@ -14,6 +15,8 @@ const About = () => {
             <AboutContent />
           </div>
         </div>
+
+        <Contact />
       </div>
     </div>
   );
