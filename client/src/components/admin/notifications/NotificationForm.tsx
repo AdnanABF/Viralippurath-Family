@@ -30,8 +30,14 @@ const NotificationForm: React.FC<Props> = ({
     return toDateTimeInputValue(d.toISOString());
   };
 
-  const [title, setTitle] = useState(initial?.title ?? "");
-  const [content, setContent] = useState(initial?.content ?? "");
+  // State for English Fields (Required)
+  const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
+  const [contentEn, setContentEn] = useState(initial?.content_en ?? "");
+
+  // State for Malayalam Fields (Optional)
+  const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
+  const [contentMl, setContentMl] = useState(initial?.content_ml ?? "");
+
   const [category, setCategory] = useState<NotificationCategory>(
     initial?.category ?? "GENERAL"
   );
@@ -51,8 +57,10 @@ const NotificationForm: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      title,
-      content,
+      title_en: titleEn,
+      title_ml: titleMl,
+      content_en: contentEn,
+      content_ml: contentMl,
       category,
       isPinned,
       date,
@@ -67,6 +75,15 @@ const NotificationForm: React.FC<Props> = ({
     }
   };
 
+  const handleDateChange = (val: string) => {
+    setDate(val);
+    if (expiresAt < val) {
+      const d = new Date(val);
+      d.setDate(d.getDate() + 30);
+      setExpiresAt(toDateTimeInputValue(d.toISOString()));
+    }
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -78,37 +95,71 @@ const NotificationForm: React.FC<Props> = ({
         </h2>
       </div>
 
-      <div className="space-y-5">
-        {/* Title */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-            Notification Title
-          </label>
-          <input
-            required
-            disabled={isLoading}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
-            placeholder="e.g., Important Family Update"
-          />
+      <div className="space-y-8">
+        {/* --- TITLE SECTION --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex gap-1">
+              Notification Title (English){" "}
+              <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="e.g., Important Family Update"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Notification Title (Malayalam)
+            </label>
+            <input
+              disabled={isLoading}
+              value={titleMl}
+              onChange={(e) => setTitleMl(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base font-ml"
+              placeholder="ഉദാ: കുടുംബ അറിയിപ്പ്"
+            />
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-            Message Content
-          </label>
-          <textarea
-            required
-            disabled={isLoading}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={5}
-            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base"
-            placeholder="What would you like to notify members about?"
-          />
+        {/* --- CONTENT SECTION --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex gap-1">
+              Message (English) <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              required
+              disabled={isLoading}
+              value={contentEn}
+              onChange={(e) => setContentEn(e.target.value)}
+              rows={6}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base"
+              placeholder="What is the notification about?"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Message (Malayalam)
+            </label>
+            <textarea
+              disabled={isLoading}
+              value={contentMl}
+              onChange={(e) => setContentMl(e.target.value)}
+              rows={6}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base font-ml"
+              placeholder="അറിയിപ്പിന്റെ ഉള്ളടക്കം ഇവിടെ നൽകുക"
+            />
+          </div>
         </div>
+
+        <div className="h-px bg-stone-200 my-2" />
 
         {/* Category + Pin Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -147,7 +198,7 @@ const NotificationForm: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Publish Date + Expiry Date */}
+        {/* Dates */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
@@ -158,7 +209,7 @@ const NotificationForm: React.FC<Props> = ({
               disabled={isLoading}
               type="datetime-local"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
             />
           </div>
@@ -172,6 +223,7 @@ const NotificationForm: React.FC<Props> = ({
               disabled={isLoading}
               type="datetime-local"
               value={expiresAt}
+              min={date}
               onChange={(e) => setExpiresAt(e.target.value)}
               className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
             />

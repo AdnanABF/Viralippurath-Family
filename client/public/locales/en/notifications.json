@@ -1,0 +1,23 @@
+{
+  "title": "Notifications",
+  "description": "Important updates and announcements for the family.",
+  "show_old": "Show old notifications",
+  "hide_old": "Hide old notifications",
+  "empty_archive": "The archive is currently empty.",
+  "no_notices": "No active notices in this category.",
+  "error_title": "Unable to load notifications",
+  "error_message": "Please check back later for the latest family updates.",
+  "categories": {
+    "all": "All",
+    "urgent": "Urgent",
+    "general": "General",
+    "magazines": "Magazines",
+    "events": "Events"
+  },
+  "ui": {
+    "pinned": "Pinned",
+    "urgent": "Urgent Alert",
+    "show_less": "Show Less",
+    "read_full": "Read Full Message"
+  }
+}

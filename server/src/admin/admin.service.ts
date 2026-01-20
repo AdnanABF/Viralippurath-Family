@@ -38,6 +38,17 @@ export class AdminService {
     return await this.adminModel.findOne({ username, isActive }).exec();
   }
 
+  /**
+   * Used by Guards to verify if a user is still active in real-time.
+   */
+  async validateUserActive(uuid: string): Promise<boolean> {
+    const admin = await this.adminModel
+      .findOne({ uuid })
+      .select('isActive')
+      .exec();
+    return !!admin?.isActive;
+  }
+
   async findByUuid(uuid: string): Promise<AdminDocument | null> {
     try {
       const admin = await this.adminModel.findOne({ uuid }).exec();
@@ -178,7 +189,6 @@ export class AdminService {
         throw error;
       }
 
-      // Capture duplicate key error even if findByUsername missed it (race conditions)
       if (error.code === 11000) {
         throw new ConflictException('Username or email already exists');
       }
@@ -195,7 +205,7 @@ export class AdminService {
     try {
       if (uuid === this.creatorUuid && admin.userUuid != this.creatorUuid) {
         throw new ForbiddenException(
-          'Security Constraint: The System Creator account is immutable and cannot be deleted.',
+          'Access Denied: The System Creator account can only be modified by itself.',
         );
       }
 
@@ -223,9 +233,18 @@ export class AdminService {
         }
       }
 
+      // Force session invalidation if account is deactivated
+      if (updateData.isActive === false) {
+        updateData.refreshTokenHash = null;
+        updateData.refreshTokenExpiresAt = null;
+      }
+
       if (updateData.password) {
         const salt = await bcrypt.genSalt(10);
         updateData.passwordHash = await bcrypt.hash(updateData.password, salt);
+        // Invalidate sessions on password change
+        updateData.refreshTokenHash = null;
+        updateData.refreshTokenExpiresAt = null;
         delete updateData.password;
       }
 
@@ -277,7 +296,7 @@ export class AdminService {
     try {
       if (uuid === this.creatorUuid) {
         throw new ForbiddenException(
-          'Access Denied: The System Creator account can only be modified by itself.',
+          'Security Constraint: The System Creator account is immutable and cannot be deleted.',
         );
       }
 
@@ -349,9 +368,28 @@ export class AdminService {
       .exec();
   }
 
-  /**
-   * Helper method to record system logs for Admin operations
-   */
+  async clearRefreshToken(uuid: string): Promise<void> {
+    try {
+      await this.adminModel
+        .updateOne(
+          { uuid },
+          {
+            $set: {
+              refreshTokenHash: null,
+              refreshTokenExpiresAt: null,
+            },
+          },
+        )
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Failed to clear refresh token for user ${uuid}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Failed to invalidate session');
+    }
+  }
+
   private async handleError(
     error: any,
     method: string,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
   ChevronLeft,
@@ -23,17 +23,44 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 // IMPORTANT: Add the standard CSS for react-pdf to prevent layout shifting
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import { useTranslation } from "react-i18next";
+import { getLocalized } from "../../utils/lang.utils";
 
 interface Props {
   issue: PublicMagazine | null;
+  initialViewMode?: "preview" | "reader"; // Added to allow mobile to trigger reader directly
+  onClose?: () => void; // Added for mobile modal handling
 }
 
-const MagazineViewer: React.FC<Props> = ({ issue }) => {
-  const [viewMode, setViewMode] = useState<"preview" | "reader">("preview");
+const MagazineViewer: React.FC<Props> = ({
+  issue,
+  initialViewMode = "preview",
+  onClose,
+}) => {
+  const { t, i18n } = useTranslation("magazine");
+
+  const [viewMode, setViewMode] = useState<"preview" | "reader">(
+    initialViewMode
+  );
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [isLoaded, setIsLoaded] = useState(false);
   const [scale, setScale] = useState<number>(1.0);
+
+  // Prevent body scroll when in full-screen reader mode on mobile
+  useEffect(() => {
+    const isMobile = window.innerWidth < 1024;
+
+    if (viewMode === "reader" && isMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [viewMode]);
 
   if (!issue) {
     return (
@@ -51,13 +78,17 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
     }
   );
 
+  const displayTitle = getLocalized(issue, "title", i18n.language);
+
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setIsLoaded(true);
   };
 
-  // Reset reader when exiting
   const closeReader = () => {
+    if (onClose) {
+      onClose(); // Specifically for mobile bottom sheet flow
+    }
     setViewMode("preview");
     setIsLoaded(false);
     setPageNumber(1);
@@ -71,21 +102,13 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
     date: string
   ) => {
     e.preventDefault();
-
     try {
-      // 1. Format the date part (e.g., "January_2026")
       const dateObj = new Date(date);
       const dateString = dateObj
-        .toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })
-        .replace(/\s+/g, "_"); // Replace space with underscore
+        .toLocaleDateString("en-US", { month: "long", year: "numeric" })
+        .replace(/\s+/g, "_");
 
-      // 2. Sanitize the title (remove special characters and spaces)
-      const cleanTitle = title
-        .replace(/[^a-z0-9]/gi, "_") // Replace non-alphanumeric with underscore
-        .replace(/_+/g, "_"); // Collapse multiple underscores
+      const cleanTitle = title.replace(/[^a-z0-9]/gi, "_").replace(/_+/g, "_");
 
       const finalFileName = `${cleanTitle}_${dateString}`;
 
@@ -95,15 +118,12 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${finalFileName}.pdf`; // Forces the filename
+      link.download = `${finalFileName}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Cleanup the temporary URL
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      // Fallback: just open in new tab if fetch fails
       window.open(url, "_blank");
     }
   };
@@ -127,36 +147,41 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
             </div>
 
             <h2 className="text-3xl font-serif text-stone-900">
-              {issue.title}
+              {displayTitle}
             </h2>
             <p className="text-stone-600 mt-2 font-medium italic">
-              Interactive Digital Edition
+              {t("interactive_digital_edition")}
             </p>
 
             <button
               onClick={() => setViewMode("reader")}
               className="mt-8 bg-amber-800 text-white px-10 py-3.5 rounded-full font-bold shadow-lg hover:bg-amber-900 hover:-translate-y-0.5 transition-all duration-300"
             >
-              Read Issue Now
+              {t("read_issue_now")}
             </button>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm mt-6 gap-4">
           <div className="text-center sm:text-left">
-            <h3 className="font-bold text-stone-900 text-lg">{issue.title}</h3>
+            <h3 className="font-bold text-stone-900 text-lg">{displayTitle}</h3>
             <p className="text-sm text-stone-500 font-medium">
-              Published {displayDate}
+              {t("published")} {displayDate}
             </p>
           </div>
           <button
             onClick={(e) =>
-              handleDownload(e, issue.pdfUrl, issue.title, issue.publishedDate)
+              handleDownload(
+                e,
+                issue.pdfUrl,
+                issue.title_en,
+                issue.publishedDate
+              )
             }
             className="flex items-center text-amber-800 font-bold hover:text-amber-900 transition-colors bg-amber-50 px-4 py-2 rounded-lg hover:bg-amber-100 hover:cursor-pointer"
           >
             <Download size={18} className="mr-2" />
-            Download PDF
+            {t("download_pdf")}
           </button>
         </div>
       </>
@@ -165,16 +190,16 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
 
   /** --- RENDER READER MODE --- **/
   return (
-    <div className="space-y-4">
-      <div className="relative bg-stone-900 rounded-2xl shadow-2xl overflow-hidden min-h-150 flex flex-col items-center justify-center border-4 border-stone-200">
+    <div className="fixed inset-0 z-60 bg-stone-950 lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:space-y-4">
+      <div className="relative bg-stone-900 lg:rounded-2xl shadow-2xl overflow-hidden h-full lg:h-[85vh] lg:min-h-150 flex flex-col items-center justify-center lg:border-4 lg:border-stone-200">
         {/* Reader Header */}
-        <div className="absolute top-0 inset-x-0 p-4 flex justify-between items-center z-40 bg-linear-to-b from-black/60 to-transparent">
+        <div className="absolute top-0 inset-x-0 p-4 flex justify-between items-center z-40 bg-linear-to-b from-black/80 to-transparent">
           <button
             onClick={closeReader}
-            className="flex items-center gap-2 text-white hover:text-amber-400 transition font-medium"
+            className="flex items-center gap-2 text-white hover:text-amber-400 transition font-medium px-2 py-1"
           >
             <ArrowLeft size={20} />
-            <span>Back</span>
+            <span>{t("back")}</span>
           </button>
 
           {/* Zoom Controls */}
@@ -210,7 +235,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
             href={issue.pdfUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-white/80 hover:text-white transition"
+            className="text-white/80 hover:text-white transition p-2"
           >
             <Maximize2 size={20} />
           </a>
@@ -220,12 +245,12 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-stone-100">
             <Loader2 className="w-10 h-10 animate-spin text-amber-700 mb-4" />
             <p className="text-stone-600 font-medium">
-              Preparing your reader...
+              {t("preparing_reader")}
             </p>
           </div>
         )}
 
-        <div className="pt-20 pb-24 w-full flex justify-center overflow-auto max-h-[80vh] custom-scrollbar scroll-smooth">
+        <div className="pt-20 pb-24 w-full h-full flex justify-center overflow-auto custom-scrollbar scroll-smooth">
           <Document
             file={issue.pdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -245,8 +270,8 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
                   window.innerWidth > 1024
                     ? 600
                     : window.innerWidth > 640
-                    ? 500
-                    : 300
+                      ? 500
+                      : window.innerWidth - 40 // Mobile optimization
                 }
               />
             </div>
@@ -254,21 +279,21 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
         </div>
 
         {isLoaded && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-stone-900/90 backdrop-blur text-white px-6 py-2 rounded-full z-30 border border-white/10">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-stone-900/90 backdrop-blur text-white px-6 py-2 rounded-full z-30 border border-white/10 shadow-xl">
             <button
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-              className="disabled:opacity-30"
+              className="disabled:opacity-30 p-1"
             >
               <ChevronLeft />
             </button>
-            <span className="text-sm font-medium tabular-nums">
-              Page {pageNumber} of {numPages}
+            <span className="text-sm font-medium tabular-nums min-w-20 text-center">
+              {t("page")} {pageNumber} / {numPages}
             </span>
             <button
               onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
               disabled={pageNumber >= numPages}
-              className="disabled:opacity-30"
+              className="disabled:opacity-30 p-1"
             >
               <ChevronRight />
             </button>

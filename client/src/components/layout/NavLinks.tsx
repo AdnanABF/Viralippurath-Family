@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { navLinks } from "./nav.config";
 
 const NavLinks = () => {
+  const { t } = useTranslation("common");
   const location = useLocation();
 
   return (
@@ -19,7 +21,7 @@ const NavLinks = () => {
                 : "text-stone-600 hover:text-stone-900"
             }`}
           >
-            {link.name}
+            {t(`nav.${link.name.toLowerCase()}`)}
           </Link>
         );
       })}

@@ -1,30 +1,27 @@
+import { useTranslation } from "react-i18next";
 import AboutPresence from "./AboutPresence";
 
 const AboutContent = () => {
+  const { t } = useTranslation("aboutus");
+
   return (
     <>
-      <h1 className="text-5xl font-serif text-stone-900 mb-8 tracking-tight">
-        Roots that run deep
+      <h1 className="text-5xl font-serif text-stone-900 mb-8 tracking-tight leading-16.75">
+        {t("title")}
       </h1>
 
       <div className="space-y-6 text-stone-600 text-lg leading-relaxed">
-        <p>
-          The Viralippurath family lineage dates back to the early 1900s,
-          originating from the fertile lands of central Kerala. Our ancestors
-          were known for their agrarian excellence and community leadership.
-        </p>
+        <p>{t("description.para_1")}</p>
 
-        <p>
-          Over the decades, members of our family have ventured into diverse
-          fields—from medicine and engineering to arts and entrepreneurship—
-          carrying the values of hard work and integrity to every corner of the
-          world.
-        </p>
+        <p>{t("description.para_2")}</p>
 
-        <p className="font-serif italic text-stone-800">
-          "We don't just inherit a name; we inherit a responsibility to do
-          good."
-        </p>
+        <p>{t("description.para_3")}</p>
+
+        <p>{t("description.para_4")}</p>
+
+        <p>{t("description.para_5")}</p>
+
+        <p className="font-serif italic text-stone-800">{t("message")}</p>
 
         <AboutPresence />
       </div>

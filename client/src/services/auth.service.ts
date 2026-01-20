@@ -9,9 +9,21 @@ export const authService = {
     return (await api.post<LoginResponse>("/auth/login", credentials)) as any;
   },
 
-  // You might also want a logout or refresh method here later
-  logout: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+  /**
+   * Synchronized logout: Notifies the backend to invalidate the session
+   * and then clears local storage.
+   */
+  logout: async (): Promise<void> => {
+    try {
+      // Notify backend to clear refreshTokenHash
+      // We use the 'api' instance so the interceptor attaches the Access Token
+      await api.post("/auth/logout");
+    } catch (error) {
+      // If the server is down, we still want the user to be logged out locally.
+    } finally {
+      // Always clear local storage regardless of API success
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+    }
   },
 };

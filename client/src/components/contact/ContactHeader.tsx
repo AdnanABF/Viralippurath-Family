@@ -1,12 +1,13 @@
+import { useTranslation } from "react-i18next";
+
 const ContactHeader = () => {
+  const { t } = useTranslation("contact");
+
   return (
     <>
-      <h1 className="text-4xl font-serif text-stone-900 mb-6">
-        Reach Out to Us
-      </h1>
+      <h1 className="text-4xl font-serif text-stone-900 mb-6">{t("title")}</h1>
       <p className="text-stone-600 text-lg mb-8 leading-relaxed">
-        Have a question about family membership, an upcoming event, or want to
-        contribute to the archive? The Family Council is here to help.
+        {t("description")}
       </p>
     </>
   );

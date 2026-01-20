@@ -9,6 +9,7 @@ import {
   TableGrid,
   type ColumnConfig,
 } from "../../ui";
+import TranslationIndicator from "../../ui/TranslationIndicator";
 
 interface Props {
   events: AdminEvent[];
@@ -34,7 +35,7 @@ const EventsTable: React.FC<Props> = ({
         label: "Past",
         color: "bg-stone-100 text-stone-500 border-stone-200",
         icon: <CheckCircle2 size={10} />,
-        ping: false,
+        pin: false,
       };
     }
     if (startDate <= now && endDate >= now) {
@@ -42,14 +43,14 @@ const EventsTable: React.FC<Props> = ({
         label: "Ongoing",
         color: "bg-green-100 text-green-700 border-green-200",
         icon: null,
-        ping: true,
+        pin: true,
       };
     }
     return {
       label: "Upcoming",
       color: "bg-blue-100 text-blue-700 border-blue-200",
       icon: <Calendar size={10} />,
-      ping: false,
+      pin: false,
     };
   };
 
@@ -64,17 +65,18 @@ const EventsTable: React.FC<Props> = ({
         );
         return (
           <div className="flex flex-col gap-1.5">
-            <span className="font-medium text-stone-900">{event.title}</span>
+            <span className="font-medium text-stone-900">{event.title_en}</span>
+            {event.title_ml && <TranslationIndicator label="ML Translated" />}
             <div
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${status.color} w-fit`}
             >
-              {status.ping && (
+              {status.pin && (
                 <span className="relative flex h-1.5 w-1.5 mr-0.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
                 </span>
               )}
-              {!status.ping && status.icon}
+              {!status.pin && status.icon}
               {status.label}
             </div>
           </div>
@@ -145,17 +147,18 @@ const EventsTable: React.FC<Props> = ({
         <div className="flex justify-between items-start gap-2">
           <div className="space-y-1 text-left">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-bold text-stone-900">{event.title}</h3>
+              <h3 className="font-bold text-stone-900">{event.title_en}</h3>
+              {event.title_ml && <TranslationIndicator label="ML Translated" />}
               <div
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${status.color}`}
               >
-                {status.ping && (
+                {status.pin && (
                   <span className="relative flex h-1.5 w-1.5 mr-0.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
                   </span>
                 )}
-                {!status.ping && status.icon}
+                {!status.pin && status.icon}
                 {status.label}
               </div>
             </div>

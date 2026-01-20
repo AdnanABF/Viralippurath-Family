@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import type {
   AdminUser,
   AdminUserDraft,
@@ -25,6 +26,7 @@ const AdminUserForm: React.FC<Props> = ({
   const [username, setUsername] = useState(initial?.username ?? "");
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<AdminRole>(initial?.role ?? "ADMIN");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
 
@@ -100,17 +102,27 @@ const AdminUserForm: React.FC<Props> = ({
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
               {initial?.uuid ? "New Password (Optional)" : "Password"}
             </label>
-            <input
-              required={!initial?.uuid}
-              type="password"
-              disabled={isLoading}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
-              placeholder={initial?.uuid ? "••••••••" : "Min. 8 chars"}
-              minLength={8}
-            />
+            <div className="relative">
+              <input
+                required={!initial?.uuid}
+                type={showPassword ? "text" : "password"}
+                disabled={isLoading}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white border border-stone-300 px-4 py-3 pr-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+                placeholder={initial?.uuid ? "••••••••" : "Min. 8 chars"}
+                minLength={8}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-stone-400 hover:text-amber-700 transition-colors focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
         </div>
 

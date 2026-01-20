@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next";
+
 const PromiseSection = () => {
+  const { t } = useTranslation("vision");
+
   return (
     <section className="text-center bg-amber-50/50 p-12 rounded-3xl border border-amber-100">
       <h2 className="text-3xl font-serif text-stone-800 mb-6">
-        Our Promise to the Future
+        {t("future_promise.title")}
       </h2>
 
       <p className="text-stone-700 max-w-2xl mx-auto leading-relaxed malayalam text-lg">
-        ഞങ്ങളുടെ ചരിത്രം വരും തലമുറകൾക്ക് പ്രചോദനമാകുമെന്ന് ഞങ്ങൾ
-        ഉറപ്പുനൽകുന്നു. സ്നേഹത്തിലും ഐക്യത്തിലും ഞങ്ങളുടെ കുടുംബം എന്നും
-        നിലനിൽക്കും.
+        {t("future_promise.message")}
       </p>
     </section>
   );

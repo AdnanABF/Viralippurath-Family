@@ -1,0 +1,16 @@
+{
+  "title": "Reach Out to Us",
+  "description": "Have a question about family membership, an upcoming event, or want to contribute to the archive? The IT Wing is here to help.",
+  "form": {
+    "fullName": "Full Name",
+    "fullName_placeholder": "Enter your name",
+    "email": "Emai",
+    "email_placeholder": "Enter your email",
+    "subject": "Subject",
+    "subject_placeholder": "What is this regarding?",
+    "message": "message",
+    "message_placeholder": "Your message...",
+    "send_message": "Send Message",
+    "sending_message": "Sending Message..."
+  }
+}

@@ -40,39 +40,75 @@ export class DashboardService {
     private readonly systemLogService: SystemLogService,
   ) {}
 
-  /**
-   * Aggregates summary statistics across all major modules.
-   * Return structure is designed for quick-glance dashboard widgets.
-   */
   async getSummaryStats(adminUserUuid?: string) {
     try {
       const now = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
 
-      const [upcomingEvents, totalImages, totalMagazines, activeAlerts] =
-        await Promise.all([
-          this.eventModel.countDocuments({
-            status: EventStatus.PUBLISHED,
-            endDateTime: { $gte: now },
-          }),
+      // We run counts for current totals and "historical" totals (items older than 30 days)
+      const [
+        currEvents,
+        prevEvents,
+        currGallery,
+        prevGallery,
+        currMagazines,
+        prevMagazines,
+        currAlerts,
+        prevAlerts,
+      ] = await Promise.all([
+        // Events
+        this.eventModel.countDocuments({
+          status: EventStatus.PUBLISHED,
+          endDateTime: { $gte: now },
+        }),
+        this.eventModel.countDocuments({
+          status: EventStatus.PUBLISHED,
+          endDateTime: { $gte: now },
+          createdAt: { $lt: thirtyDaysAgo },
+        }),
 
-          this.galleryModel.countDocuments({
-            status: GalleryStatus.PUBLISHED,
-          }),
+        // Gallery
+        this.galleryModel.countDocuments({ status: GalleryStatus.PUBLISHED }),
+        this.galleryModel.countDocuments({
+          status: GalleryStatus.PUBLISHED,
+          createdAt: { $lt: thirtyDaysAgo },
+        }),
 
-          this.magazineModel.countDocuments({
-            status: MagazineStatus.PUBLISHED,
-          }),
+        // Magazines
+        this.magazineModel.countDocuments({ status: MagazineStatus.PUBLISHED }),
+        this.magazineModel.countDocuments({
+          status: MagazineStatus.PUBLISHED,
+          createdAt: { $lt: thirtyDaysAgo },
+        }),
 
-          this.notificationModel.countDocuments({
-            status: NotificationStatus.PUBLISHED,
-          }),
-        ]);
+        // Notifications/Alerts
+        this.notificationModel.countDocuments({
+          status: NotificationStatus.PUBLISHED,
+        }),
+        this.notificationModel.countDocuments({
+          status: NotificationStatus.PUBLISHED,
+          createdAt: { $lt: thirtyDaysAgo },
+        }),
+      ]);
 
       return {
-        upcomingEvents,
-        galleryPhotos: totalImages,
-        totalMagazines,
-        activeAlerts,
+        upcomingEvents: {
+          current: currEvents,
+          diff: currEvents - prevEvents,
+        },
+        galleryPhotos: {
+          current: currGallery,
+          diff: currGallery - prevGallery,
+        },
+        totalMagazines: {
+          current: currMagazines,
+          diff: currMagazines - prevMagazines,
+        },
+        activeAlerts: {
+          current: currAlerts,
+          diff: currAlerts - prevAlerts,
+        },
       };
     } catch (error) {
       await this.handleError(
@@ -88,9 +124,6 @@ export class DashboardService {
     }
   }
 
-  /**
-   * Helper method to record system logs for Dashboard operations
-   */
   private async handleError(
     error: any,
     method: string,
@@ -102,7 +135,6 @@ export class DashboardService {
       `${method} ${path} failed: ${error.message}`,
       error.stack,
     );
-
     await this.systemLogService.log({
       errorCode: error.code?.toString() || error.name || '500',
       message: error.message,

@@ -26,6 +26,16 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   // ===== PUBLIC =====
+
+  /**
+   * Fetches the 3 most important/recent notifications for the landing page.
+   * This is a public endpoint.
+   */
+  @Get('latest')
+  async getLatest() {
+    return await this.notificationsService.getLatestThree();
+  }
+
   @Get('published')
   async getPublished(
     @Query('category') category?: string,

@@ -9,6 +9,7 @@ import {
   TableGrid,
   type ColumnConfig,
 } from "../../ui";
+import TranslationIndicator from "../../ui/TranslationIndicator";
 
 interface Props {
   items: AdminMagazine[];
@@ -45,7 +46,10 @@ const MagazineTable: React.FC<Props> = ({
                 <FileText size={16} />
               </div>
             )}
-            <span className="font-medium text-stone-900">{m.title}</span>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium text-stone-900">{m.title_en}</span>
+              {m.title_ml && <TranslationIndicator label="ML Translated" />}
+            </div>
           </div>
         );
       },
@@ -105,9 +109,10 @@ const MagazineTable: React.FC<Props> = ({
         {/* Content Right */}
         <div className="flex-1 min-w-0 text-left">
           <div className="flex justify-between items-start gap-2">
-            <h3 className="font-bold text-stone-900 truncate">{m.title}</h3>
+            <h3 className="font-bold text-stone-900 truncate">{m.title_en}</h3>
             <EventStatusBadge status={m.status} />
           </div>
+          {m.title_ml && <TranslationIndicator label="ML Translated" />}
 
           <div className="flex items-center gap-1.5 mt-1 text-sm text-stone-500">
             <Calendar size={14} />

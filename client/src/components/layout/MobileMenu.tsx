@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { navLinks } from "./nav.config";
 import { useAuth } from "../../context/AuthContext";
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const MobileMenu: React.FC<Props> = ({ onClose }) => {
+  const { t } = useTranslation("common");
   const { isAuthenticated, logout } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
 
@@ -54,7 +56,7 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
               onClick={handleClose}
               className="block px-3 py-3 text-base font-medium text-stone-600 border-b border-stone-50 last:border-0 active:bg-stone-50"
             >
-              {link.name}
+              {t(`nav.${link.name.toLowerCase()}`)}
             </Link>
           ))}
 
@@ -65,7 +67,7 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
                 onClick={handleClose}
                 className="block px-3 py-3 text-base font-medium text-amber-800 active:bg-stone-50"
               >
-                Admin Portal
+                {t("nav.admin_portal")}
               </Link>
             ) : (
               <>
@@ -74,14 +76,14 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
                   onClick={handleClose}
                   className="block px-3 py-3 text-base font-medium text-stone-800 active:bg-stone-50"
                 >
-                  Admin Portal
+                  {t("nav.admin_portal")}
                 </Link>
 
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-3 text-base font-medium text-red-600 active:bg-red-50"
                 >
-                  Logout
+                  {t("logout")}
                 </button>
               </>
             )}

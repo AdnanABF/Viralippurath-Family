@@ -1,0 +1,18 @@
+{
+  "title": "Viralippurath Magazines",
+  "description": "The official family journal documenting our lives and stories.",
+  "error_title": "Unable to load magazines",
+  "error_message": "Please check back later to view our family archives.",
+  "no_magazine_message": "No magazine issues have been published yet.",
+  "loading_message": "Loading archives...",
+  "family_magazines": "Family Magazines",
+  "no_cover": "No Cover",
+  "interactive_digital_edition": "Interactive Digital Edition",
+  "read_issue_now": "Read Issue Now",
+  "published": "Published",
+  "download_pdf": "Download PDF",
+  "back": "Back",
+  "preparing_reader": "Preparing your reader...",
+  "page": "Page",
+  "issues_available": "Issues Available"
+}
