@@ -1,15 +1,25 @@
+import { clearUserFromStorage } from "./auth";
+
+/**
+ * Clears the user profile hint from local storage.
+ * Note: The actual JWT cookies are cleared by the browser
+ * when the server sends 'Set-Cookie' with an expired date
+ * during the logout API call.
+ */
 export const clearAuthData = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+  clearUserFromStorage();
 };
 
 /**
- * Full logout: clears data and forces a page reload to the login page
- * This is safe to call from anywhere (components or api.ts)
+ * Full logout: clears local hints and forces a page reload.
+ * When this is called from api.ts (e.g., on a 401 error),
+ * it ensures the UI resets to the login state.
  */
 export const logout = () => {
   clearAuthData();
-  // Using window.location forces a full refresh, which clears
-  // any sensitive data remaining in React's memory/state.
-  window.location.href = "/login";
+
+  // Force a full refresh to clear React state and redirect
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
 };

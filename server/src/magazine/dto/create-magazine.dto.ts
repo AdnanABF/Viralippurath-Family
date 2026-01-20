@@ -10,7 +10,11 @@ import { MagazineStatus } from '../schemas/magazine.schema';
 export class CreateMagazineDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title_en: string;
+
+  @IsString()
+  @IsOptional()
+  title_ml?: string;
 
   @IsDateString()
   @IsNotEmpty()

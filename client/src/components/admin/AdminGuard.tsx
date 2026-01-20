@@ -1,8 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const AdminGuard = () => {
   const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
 
   // 1. Wait for auth to finish loading
   if (loading) {
@@ -14,8 +15,9 @@ const AdminGuard = () => {
   }
 
   // 2. Check if authenticated
+  // We pass the current location in 'state' so we can redirect back after login
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // 3. Allow both ADMIN and SUPER_ADMIN to enter the Admin Panel

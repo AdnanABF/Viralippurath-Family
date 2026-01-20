@@ -1,6 +1,11 @@
+export interface StatValue {
+  current: number;
+  diff: number;
+}
+
 export interface DashboardStats {
-  upcomingEvents: number;
-  galleryPhotos: number;
-  totalMagazines: number;
-  activeAlerts: number;
+  upcomingEvents: StatValue;
+  galleryPhotos: StatValue;
+  totalMagazines: StatValue;
+  activeAlerts: StatValue;
 }

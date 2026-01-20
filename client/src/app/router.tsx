@@ -7,7 +7,6 @@ import Events from "../pages/public/Events";
 import Magazine from "../pages/public/Magazine";
 import Notifications from "../pages/public/Notifications";
 import About from "../pages/public/About";
-import Contact from "../pages/public/Contact";
 import Login from "../pages/public/Login";
 import AdminRouter from "./admin-router";
 import GuestGuard from "../components/admin/GuestGuard";
@@ -27,7 +26,6 @@ const AppRouter = () => {
         <Route path="/magazine" element={<Magazine />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 

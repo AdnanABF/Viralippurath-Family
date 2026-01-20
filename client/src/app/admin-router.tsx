@@ -12,15 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import SystemLogAdmin from "../pages/admin/SystemLogsAdmin";
 
 const AdminRouter = () => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-stone-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
-      </div>
-    );
-  }
+  const { user } = useAuth();
 
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
 

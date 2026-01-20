@@ -11,6 +11,7 @@ import {
   Request,
   Query,
   ParseIntPipe,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification-dto';
@@ -25,9 +26,26 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   // ===== PUBLIC =====
+
+  /**
+   * Fetches the 3 most important/recent notifications for the landing page.
+   * This is a public endpoint.
+   */
+  @Get('latest')
+  async getLatest() {
+    return await this.notificationsService.getLatestThree();
+  }
+
   @Get('published')
-  async getPublished() {
-    return await this.notificationsService.findPublished();
+  async getPublished(
+    @Query('category') category?: string,
+    @Query('archived', new ParseBoolPipe({ optional: true }))
+    archived?: boolean,
+  ) {
+    return await this.notificationsService.findPublished({
+      category,
+      showArchived: archived ?? false,
+    });
   }
 
   // ===== ADMIN =====
@@ -39,7 +57,7 @@ export class NotificationsController {
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('status') status?: string,
-    @Query('priority') priority?: string,
+    @Query('category') category?: string,
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -48,7 +66,7 @@ export class NotificationsController {
       page: page ?? 1,
       limit: limit ?? 10,
       status,
-      priority,
+      category,
       search,
       startDate,
       endDate,

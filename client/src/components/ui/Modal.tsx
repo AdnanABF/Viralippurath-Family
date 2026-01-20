@@ -28,7 +28,7 @@ const Modal: React.FC<Props> = ({ open, onClose, children }) => {
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
       {/* Modal content */}
-      <div className="relative z-10 w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-xl">
+      <div className="relative z-10 w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-xl">
         {children}
       </div>
     </div>

@@ -8,7 +8,8 @@ export type AdminMagazine = PublicMagazine & {
 };
 
 export type AdminMagazineDraft = {
-  title: string;
+  title_en: string;
+  title_ml?: string;
   publishedDate: string;
   status: MagazineStatus;
   file?: File; // Temporary for the form

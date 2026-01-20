@@ -34,8 +34,10 @@ const STATUS_OPTIONS = [
 
 const defaultEventValues = {
   uuid: "",
-  title: "",
-  description: "",
+  title_en: "",
+  title_ml: "",
+  description_en: "",
+  description_ml: "",
   location: "",
   type: "Gathering",
   startDateTime: "",
@@ -168,7 +170,7 @@ const EventsAdmin = () => {
             onEdit={setEditing}
             onDelete={(uuid) => {
               const e = events.find((x) => x.uuid === uuid);
-              if (e) setDeleteTarget({ uuid: e.uuid, title: e.title });
+              if (e) setDeleteTarget({ uuid: e.uuid, title: e.title_en });
             }}
             disabled={isDeleting || isSaving}
           />

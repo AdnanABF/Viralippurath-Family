@@ -1,8 +1,25 @@
-import { Clock } from "lucide-react";
-import type { AdminNotification } from "../../../types/notification.admin";
+import React from "react";
+import {
+  Clock,
+  Pin,
+  BookOpen,
+  Calendar,
+  AlertTriangle,
+  Bell,
+} from "lucide-react";
+import type {
+  AdminNotification,
+  NotificationCategory,
+} from "../../../types/notification.admin";
 import EventStatusBadge from "../events/EventStatusBadge";
 import { formatDateTime } from "../../../utils/date";
-import { DeleteButton, EditButton } from "../../ui";
+import {
+  DeleteButton,
+  EditButton,
+  TableGrid,
+  type ColumnConfig,
+} from "../../ui";
+import TranslationIndicator from "../../ui/TranslationIndicator";
 
 interface Props {
   items: AdminNotification[];
@@ -17,115 +34,172 @@ const NotificationsTable: React.FC<Props> = ({
   onDelete,
   disabled,
 }) => {
-  return (
-    <div className="w-full">
-      {/* --- MOBILE VIEW: Notification Feed --- */}
-      <div className="grid grid-cols-1 gap-4 lg:hidden">
-        {items.map((n) => (
+  // --- UI Helpers ---
+  const getCategoryContent = (category: NotificationCategory) => {
+    switch (category) {
+      case "MAGAZINE":
+        return {
+          icon: <BookOpen size={14} />,
+          label: "Magazine",
+          color: "text-blue-600",
+        };
+      case "EVENT":
+        return {
+          icon: <Calendar size={14} />,
+          label: "Event",
+          color: "text-emerald-600",
+        };
+      case "URGENT":
+        return {
+          icon: <AlertTriangle size={14} />,
+          label: "Urgent",
+          color: "text-amber-600",
+        };
+      default:
+        return {
+          icon: <Bell size={14} />,
+          label: "General",
+          color: "text-stone-500",
+        };
+    }
+  };
+
+  // --- Desktop Columns Configuration ---
+  const columns: ColumnConfig<AdminNotification>[] = [
+    {
+      header: "Title",
+      render: (n) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            {n.isPinned && (
+              <Pin
+                size={14}
+                className="text-amber-600 fill-amber-600 shrink-0"
+              />
+            )}
+            <span className="font-medium text-stone-900 line-clamp-1">
+              {n.title_en}
+            </span>
+          </div>
+          {/* Indicator if Malayalam translation exists */}
+          {n.title_ml && <TranslationIndicator label="ML Translated" />}
+        </div>
+      ),
+    },
+    {
+      header: "Category",
+      render: (n) => {
+        const cat = getCategoryContent(n.category);
+        return (
           <div
-            key={n.uuid}
-            className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-3"
+            className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${cat.color}`}
           >
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-                    n.priority === "HIGH"
-                      ? "bg-red-50 text-red-700 border-red-100"
-                      : "bg-stone-100 text-stone-600 border-stone-200"
-                  }`}
-                >
-                  {n.priority}
-                </span>
-                <EventStatusBadge status={n.status} />
-              </div>
-              <div className="flex items-center gap-1 text-stone-400 text-xs">
-                <Clock size={12} />
-                <span>{formatDateTime(n.date)}</span>
-              </div>
-            </div>
+            {cat.icon}
+            <span>{cat.label}</span>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Timeline",
+      render: (n) => (
+        <div className="flex flex-col text-sm leading-tight">
+          <span className="text-stone-600">
+            Published: {formatDateTime(n.date)}
+          </span>
+          <span className="text-amber-700 font-medium">
+            Expires: {formatDateTime(n.expiresAt)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      render: (n) => <EventStatusBadge status={n.status} />,
+    },
+    {
+      header: "Actions",
+      className: "justify-end text-right",
+      render: (n) => (
+        <div className="inline-flex items-center gap-2">
+          <EditButton
+            disabled={disabled}
+            onClick={() => onEdit(n)}
+            variant="normal"
+          />
+          <DeleteButton
+            disabled={disabled}
+            onClick={() => onDelete(n.uuid)}
+            variant="normal"
+          />
+        </div>
+      ),
+    },
+  ];
 
-            <div>
-              <h3 className="font-bold text-stone-900 leading-tight">
-                {n.title}
-              </h3>
-              {/* Optional: Add a line-clamp for content if your type supports it */}
-            </div>
+  // --- Mobile Card Definition ---
+  const renderMobileCard = (n: AdminNotification) => {
+    const cat = getCategoryContent(n.category);
+    return (
+      <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-3 text-left relative overflow-hidden">
+        {n.isPinned && (
+          <div className="absolute top-0 right-0 bg-amber-500 text-white p-2 rounded-bl-lg">
+            <Pin size={12} fill="currentColor" />
+          </div>
+        )}
 
-            <div className="flex gap-2 pt-2 border-t border-stone-50">
-              <EditButton
-                disabled={disabled}
-                onClick={() => onEdit(n)}
-                variant="mobile"
-              />
-              <DeleteButton
-                disabled={disabled}
-                onClick={() => onDelete(n.uuid)}
-                variant="mobile"
-              />
+        <div className="flex justify-between items-start">
+          <div className="flex flex-wrap items-center gap-2">
+            <EventStatusBadge status={n.status} />
+            <div
+              className={`flex items-center gap-1 text-[10px] font-bold uppercase ${cat.color} bg-stone-50 px-2 py-0.5 rounded border border-stone-100`}
+            >
+              {cat.icon} {cat.label}
+            </div>
+            {n.title_ml && <TranslationIndicator label="ML Translated" />}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-bold text-stone-900 leading-tight mb-2">
+            {n.title_en}
+          </h3>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-stone-400 text-[11px]">
+              <Clock size={10} />
+              <span>Published: {formatDateTime(n.date)}</span>
+            </div>
+            <div className="flex items-center gap-1 text-amber-700 text-[11px] font-medium">
+              <Clock size={10} />
+              <span>Expires: {formatDateTime(n.expiresAt)}</span>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* --- DESKTOP VIEW: Table --- */}
-      <div className="hidden lg:block w-full bg-white border border-stone-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead className="bg-stone-50 text-sm text-stone-600 border-b border-stone-200">
-              <tr>
-                <th className="p-4 text-left font-semibold">Title</th>
-                <th className="p-4 text-left font-semibold">Priority</th>
-                <th className="p-4 text-left font-semibold">Date</th>
-                <th className="p-4 text-left font-semibold">Status</th>
-                <th className="p-4 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {items.map((n) => (
-                <tr
-                  key={n.uuid}
-                  className="hover:bg-stone-50/50 transition-colors group"
-                >
-                  <td className="p-4 font-medium text-stone-900">{n.title}</td>
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        n.priority === "HIGH"
-                          ? "bg-red-50 text-red-700 border-red-100"
-                          : "bg-stone-100 text-stone-700 border-stone-200"
-                      }`}
-                    >
-                      {n.priority}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-stone-600">
-                    {formatDateTime(n.date)}
-                  </td>
-                  <td className="p-4">
-                    <EventStatusBadge status={n.status} />
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="inline-flex items-center gap-2">
-                      <EditButton
-                        disabled={disabled}
-                        onClick={() => onEdit(n)}
-                        variant="normal"
-                      />
-                      <DeleteButton
-                        disabled={disabled}
-                        onClick={() => onDelete(n.uuid)}
-                        variant="normal"
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex gap-2 pt-3 border-t border-stone-100">
+          <EditButton
+            disabled={disabled}
+            onClick={() => onEdit(n)}
+            variant="mobile"
+          />
+          <DeleteButton
+            disabled={disabled}
+            onClick={() => onDelete(n.uuid)}
+            variant="mobile"
+          />
         </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <TableGrid
+      data={items}
+      columns={columns}
+      gridTemplate="grid-cols-[1.5fr_1fr_1.5fr_1fr_1fr]"
+      keyExtractor={(n) => n.uuid}
+      renderMobileCard={renderMobileCard}
+    />
   );
 };
 

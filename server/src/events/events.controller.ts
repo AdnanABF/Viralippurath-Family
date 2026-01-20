@@ -9,7 +9,6 @@ import {
   UseGuards,
   Query,
   ParseUUIDPipe,
-  BadRequestException,
   Request,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
@@ -28,11 +27,6 @@ export class EventsController {
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post()
   async create(@Body() dto: CreateEventDto, @Request() req) {
-    if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
-      throw new BadRequestException(
-        'End date-time must be strictly after the start date-time',
-      );
-    }
     return await this.eventsService.create(dto, req.user);
   }
 
@@ -67,13 +61,6 @@ export class EventsController {
     @Body() dto: UpdateEventDto,
     @Request() req,
   ) {
-    if (dto.startDateTime && dto.endDateTime) {
-      if (new Date(dto.endDateTime) <= new Date(dto.startDateTime)) {
-        throw new BadRequestException(
-          'End date-time must be strictly after the start date-time',
-        );
-      }
-    }
     return await this.eventsService.update(uuid, dto, req.user);
   }
 

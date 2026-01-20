@@ -1,0 +1,27 @@
+{
+  "title": "Our Vision & Heritage",
+  "pre_title": "Purpose",
+  "vision": {
+    "title": "The Vision",
+    "description": "\"To work towards the social, educational and economic progress of each individual in the family and thereby devise and implement activities aimed at the comprehensive progress of the society and, consequently, the country.\""
+  },
+  "core_values": {
+    "title": "Core Values",
+    "item_1": {
+      "title": "Unity in Diversity",
+      "message": "Celebrating our individual paths while staying rooted in one home."
+    },
+    "item_2": {
+      "title": "Education",
+      "message": "Investing in the intellectual growth of our youth."
+    },
+    "item_3": {
+      "title": "Tradition",
+      "message": "Preserving the rituals and stories that define us."
+    }
+  },
+  "future_promise": {
+    "title": "Our Promise to the Future",
+    "message": "We assure you that our history will inspire generations to come. Our family will always exist in love and unity."
+  }
+}

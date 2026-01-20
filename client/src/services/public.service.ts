@@ -19,9 +19,31 @@ export const publicService = {
     return (await api.get<PublicMagazine[]>("/magazine/published")) as any;
   },
 
-  getNotifications: async () => {
+  getLatestNotifications: async () => {
     return (await api.get<PublicNotification[]>(
-      "/notifications/published"
+      "/notifications/latest"
     )) as any;
+  },
+
+  getNotifications: async (params?: {
+    category?: string;
+    archived?: boolean;
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (params?.category && params.category !== "ALL") {
+      queryParams.append("category", params.category);
+    }
+
+    if (params?.archived !== undefined) {
+      queryParams.append("archived", params.archived.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const url = `/notifications/published${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    return (await api.get<PublicNotification[]>(url)) as any;
   },
 };

@@ -22,3 +22,7 @@ export { default as ConfirmModal } from "./ConfirmModal";
 export { default as AdminSelect } from "./AdminSelect";
 export { default as AdminDateRange } from "./AdminDateRange";
 export { default as AdminMultiSearch } from "./AdminMultiSearchBox";
+
+// Table Grids
+export { default as TableGrid } from "./TableGrid";
+export type { ColumnConfig } from "./TableGrid";

@@ -20,7 +20,9 @@ const MagazineForm: React.FC<Props> = ({
   onCancel,
   isLoading,
 }) => {
-  const [title, setTitle] = useState(initial?.title ?? "");
+  const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
+  const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
+
   const [publishedDate, setPublishedDate] = useState(
     initial?.publishedDate
       ? new Date(initial.publishedDate).toISOString().split("T")[0]
@@ -36,7 +38,8 @@ const MagazineForm: React.FC<Props> = ({
     e.preventDefault();
 
     const payload: any = {
-      title,
+      title_en: titleEn,
+      title_ml: titleMl,
       publishedDate: new Date(publishedDate).toISOString(),
       status,
     };
@@ -64,19 +67,34 @@ const MagazineForm: React.FC<Props> = ({
       </div>
 
       <div className="space-y-5">
-        {/* Title */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-            Magazine Title
-          </label>
-          <input
-            required
-            disabled={isLoading}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., The Family Chronicle - Summer Edition"
-            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
-          />
+        {/* --- TITLE SECTION --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex gap-1">
+              Magazine Title (English) <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="e.g., The Family Chronicle - Summer Edition"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Magazine Title (Malayalam)
+            </label>
+            <input
+              disabled={isLoading}
+              value={titleMl}
+              onChange={(e) => setTitleMl(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base font-ml"
+              placeholder="e.g., The Family Chronicle - Summer Edition"
+            />
+          </div>
         </div>
 
         {/* Date */}

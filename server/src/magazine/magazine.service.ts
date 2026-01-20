@@ -38,7 +38,7 @@ export class MagazineService {
     try {
       return await this.magazineModel
         .find({ status: MagazineStatus.PUBLISHED })
-        .select('uuid title publishedDate pdfUrl -_id')
+        .select('uuid title_en title_ml publishedDate pdfUrl -_id')
         .sort({ publishedDate: -1 })
         .exec();
     } catch (error) {
@@ -75,7 +75,8 @@ export class MagazineService {
       if (status && status !== 'ALL') filters.status = status;
 
       if (search) {
-        filters.title = { $regex: search, $options: 'i' };
+        const searchRegex = { $regex: search, $options: 'i' };
+        filters.$or = [{ title_en: searchRegex }, { title_ml: searchRegex }];
       }
 
       if (startDate || endDate) {
@@ -134,7 +135,7 @@ export class MagazineService {
         adminUserName: admin.username,
         action: ActivityAction.CREATE,
         entityType: EntityType.MAGAZINE,
-        entityTitle: magazine.title,
+        entityTitle: magazine.title_en,
         entityUuid: magazine.uuid,
       });
 
@@ -197,7 +198,7 @@ export class MagazineService {
           adminUserName: admin.username,
           action: ActivityAction.UPDATE,
           entityType: EntityType.MAGAZINE,
-          entityTitle: updated.title,
+          entityTitle: updated.title_en,
           entityUuid: updated.uuid,
         });
       }
@@ -244,7 +245,7 @@ export class MagazineService {
         adminUserName: admin.username,
         action: ActivityAction.DELETE,
         entityType: EntityType.MAGAZINE,
-        entityTitle: magazine.title,
+        entityTitle: magazine.title_en,
         entityUuid: magazine.uuid,
       });
 

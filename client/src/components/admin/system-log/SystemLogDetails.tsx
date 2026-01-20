@@ -1,5 +1,5 @@
 import React from "react";
-import { Terminal, Copy, Globe, User, Hash } from "lucide-react";
+import { Terminal, Copy, Globe, User, Hash, Box } from "lucide-react";
 import type { SystemLog } from "../../../types/system-log.admin";
 import toast from "react-hot-toast";
 
@@ -9,14 +9,26 @@ interface Props {
 }
 
 const SystemLogDetails: React.FC<Props> = ({ log, onClose }) => {
-  const copyToClipboard = (text: string) => {
-    if (!text) return; // Guard clause
+  const copyToClipboard = (text: string, label: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
+    toast.success(`${label} copied to clipboard`);
   };
 
   const isError =
     log.errorCode.startsWith("5") || log.errorCode.startsWith("4");
+
+  // Helper to format payload safely
+  const formatPayload = (payload: any) => {
+    try {
+      if (typeof payload === "string") {
+        return JSON.stringify(JSON.parse(payload), null, 2);
+      }
+      return JSON.stringify(payload, null, 2);
+    } catch (e) {
+      return String(payload);
+    }
+  };
 
   return (
     <div className="bg-white lg:bg-stone-50 border-stone-200 sm:rounded-2xl p-4 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
@@ -43,8 +55,8 @@ const SystemLogDetails: React.FC<Props> = ({ log, onClose }) => {
         </span>
       </div>
 
+      {/* Grid: Path and ID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Basic Info Cards */}
         <div className="p-4 bg-white border border-stone-200 rounded-xl space-y-1">
           <span className="text-[10px] font-bold text-stone-400 uppercase flex items-center gap-1">
             <Globe size={10} /> Request Path
@@ -65,7 +77,7 @@ const SystemLogDetails: React.FC<Props> = ({ log, onClose }) => {
             </p>
             {log.correlationId && (
               <button
-                onClick={() => copyToClipboard(log.correlationId || "")}
+                onClick={() => copyToClipboard(log.correlationId || "", "ID")}
                 className="text-stone-400 hover:text-amber-600"
               >
                 <Copy size={14} />
@@ -78,16 +90,42 @@ const SystemLogDetails: React.FC<Props> = ({ log, onClose }) => {
       {/* Message Section */}
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-          Error Message
+          Message
         </label>
-        <div className="w-full bg-red-50/50 border border-red-100 p-4 rounded-xl">
-          <p className="text-red-900 font-medium text-sm leading-relaxed">
-            {log.message}
-          </p>
+        <div
+          className={`w-full p-4 rounded-xl border ${
+            isError
+              ? "bg-red-50/50 border-red-100 text-red-900"
+              : "bg-blue-50/50 border-blue-100 text-blue-900"
+          }`}
+        >
+          <p className="font-medium text-sm leading-relaxed">{log.message}</p>
         </div>
       </div>
 
-      {/* Stack Trace (Only if exists) */}
+      {/* Request Payload Section (New) */}
+      {log.payload && (
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
+              <Box size={12} /> Request Payload
+            </label>
+            <button
+              onClick={() =>
+                copyToClipboard(formatPayload(log.payload), "Payload")
+              }
+              className="text-[10px] font-bold text-amber-700 hover:underline"
+            >
+              COPY JSON
+            </button>
+          </div>
+          <pre className="w-full bg-stone-100 text-stone-800 p-4 rounded-xl text-xs font-mono overflow-x-auto leading-relaxed max-h-60 border border-stone-200">
+            {formatPayload(log.payload)}
+          </pre>
+        </div>
+      )}
+
+      {/* Stack Trace (Dark mode style) */}
       {log.stack && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -95,7 +133,7 @@ const SystemLogDetails: React.FC<Props> = ({ log, onClose }) => {
               Stack Trace
             </label>
             <button
-              onClick={() => copyToClipboard(log.stack!)}
+              onClick={() => copyToClipboard(log.stack!, "Stack trace")}
               className="text-[10px] font-bold text-amber-700 hover:underline"
             >
               COPY TRACE
@@ -107,21 +145,26 @@ const SystemLogDetails: React.FC<Props> = ({ log, onClose }) => {
         </div>
       )}
 
-      {/* Request Payload (JSON Viewing) */}
+      {/* Request Context */}
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
           Request Context
         </label>
-        <div className="grid grid-cols-1 gap-4">
-          <div className="bg-white border border-stone-200 p-4 rounded-xl">
-            <div className="flex items-center gap-4 text-xs text-stone-500">
-              <span className="flex items-center gap-1">
-                <User size={12} /> User: {log.userUuid || "System/Guest"}
+        <div className="bg-white border border-stone-200 p-4 rounded-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-xs text-stone-500">
+            <span className="flex items-center gap-1">
+              <User size={12} /> User:{" "}
+              <span className="text-stone-700 font-mono">
+                {log.userUuid || "System/Guest"}
               </span>
-              <span className="flex items-center gap-1">
-                <Globe size={12} /> IP: {log.ipAddress || "Internal"}
+            </span>
+            <span className="hidden sm:inline text-stone-300">|</span>
+            <span className="flex items-center gap-1">
+              <Globe size={12} /> IP:{" "}
+              <span className="text-stone-700 font-mono">
+                {log.ipAddress || "Internal"}
               </span>
-            </div>
+            </span>
           </div>
         </div>
       </div>

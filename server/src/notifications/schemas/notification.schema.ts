@@ -9,9 +9,11 @@ export enum NotificationStatus {
   PUBLISHED = 'PUBLISHED',
 }
 
-export enum NotificationPriority {
-  HIGH = 'HIGH',
-  NORMAL = 'NORMAL',
+export enum NotificationCategory {
+  GENERAL = 'GENERAL',
+  MAGAZINE = 'MAGAZINE',
+  EVENT = 'EVENT',
+  URGENT = 'URGENT',
 }
 
 @Schema({ timestamps: true })
@@ -24,21 +26,58 @@ export class Notification {
   uuid: string;
 
   @Prop({ required: true, trim: true })
-  title: string;
+  title_en: string;
+
+  @Prop({ required: false, trim: true })
+  title_ml?: string;
 
   @Prop({ required: true, trim: true })
-  content: string;
+  content_en: string;
+
+  @Prop({ required: false, trim: true })
+  content_ml?: string;
 
   @Prop({ required: true })
   date: Date;
 
   @Prop({
-    enum: NotificationPriority,
-    default: NotificationPriority.NORMAL,
+    required: true,
+    validate: {
+      validator: function (value: Date) {
+        // 'this' can be a Document or a Query
+        // For updates, we look into the update object
+        const date =
+          this instanceof Document
+            ? this.date
+            : (this as any).getUpdate().$set?.date ||
+              (this as any).getUpdate().date;
+
+        // If we are updating only the end date and not the start date,
+        // we might not have startDateTime in the update object.
+        // In that case, we can skip validation or fetch the doc (expensive).
+        // A better practice is to ensure both are sent or use a service-level check.
+
+        if (!date) return true;
+
+        return value >= date;
+      },
+      message: 'Expiry date must be equal to or after publish date',
+    },
   })
-  priority: NotificationPriority;
+  expiresAt: Date;
+
+  @Prop({ default: false })
+  isPinned: boolean;
 
   @Prop({
+    type: String,
+    enum: NotificationCategory,
+    default: NotificationCategory.GENERAL,
+  })
+  category: NotificationCategory;
+
+  @Prop({
+    type: String,
     enum: NotificationStatus,
     default: NotificationStatus.DRAFT,
   })

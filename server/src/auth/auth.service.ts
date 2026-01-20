@@ -23,13 +23,12 @@ export class AuthService {
   ) {}
 
   /**
-   * Validates admin credentials and updates login metadata.
+   * Validates admin credentials and returns tokens + expiry info for cookies.
    */
   async login(username: string, password: string) {
     try {
       const admin = await this.adminService.findByUsername(username, true);
 
-      // Using generic error to prevent account enumeration
       if (!admin || !admin.isActive) {
         throw new UnauthorizedException('Invalid credentials');
       }
@@ -39,14 +38,13 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      // Update last login timestamp
       admin.lastLogin = new Date();
       await admin.save();
 
-      const tokens = await this.generateTokenPair(admin);
+      const tokenData = await this.generateTokenPair(admin);
 
       return {
-        data: tokens,
+        data: tokenData,
         message: 'Logged in successfully',
       };
     } catch (error) {
@@ -61,7 +59,7 @@ export class AuthService {
   }
 
   /**
-   * Validates refresh token and issues a new pair.
+   * Validates refresh token from cookie and issues a new pair.
    */
   async refresh(userUuid: string, refreshToken: string) {
     try {
@@ -71,8 +69,19 @@ export class AuthService {
 
       const admin = await this.adminService.findByUuid(userUuid);
 
+      // Check if session exists in DB
       if (!admin || !admin.isActive || !admin.refreshTokenHash) {
         throw new UnauthorizedException('Invalid session');
+      }
+
+      // Check Database Expiry Date
+      if (
+        admin.refreshTokenExpiresAt &&
+        new Date() > admin.refreshTokenExpiresAt
+      ) {
+        // Token expired in DB, clean it up and reject
+        await this.adminService.clearRefreshToken(userUuid);
+        throw new UnauthorizedException('Session expired');
       }
 
       const isValid = await bcrypt.compare(
@@ -83,10 +92,10 @@ export class AuthService {
         throw new UnauthorizedException('Invalid session');
       }
 
-      const tokens = await this.generateTokenPair(admin);
+      const tokenData = await this.generateTokenPair(admin);
 
       return {
-        data: tokens,
+        data: tokenData,
         message: 'Token refreshed successfully',
       };
     } catch (error) {
@@ -100,7 +109,21 @@ export class AuthService {
   }
 
   /**
+   * Invalidates a user session by clearing the refresh token from the database.
+   */
+  async logout(userUuid: string) {
+    try {
+      await this.adminService.clearRefreshToken(userUuid);
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      await this.handleError(error, 'POST', '/auth/logout', { userUuid });
+      throw new InternalServerErrorException('An error occurred during logout');
+    }
+  }
+
+  /**
    * Generates Access and Refresh tokens.
+   * Now returns metadata needed for HttpOnly cookie configuration.
    */
   private async generateTokenPair(admin: any) {
     try {
@@ -111,23 +134,43 @@ export class AuthService {
         fullName: admin.fullName,
       };
 
+      // Get expiry strings from config
+      const accessExpiresIn = this.config.get<string>(
+        'JWT_ACCESS_EXPIRES_IN',
+        '15m',
+      ) as any;
+      const refreshExpiresIn = this.config.get<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+        '30d',
+      ) as any;
+
       const accessToken = this.jwtService.sign(payload, {
         secret: this.config.get('JWT_SECRET'),
-        expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN'),
+        expiresIn: accessExpiresIn,
       });
 
       const refreshToken = randomBytes(64).toString('hex');
       const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
+      const expiryDate = this.calculateExpiryDate(refreshExpiresIn);
+
       admin.refreshTokenHash = refreshTokenHash;
+      admin.refreshTokenExpiresAt = expiryDate;
       await admin.save();
 
       return {
         accessToken,
         refreshToken,
+        accessTokenExpiresIn: accessExpiresIn,
+        refreshTokenExpiresIn: refreshExpiresIn,
+        user: {
+          userUuid: admin.uuid,
+          username: admin.username,
+          role: admin.role,
+          fullName: admin.fullName,
+        },
       };
     } catch (error) {
-      // If token generation fails (e.g., JWT secret missing), this is a critical system error
       await this.handleError(error, 'INTERNAL', 'TOKEN_GENERATION', {
         username: admin.username,
       });
@@ -138,8 +181,15 @@ export class AuthService {
   }
 
   /**
-   * Helper method to record technical system logs for Auth
+   * Simple helper to parse duration strings like "30d" or "7d" into a Date object.
    */
+  private calculateExpiryDate(expiresIn: string): Date {
+    const days = parseInt(expiresIn.replace('d', ''), 10);
+    const date = new Date();
+    date.setDate(date.getDate() + (isNaN(days) ? 30 : days));
+    return date;
+  }
+
   private async handleError(
     error: any,
     method: string,
@@ -157,7 +207,7 @@ export class AuthService {
       stack: error.stack,
       path,
       method,
-      payload, // Payload here is already masked in the calling methods (no passwords)
+      payload,
       userUuid: payload?.userUuid || 'SYSTEM_AUTH',
     });
   }

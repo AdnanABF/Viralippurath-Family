@@ -23,8 +23,14 @@ const EventForm: React.FC<Props> = ({
   onCancel,
   isLoading,
 }) => {
-  const [title, setTitle] = useState(initial?.title ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
+  const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
+  const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
+  const [descriptionEn, setDescriptionEn] = useState(
+    initial?.description_en ?? ""
+  );
+  const [descriptionMl, setDescriptionMl] = useState(
+    initial?.description_ml ?? ""
+  );
   const [type, setType] = useState(initial?.type ?? "");
   const [location, setLocation] = useState(initial?.location ?? "");
 
@@ -44,8 +50,10 @@ const EventForm: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      title,
-      description,
+      title_en: titleEn,
+      title_ml: titleMl,
+      description_en: descriptionEn,
+      description_ml: descriptionMl,
       type,
       location,
       startDateTime,
@@ -81,34 +89,65 @@ const EventForm: React.FC<Props> = ({
 
       <div className="space-y-5">
         {/* Title */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-            Event Title
-          </label>
-          <input
-            required
-            disabled={isLoading}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
-            placeholder="e.g., Annual Family Reunion"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex gap-1">
+              Event Title (English)
+              <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              disabled={isLoading}
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="e.g., Annual Family Reunion"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Event Title (Malayalam)
+            </label>
+            <input
+              disabled={isLoading}
+              value={titleMl}
+              onChange={(e) => setTitleMl(e.target.value)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
+              placeholder="e.g., Annual Family Reunion"
+            />
+          </div>
         </div>
 
         {/* Description */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-            Description
-          </label>
-          <textarea
-            required
-            disabled={isLoading}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base"
-            placeholder="What is happening during this event?"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex gap-1">
+              Description (English)
+              <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              required
+              disabled={isLoading}
+              value={descriptionEn}
+              onChange={(e) => setDescriptionEn(e.target.value)}
+              rows={4}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base"
+              placeholder="What is happening during this event?"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
+              Description (Malayalam)
+            </label>
+            <textarea
+              disabled={isLoading}
+              value={descriptionMl}
+              onChange={(e) => setDescriptionMl(e.target.value)}
+              rows={4}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all resize-none text-base"
+              placeholder="What is happening during this event?"
+            />
+          </div>
         </div>
 
         {/* Type + Location */}

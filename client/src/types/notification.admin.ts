@@ -1,7 +1,11 @@
-import type { PublicNotification } from "./notification.public";
+import type {
+  PublicNotification,
+  NotificationCategory,
+} from "./notification.public";
 
 export type NotificationStatus = "DRAFT" | "PUBLISHED";
-export type NotificationPriority = "HIGH" | "NORMAL";
+
+export { type NotificationCategory };
 
 export type AdminNotification = PublicNotification & {
   status: NotificationStatus;
@@ -13,7 +17,8 @@ export interface NotificationQueryParams {
   page?: number;
   limit?: number;
   status?: string;
-  priority?: string;
+  category?: string;
+  isPinned?: boolean;
   search?: string;
   startDate?: string;
   endDate?: string;

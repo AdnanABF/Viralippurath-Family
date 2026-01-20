@@ -163,10 +163,10 @@ const AdminManagement = () => {
         <>
           <AdminsTable
             admins={admins}
-            currentUserUuid={user?.uuid}
+            currentUserUuid={user?.userUuid}
             onEdit={(admin) => setEditing(admin)}
             onDelete={(uuid) => {
-              if (uuid === user?.uuid) {
+              if (uuid === user?.userUuid) {
                 toast.error("You cannot delete your own account");
                 return;
               }
@@ -194,7 +194,7 @@ const AdminManagement = () => {
         {editing && (
           <AdminUserForm
             initial={editing.uuid ? editing : undefined}
-            currentUserUuid={user?.uuid}
+            currentUserUuid={user?.userUuid}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}

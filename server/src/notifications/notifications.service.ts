@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -37,7 +38,7 @@ export class NotificationsService {
     page?: number;
     limit?: number;
     status?: string;
-    priority?: string;
+    category?: string;
     search?: string;
     startDate?: string;
     endDate?: string;
@@ -48,7 +49,7 @@ export class NotificationsService {
         page = 1,
         limit = 10,
         status,
-        priority,
+        category,
         search,
         startDate,
         endDate,
@@ -58,11 +59,16 @@ export class NotificationsService {
       const filters: any = {};
 
       if (status && status !== 'ALL') filters.status = status;
-      if (priority && priority !== 'ALL') filters.priority = priority;
+      if (category && category !== 'ALL') filters.category = category;
 
       if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
-        filters.$or = [{ title: searchRegex }, { content: searchRegex }];
+        filters.$or = [
+          { title_en: searchRegex },
+          { title_ml: searchRegex },
+          { content_en: searchRegex },
+          { content_ml: searchRegex },
+        ];
       }
 
       if (startDate || endDate) {
@@ -78,7 +84,7 @@ export class NotificationsService {
       const [data, totalItems] = await Promise.all([
         this.notificationModel
           .find(filters)
-          .sort({ date: -1, createdAt: -1 })
+          .sort({ isPinned: -1, category: -1, date: -1 })
           .skip(skip)
           .limit(limit)
           .exec(),
@@ -112,6 +118,12 @@ export class NotificationsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (new Date(dto.expiresAt) <= new Date(dto.date)) {
+        throw new BadRequestException(
+          'Expiry date must be equal to or after publish date',
+        );
+      }
+
       const notification = await this.notificationModel.create(dto);
 
       await this.activityLogService.create({
@@ -119,7 +131,7 @@ export class NotificationsService {
         adminUserName: admin.username,
         action: ActivityAction.CREATE,
         entityType: EntityType.NOTIFICATION,
-        entityTitle: notification.title,
+        entityTitle: notification.title_en,
         entityUuid: notification.uuid,
       });
 
@@ -145,6 +157,14 @@ export class NotificationsService {
     admin: { userUuid: string; username: string },
   ) {
     try {
+      if (dto.date && dto.expiresAt) {
+        if (new Date(dto.expiresAt) <= new Date(dto.date)) {
+          throw new BadRequestException(
+            'Expiry date must be equal to or after publish date',
+          );
+        }
+      }
+
       const updated = await this.notificationModel
         .findOneAndUpdate(
           { uuid },
@@ -162,7 +182,7 @@ export class NotificationsService {
         adminUserName: admin.username,
         action: ActivityAction.UPDATE,
         entityType: EntityType.NOTIFICATION,
-        entityTitle: updated.title,
+        entityTitle: updated.title_en,
         entityUuid: updated.uuid,
       });
 
@@ -201,7 +221,7 @@ export class NotificationsService {
         adminUserName: admin.username,
         action: ActivityAction.DELETE,
         entityType: EntityType.NOTIFICATION,
-        entityTitle: res.title,
+        entityTitle: res.title_en,
         entityUuid: res.uuid,
       });
 
@@ -225,21 +245,71 @@ export class NotificationsService {
     }
   }
 
-  // ===== PUBLIC =====
+  // ===== PUBLIC
 
-  async findPublished() {
+  /**
+   * Fetches only the 3 most important/latest notifications for the home page.
+   */
+  async getLatestThree() {
     try {
+      const now = new Date();
       return await this.notificationModel
-        .find({ status: NotificationStatus.PUBLISHED })
-        .select('uuid title content date priority -_id')
-        .sort({ date: -1, createdAt: -1 })
+        .find({
+          status: NotificationStatus.PUBLISHED,
+          date: { $lt: now },
+          expiresAt: { $gt: now }, // Only current (non-archived) ones
+        })
+        .select(
+          'uuid title_en title_ml content_en content_ml date category isPinned -_id',
+        )
+        .sort({ isPinned: -1, category: -1, date: -1 })
+        .limit(3)
+        .exec();
+    } catch (error) {
+      await this.handleError(
+        error,
+        'GET',
+        '/public/notifications/latest',
+        null,
+        'GUEST',
+      );
+      throw new InternalServerErrorException(
+        'Failed to fetch home notifications',
+      );
+    }
+  }
+
+  async findPublished(query?: { category?: string; showArchived?: boolean }) {
+    try {
+      const now = new Date();
+      const filters: any = {
+        status: NotificationStatus.PUBLISHED,
+        date: { $lt: now },
+      };
+
+      if (query?.category && query.category !== 'ALL') {
+        filters.category = query.category;
+      }
+
+      if (query?.showArchived) {
+        filters.expiresAt = { $lt: now };
+      } else {
+        filters.expiresAt = { $gt: now };
+      }
+
+      return await this.notificationModel
+        .find(filters)
+        .select(
+          'uuid title_en title_ml content_en content_ml date expiresAt category isPinned -_id',
+        )
+        .sort({ isPinned: -1, category: -1, date: -1 })
         .exec();
     } catch (error) {
       await this.handleError(
         error,
         'GET',
         '/public/notifications',
-        null,
+        query,
         'GUEST',
       );
       throw new InternalServerErrorException('Failed to fetch notifications');

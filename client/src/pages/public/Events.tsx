@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { publicService } from "../../services/public.service";
 import EventsHeader from "../../components/events/EventsHeader";
 import EventsTimeline from "../../components/events/EventsTimeline";
 import { AdminLoading, AdminError } from "../../components/ui"; // Use your existing UI components
 
 const Events = () => {
+  const { t } = useTranslation("events");
   const [view, setView] = useState<"upcoming" | "past">("upcoming");
 
   // 1. Fetch Ongoing Events (Happening Now)
@@ -31,7 +33,7 @@ const Events = () => {
         <EventsHeader />
 
         {/* --- Ongoing Events Section --- */}
-        {ongoingEvents.data.length > 0 && (
+        {ongoingEvents?.data?.length > 0 && (
           <div className="mb-16">
             <div className="flex items-center gap-3 mb-6">
               <span className="relative flex h-3 w-3">
@@ -39,10 +41,10 @@ const Events = () => {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
               </span>
               <h2 className="text-xl font-bold text-stone-800 uppercase tracking-widest">
-                Happening Now
+                {t("happening_now")}
               </h2>
             </div>
-            <EventsTimeline events={ongoingEvents.data} />
+            <EventsTimeline events={ongoingEvents?.data} />
           </div>
         )}
 
@@ -59,7 +61,7 @@ const Events = () => {
                     : "text-stone-500 hover:text-stone-700"
                 }`}
               >
-                {type === "upcoming" ? "Upcoming" : "Past Events"}
+                {type === "upcoming" ? t("upcoming") : t("past")}
               </button>
             ))}
           </div>
@@ -67,21 +69,19 @@ const Events = () => {
 
         {/* --- Content States --- */}
         {isLoading ? (
-          <AdminLoading message="Loading events..." />
+          <AdminLoading message={t("loading_message")} />
         ) : isError ? (
           <AdminError
-            title="Something went wrong"
-            message="We couldn't load the events. Please try again."
+            title={t("error_title")}
+            message={t("error_message")}
             onRetry={() => refetch()}
           />
-        ) : events.data.length > 0 ? (
-          <EventsTimeline events={events.data} />
+        ) : events?.data?.length > 0 ? (
+          <EventsTimeline events={events?.data} />
         ) : (
           <div className="text-center py-20 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
             <p className="text-stone-500 italic">
-              {view === "upcoming"
-                ? "There are no upcoming events at this time."
-                : "No past event records were found."}
+              {view === "upcoming" ? t("empty_events") : t("empty_past_events")}
             </p>
           </div>
         )}

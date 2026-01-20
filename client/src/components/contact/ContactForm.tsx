@@ -1,9 +1,10 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import api from "../../services/api"; // Adjust path based on your folder structure
+import { useTranslation } from "react-i18next";
+import api from "../../services/api";
 
 const ContactForm = () => {
-  // 1. Setup local state following your standard pattern
+  const { t } = useTranslation("contact");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -52,7 +53,7 @@ const ContactForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
-            Full Name
+            {t("form.fullName")}
           </label>
           <input
             required
@@ -61,13 +62,13 @@ const ContactForm = () => {
             value={formData.name}
             onChange={handleChange}
             className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
-            placeholder="Enter your name"
+            placeholder={t("form.fullName_placeholder")}
           />
         </div>
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
-            Email
+            {t("form.email")}
           </label>
           <input
             required
@@ -76,14 +77,14 @@ const ContactForm = () => {
             value={formData.email}
             onChange={handleChange}
             className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
-            placeholder="Enter email"
+            placeholder={t("form.email_placeholder")}
           />
         </div>
       </div>
 
       <div>
         <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
-          Subject
+          {t("form.subject")}
         </label>
         <input
           required
@@ -92,13 +93,13 @@ const ContactForm = () => {
           value={formData.subject}
           onChange={handleChange}
           className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
-          placeholder="What is this regarding?"
+          placeholder={t("form.subject_placeholder")}
         />
       </div>
 
       <div>
         <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
-          Message
+          {t("form.message")}
         </label>
         <textarea
           required
@@ -107,7 +108,7 @@ const ContactForm = () => {
           onChange={handleChange}
           rows={5}
           className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all"
-          placeholder="Your message..."
+          placeholder={t("form.message_placeholder")}
         />
       </div>
 
@@ -127,7 +128,7 @@ const ContactForm = () => {
         disabled={loading}
         className="w-full bg-amber-700 text-white font-bold py-4 rounded-xl hover:bg-amber-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
       >
-        {loading ? "Sending Message..." : "Send Message"}
+        {loading ? t("form.sending_message") : t("form.send_message")}
       </button>
     </form>
   );
