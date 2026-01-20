@@ -13,20 +13,33 @@ let cachedNestApp: any;
  * Shared setup logic for both Local and Production
  */
 async function setupApp(app: INestApplication) {
-  // 1. Trust Proxy (Crucial for Throttler on Vercel)
+  // 1. Trust Proxy (Crucial for Throttler and secure cookies on Vercel)
+  // This tells Express to trust the headers set by Vercel's proxy (like x-forwarded-proto)
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 
   // 2. Cookie Parser Middleware
-  // Required to read cookies from incoming requests
   app.use(cookieParser());
 
   // 3. CORS Configuration
   const corsOrigin = process.env.CORS_ORIGIN;
+
   app.enableCors({
-    // When using credentials: true, origin cannot be '*'
-    origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : [],
-    credentials: true, // Required for cookies to be sent/received
+    // Important: origin cannot be '*' when credentials is true
+    origin: corsOrigin
+      ? corsOrigin.split(',').map((o) => o.trim())
+      : ['http://localhost:5173'], // Default dev fallback
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'x-skip-toast',
+      'Correlation-Id',
+    ],
     maxAge: 86400,
   });
 
@@ -62,7 +75,6 @@ if (process.env.NODE_ENV !== 'production') {
     const app = await NestFactory.create(AppModule);
     await setupApp(app);
 
-    // Default to 3000 if PORT is not defined
     const port = process.env.PORT || 3000;
 
     await app.listen(port);
