@@ -85,6 +85,7 @@ const NotificationsAdmin = () => {
 
   // 2. Local Action States
   const [editing, setEditing] = useState<AdminNotification | null>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -237,13 +238,18 @@ const NotificationsAdmin = () => {
       )}
 
       {/* Modals */}
-      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        isDirty={isFormDirty}
+      >
         {editing && (
           <NotificationForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}
+            onDirtyChange={setIsFormDirty}
           />
         )}
       </Modal>

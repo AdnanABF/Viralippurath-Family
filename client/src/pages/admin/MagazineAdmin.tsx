@@ -74,6 +74,7 @@ const MagazineAdmin = () => {
 
   // 2. Action States
   const [editing, setEditing] = useState<AdminMagazine | null>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -205,13 +206,18 @@ const MagazineAdmin = () => {
       )}
 
       {/* Modals */}
-      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        isDirty={isFormDirty}
+      >
         {editing && (
           <MagazineForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}
+            onDirtyChange={setIsFormDirty}
           />
         )}
       </Modal>

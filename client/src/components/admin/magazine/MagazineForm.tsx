@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Upload, CheckCircle2 } from "lucide-react";
+import { useFormDirty } from "../../../hooks/useFormDirty";
 import type {
   AdminMagazine,
   AdminMagazineDraft,
@@ -12,6 +13,7 @@ interface Props {
   onSave: (data: any) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const MagazineForm: React.FC<Props> = ({
@@ -19,20 +21,40 @@ const MagazineForm: React.FC<Props> = ({
   onSave,
   onCancel,
   isLoading,
+  onDirtyChange,
 }) => {
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
   const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
 
-  const [publishedDate, setPublishedDate] = useState(
-    initial?.publishedDate
-      ? new Date(initial.publishedDate).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0]
-  );
+  const initialDate = initial?.publishedDate
+    ? new Date(initial.publishedDate).toISOString().split("T")[0]
+    : new Date().toISOString().split("T")[0];
+
+  const [publishedDate, setPublishedDate] = useState(initialDate);
   const [status, setStatus] = useState<MagazineStatus>(
     initial?.status ?? "DRAFT"
   );
 
   const [file, setFile] = useState<File | null>(null);
+
+  // Dirty check logic
+  const currentValues = {
+    titleEn,
+    titleMl,
+    publishedDate,
+    status,
+    hasNewFile: !!file,
+  };
+
+  const initialValues = {
+    titleEn: initial?.title_en ?? "",
+    titleMl: initial?.title_ml ?? "",
+    publishedDate: initialDate,
+    status: initial?.status ?? "DRAFT",
+    hasNewFile: false,
+  };
+
+  const isDirty = useFormDirty(currentValues, initialValues, onDirtyChange);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +74,20 @@ const MagazineForm: React.FC<Props> = ({
       onSave({ ...payload, uuid: initial.uuid });
     } else {
       onSave(payload as AdminMagazineDraft);
+    }
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to close this form?"
+        )
+      ) {
+        onCancel();
+      }
+    } else {
+      onCancel();
     }
   };
 
@@ -184,7 +220,7 @@ const MagazineForm: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <SecondaryButton
           variant="form"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isLoading}
           label="Cancel"
         />
