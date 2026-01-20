@@ -83,16 +83,14 @@ const EventsAdmin = () => {
     try {
       if ("uuid" in event && event.uuid) {
         const { uuid, ...payload } = event;
-        // Success toast is now handled globally by api.ts interceptor
         await eventsAdminService.update(uuid, payload);
       } else {
-        // Success toast is now handled globally by api.ts interceptor
         await eventsAdminService.create(event as AdminEventDraft);
       }
       setEditing(null);
-      refresh(); // Reload data via hook
+      refresh();
     } catch {
-      /* api.ts handles global error reporting via toast.error */
+      /* api.ts handles global error reporting */
     } finally {
       setIsSaving(false);
     }
@@ -102,15 +100,40 @@ const EventsAdmin = () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      // Success toast is now handled globally by api.ts interceptor
       await eventsAdminService.remove(deleteTarget.uuid);
-      refresh(); // Reload data via hook
+      refresh();
     } catch {
-      /* api.ts handles global error reporting via toast.error */
+      /* api.ts handles global error reporting */
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
     }
+  };
+
+  /**
+   * Helper to convert a local date string (YYYY-MM-DD) to a UTC ISO string
+   * for the start or end of the day.
+   */
+  const handleDateFilterChange = (type: "start" | "end", dateVal: string) => {
+    if (!dateVal) {
+      setFilters((prev) => ({
+        ...prev,
+        [type === "start" ? "startDate" : "endDate"]: "",
+      }));
+      return;
+    }
+
+    const date = new Date(dateVal);
+    if (type === "start") {
+      date.setHours(0, 0, 0, 0);
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    setFilters((prev) => ({
+      ...prev,
+      [type === "start" ? "startDate" : "endDate"]: date.toISOString(),
+    }));
   };
 
   return (
@@ -129,14 +152,10 @@ const EventsAdmin = () => {
         />
 
         <AdminDateRange
-          start={filters.startDate || ""}
-          end={filters.endDate || ""}
-          onStartChange={(val) =>
-            setFilters((prev) => ({ ...prev, startDate: val }))
-          }
-          onEndChange={(val) =>
-            setFilters((prev) => ({ ...prev, endDate: val }))
-          }
+          start={filters.startDate ? filters.startDate.split("T")[0] : ""}
+          end={filters.endDate ? filters.endDate.split("T")[0] : ""}
+          onStartChange={(val) => handleDateFilterChange("start", val)}
+          onEndChange={(val) => handleDateFilterChange("end", val)}
         />
 
         <AdminControlGroup>
