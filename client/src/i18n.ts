@@ -22,6 +22,7 @@ i18n
       "vision",
       "events",
       "home",
+      "gallery",
     ],
     defaultNS: "common",
 

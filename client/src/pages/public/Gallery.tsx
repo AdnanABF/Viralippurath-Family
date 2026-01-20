@@ -6,8 +6,10 @@ import GalleryFilters from "../../components/gallery/GalleryFilters";
 import GalleryGrid from "../../components/gallery/GalleryGrid";
 import { AdminError } from "../../components/ui";
 import type { PublicGalleryItem } from "../../types/gallery.public";
+import { useTranslation } from "react-i18next";
 
 const Gallery = () => {
+  const { t } = useTranslation("gallery");
   const [activeAlbum, setActiveAlbum] = useState("All");
 
   // 1. Fetch Gallery Data
@@ -44,8 +46,8 @@ const Gallery = () => {
 
         {isError ? (
           <AdminError
-            title="Unable to load gallery"
-            message="Please check back later to see our family memories."
+            title={t("error_title")}
+            message={t("error_message")}
             onRetry={() => refetch()}
           />
         ) : (
@@ -58,9 +60,7 @@ const Gallery = () => {
 
             {filteredImages.length === 0 && !isLoading ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-stone-100">
-                <p className="text-stone-500 italic">
-                  No images found in this album.
-                </p>
+                <p className="text-stone-500 italic">{t("no_image_message")}</p>
               </div>
             ) : (
               <GalleryGrid images={filteredImages} loading={isLoading} />
