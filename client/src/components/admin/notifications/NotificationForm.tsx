@@ -8,6 +8,7 @@ import type {
 import {
   toDateTimeInputValue,
   nowDateTimeInputValue,
+  toUTCISO,
 } from "../../../utils/date";
 import { PrimaryButton, SecondaryButton } from "../../ui";
 
@@ -63,8 +64,8 @@ const NotificationForm: React.FC<Props> = ({
       content_ml: contentMl,
       category,
       isPinned,
-      date: new Date(date).toISOString(),
-      expiresAt: new Date(expiresAt).toISOString(),
+      date: toUTCISO(date),
+      expiresAt: toUTCISO(expiresAt),
       status,
     };
 
