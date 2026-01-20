@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
   ChevronLeft,
@@ -28,16 +28,39 @@ import { getLocalized } from "../../utils/lang.utils";
 
 interface Props {
   issue: PublicMagazine | null;
+  initialViewMode?: "preview" | "reader"; // Added to allow mobile to trigger reader directly
+  onClose?: () => void; // Added for mobile modal handling
 }
 
-const MagazineViewer: React.FC<Props> = ({ issue }) => {
+const MagazineViewer: React.FC<Props> = ({
+  issue,
+  initialViewMode = "preview",
+  onClose,
+}) => {
   const { t, i18n } = useTranslation("magazine");
 
-  const [viewMode, setViewMode] = useState<"preview" | "reader">("preview");
+  const [viewMode, setViewMode] = useState<"preview" | "reader">(
+    initialViewMode
+  );
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [isLoaded, setIsLoaded] = useState(false);
   const [scale, setScale] = useState<number>(1.0);
+
+  // Prevent body scroll when in full-screen reader mode on mobile
+  useEffect(() => {
+    const isMobile = window.innerWidth < 1024;
+
+    if (viewMode === "reader" && isMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [viewMode]);
 
   if (!issue) {
     return (
@@ -62,8 +85,10 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
     setIsLoaded(true);
   };
 
-  // Reset reader when exiting
   const closeReader = () => {
+    if (onClose) {
+      onClose(); // Specifically for mobile bottom sheet flow
+    }
     setViewMode("preview");
     setIsLoaded(false);
     setPageNumber(1);
@@ -77,21 +102,13 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
     date: string
   ) => {
     e.preventDefault();
-
     try {
-      // 1. Format the date part (e.g., "January_2026")
       const dateObj = new Date(date);
       const dateString = dateObj
-        .toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })
-        .replace(/\s+/g, "_"); // Replace space with underscore
+        .toLocaleDateString("en-US", { month: "long", year: "numeric" })
+        .replace(/\s+/g, "_");
 
-      // 2. Sanitize the title (remove special characters and spaces)
-      const cleanTitle = title
-        .replace(/[^a-z0-9]/gi, "_") // Replace non-alphanumeric with underscore
-        .replace(/_+/g, "_"); // Collapse multiple underscores
+      const cleanTitle = title.replace(/[^a-z0-9]/gi, "_").replace(/_+/g, "_");
 
       const finalFileName = `${cleanTitle}_${dateString}`;
 
@@ -101,15 +118,12 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${finalFileName}.pdf`; // Forces the filename
+      link.download = `${finalFileName}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Cleanup the temporary URL
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      // Fallback: just open in new tab if fetch fails
       window.open(url, "_blank");
     }
   };
@@ -176,13 +190,13 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
 
   /** --- RENDER READER MODE --- **/
   return (
-    <div className="space-y-4">
-      <div className="relative bg-stone-900 rounded-2xl shadow-2xl overflow-hidden min-h-150 flex flex-col items-center justify-center border-4 border-stone-200">
+    <div className="fixed inset-0 z-60 bg-stone-950 lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:space-y-4">
+      <div className="relative bg-stone-900 lg:rounded-2xl shadow-2xl overflow-hidden h-full lg:h-[85vh] lg:min-h-150 flex flex-col items-center justify-center lg:border-4 lg:border-stone-200">
         {/* Reader Header */}
-        <div className="absolute top-0 inset-x-0 p-4 flex justify-between items-center z-40 bg-linear-to-b from-black/60 to-transparent">
+        <div className="absolute top-0 inset-x-0 p-4 flex justify-between items-center z-40 bg-linear-to-b from-black/80 to-transparent">
           <button
             onClick={closeReader}
-            className="flex items-center gap-2 text-white hover:text-amber-400 transition font-medium"
+            className="flex items-center gap-2 text-white hover:text-amber-400 transition font-medium px-2 py-1"
           >
             <ArrowLeft size={20} />
             <span>{t("back")}</span>
@@ -221,7 +235,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
             href={issue.pdfUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-white/80 hover:text-white transition"
+            className="text-white/80 hover:text-white transition p-2"
           >
             <Maximize2 size={20} />
           </a>
@@ -236,7 +250,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
           </div>
         )}
 
-        <div className="pt-20 pb-24 w-full flex justify-center overflow-auto max-h-[80vh] custom-scrollbar scroll-smooth">
+        <div className="pt-20 pb-24 w-full h-full flex justify-center overflow-auto custom-scrollbar scroll-smooth">
           <Document
             file={issue.pdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -257,7 +271,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
                     ? 600
                     : window.innerWidth > 640
                       ? 500
-                      : 300
+                      : window.innerWidth - 40 // Mobile optimization
                 }
               />
             </div>
@@ -265,21 +279,21 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
         </div>
 
         {isLoaded && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-stone-900/90 backdrop-blur text-white px-6 py-2 rounded-full z-30 border border-white/10">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-stone-900/90 backdrop-blur text-white px-6 py-2 rounded-full z-30 border border-white/10 shadow-xl">
             <button
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-              className="disabled:opacity-30"
+              className="disabled:opacity-30 p-1"
             >
               <ChevronLeft />
             </button>
-            <span className="text-sm font-medium tabular-nums">
-              {t("page")} {pageNumber} of {numPages}
+            <span className="text-sm font-medium tabular-nums min-w-20 text-center">
+              {t("page")} {pageNumber} / {numPages}
             </span>
             <button
               onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
               disabled={pageNumber >= numPages}
-              className="disabled:opacity-30"
+              className="disabled:opacity-30 p-1"
             >
               <ChevronRight />
             </button>

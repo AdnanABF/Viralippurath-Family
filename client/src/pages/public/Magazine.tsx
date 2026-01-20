@@ -4,6 +4,7 @@ import { publicService } from "../../services/public.service";
 import MagazineHeader from "../../components/magazine/MagazineHeader";
 import MagazineViewer from "../../components/magazine/MagazineViewer";
 import MagazineArchive from "../../components/magazine/MagazineArchive";
+import MagazineBottomSheet from "../../components/magazine/MagazineBottomSheet";
 import type { PublicMagazine } from "../../types/magazine.public";
 import { AdminLoading, AdminError } from "../../components/ui";
 import { useTranslation } from "react-i18next";
@@ -13,6 +14,7 @@ const Magazine = () => {
   const [selectedIssue, setSelectedIssue] = useState<PublicMagazine | null>(
     null
   );
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // 1. Fetch Magazines Data
   const {
@@ -31,6 +33,11 @@ const Magazine = () => {
       setSelectedIssue(issues[0]);
     }
   }, [issues, selectedIssue]);
+
+  const handleSelectIssue = (issue: PublicMagazine) => {
+    setSelectedIssue(issue);
+    setIsSheetOpen(true);
+  };
 
   return (
     <div className="py-20 bg-stone-50 min-h-screen">
@@ -54,14 +61,14 @@ const Magazine = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                 <MagazineArchive
                   issues={issues}
                   selectedId={selectedIssue?.uuid}
-                  onSelect={setSelectedIssue}
+                  onSelect={handleSelectIssue}
                 />
 
-                <div className="lg:col-span-2 space-y-6">
+                <div className="hidden lg:block lg:col-span-2 lg:sticky lg:top-28 self-start space-y-6">
                   <MagazineViewer
                     key={selectedIssue?.uuid}
                     issue={selectedIssue}
@@ -72,6 +79,12 @@ const Magazine = () => {
           </>
         )}
       </div>
+
+      <MagazineBottomSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        issue={selectedIssue}
+      />
     </div>
   );
 };
