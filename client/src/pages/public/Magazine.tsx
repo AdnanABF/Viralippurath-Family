@@ -6,8 +6,10 @@ import MagazineViewer from "../../components/magazine/MagazineViewer";
 import MagazineArchive from "../../components/magazine/MagazineArchive";
 import type { PublicMagazine } from "../../types/magazine.public";
 import { AdminLoading, AdminError } from "../../components/ui";
+import { useTranslation } from "react-i18next";
 
 const Magazine = () => {
+  const { t } = useTranslation("magazine");
   const [selectedIssue, setSelectedIssue] = useState<PublicMagazine | null>(
     null
   );
@@ -37,18 +39,18 @@ const Magazine = () => {
 
         {isError ? (
           <AdminError
-            title="Unable to load magazines"
-            message="Please check back later to view our family archives."
+            title={t("error_title")}
+            message={t("error_message")}
             onRetry={() => refetch()}
           />
         ) : (
           <>
             {isLoading ? (
-              <AdminLoading message="Loading archives..." />
+              <AdminLoading message={t("loading_message")} />
             ) : issues.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-stone-200 shadow-sm">
                 <p className="text-stone-500 italic">
-                  No magazine issues have been published yet.
+                  {t("no_magazine_message")}
                 </p>
               </div>
             ) : (

@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import type { PublicMagazine } from "../../types/magazine.public";
 import { formatDate } from "../../utils/date";
+import { getLocalized } from "../../utils/lang.utils";
 
 interface Props {
   issues: PublicMagazine[];
@@ -8,14 +10,17 @@ interface Props {
 }
 
 const MagazineArchive: React.FC<Props> = ({ issues, selectedId, onSelect }) => {
+  const { t, i18n } = useTranslation("magazine");
+
   return (
     <div className="space-y-6">
       <h3 className="font-bold text-stone-800 uppercase tracking-[0.2em] text-[10px]">
-        Family Magazines
+        {t("family_magazines")}
       </h3>
 
       <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
         {issues.map((issue) => {
+          const displayTitle = getLocalized(issue, "title", i18n.language);
           const displayDate = formatDate(issue.publishedDate);
 
           // Cloudinary Transformation: First page of PDF to JPG thumbnail
@@ -35,13 +40,13 @@ const MagazineArchive: React.FC<Props> = ({ issues, selectedId, onSelect }) => {
                 {thumbnail ? (
                   <img
                     src={thumbnail}
-                    alt={issue.title}
+                    alt={displayTitle}
                     className="w-16 h-20 object-cover rounded-lg shadow-sm bg-stone-100"
                   />
                 ) : (
                   <div className="w-16 h-20 bg-stone-200 rounded-lg flex items-center justify-center">
                     <span className="text-[10px] text-stone-400 uppercase">
-                      No Cover
+                      {t("no_cover")}
                     </span>
                   </div>
                 )}
@@ -60,7 +65,7 @@ const MagazineArchive: React.FC<Props> = ({ issues, selectedId, onSelect }) => {
                       : "text-stone-800"
                   }`}
                 >
-                  {issue.title}
+                  {displayTitle}
                 </h4>
                 <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wide">
                   {displayDate}

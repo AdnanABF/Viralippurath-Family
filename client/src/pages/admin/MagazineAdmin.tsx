@@ -39,7 +39,8 @@ const STATUS_OPTIONS = [
 
 const defaultMagazineValues = {
   uuid: "",
-  title: "",
+  title_en: "",
+  title_ml: "",
   publishedDate: new Date().toISOString(),
   status: "DRAFT",
 };
@@ -186,7 +187,7 @@ const MagazineAdmin = () => {
             onEdit={setEditing}
             onDelete={(uuid) => {
               const m = items.find((x) => x.uuid === uuid);
-              if (m) setDeleteTarget({ uuid: m.uuid, title: m.title });
+              if (m) setDeleteTarget({ uuid: m.uuid, title: m.title_en });
             }}
             disabled={isDeleting || isSaving}
           />

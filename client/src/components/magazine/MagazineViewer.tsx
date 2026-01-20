@@ -23,12 +23,16 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 // IMPORTANT: Add the standard CSS for react-pdf to prevent layout shifting
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import { useTranslation } from "react-i18next";
+import { getLocalized } from "../../utils/lang.utils";
 
 interface Props {
   issue: PublicMagazine | null;
 }
 
 const MagazineViewer: React.FC<Props> = ({ issue }) => {
+  const { t, i18n } = useTranslation("magazine");
+
   const [viewMode, setViewMode] = useState<"preview" | "reader">("preview");
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
@@ -50,6 +54,8 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
       year: "numeric",
     }
   );
+
+  const displayTitle = getLocalized(issue, "title", i18n.language);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -127,36 +133,41 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
             </div>
 
             <h2 className="text-3xl font-serif text-stone-900">
-              {issue.title}
+              {displayTitle}
             </h2>
             <p className="text-stone-600 mt-2 font-medium italic">
-              Interactive Digital Edition
+              {t("interactive_digital_edition")}
             </p>
 
             <button
               onClick={() => setViewMode("reader")}
               className="mt-8 bg-amber-800 text-white px-10 py-3.5 rounded-full font-bold shadow-lg hover:bg-amber-900 hover:-translate-y-0.5 transition-all duration-300"
             >
-              Read Issue Now
+              {t("read_issue_now")}
             </button>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm mt-6 gap-4">
           <div className="text-center sm:text-left">
-            <h3 className="font-bold text-stone-900 text-lg">{issue.title}</h3>
+            <h3 className="font-bold text-stone-900 text-lg">{displayTitle}</h3>
             <p className="text-sm text-stone-500 font-medium">
-              Published {displayDate}
+              {t("published")} {displayDate}
             </p>
           </div>
           <button
             onClick={(e) =>
-              handleDownload(e, issue.pdfUrl, issue.title, issue.publishedDate)
+              handleDownload(
+                e,
+                issue.pdfUrl,
+                issue.title_en,
+                issue.publishedDate
+              )
             }
             className="flex items-center text-amber-800 font-bold hover:text-amber-900 transition-colors bg-amber-50 px-4 py-2 rounded-lg hover:bg-amber-100 hover:cursor-pointer"
           >
             <Download size={18} className="mr-2" />
-            Download PDF
+            {t("download_pdf")}
           </button>
         </div>
       </>
@@ -174,7 +185,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
             className="flex items-center gap-2 text-white hover:text-amber-400 transition font-medium"
           >
             <ArrowLeft size={20} />
-            <span>Back</span>
+            <span>{t("back")}</span>
           </button>
 
           {/* Zoom Controls */}
@@ -220,7 +231,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-stone-100">
             <Loader2 className="w-10 h-10 animate-spin text-amber-700 mb-4" />
             <p className="text-stone-600 font-medium">
-              Preparing your reader...
+              {t("preparing_reader")}
             </p>
           </div>
         )}
@@ -245,8 +256,8 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
                   window.innerWidth > 1024
                     ? 600
                     : window.innerWidth > 640
-                    ? 500
-                    : 300
+                      ? 500
+                      : 300
                 }
               />
             </div>
@@ -263,7 +274,7 @@ const MagazineViewer: React.FC<Props> = ({ issue }) => {
               <ChevronLeft />
             </button>
             <span className="text-sm font-medium tabular-nums">
-              Page {pageNumber} of {numPages}
+              {t("page")} {pageNumber} of {numPages}
             </span>
             <button
               onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
