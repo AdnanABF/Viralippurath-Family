@@ -4,10 +4,7 @@ import { logout } from "../utils/logout";
 import { getUserIdFromToken } from "../utils/auth";
 
 const api = axios.create({
-  baseURL:
-    import.meta.env.REACT_ENV === "production"
-      ? "/api"
-      : import.meta.env.VITE_API_URL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
   // CRITICAL: Allows browser to send and receive cookies for cross-origin requests
   withCredentials: true,
 });
