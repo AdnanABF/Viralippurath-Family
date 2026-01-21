@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { navLinks } from "./nav.config";
 import { useAuth } from "../../context/AuthContext";
+import LanguageSwitcher from "../ui/LanguageSwitcher";
 
 interface Props {
   onClose: () => void;
@@ -49,6 +50,7 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
         }`}
       >
         <div className="px-4 pt-2 pb-6 space-y-1">
+          <LanguageSwitcher className="w-full min-[450px]:hidden" buttonClassName="flex-1"/>
           {navLinks.map((link) => (
             <Link
               key={link.path}
