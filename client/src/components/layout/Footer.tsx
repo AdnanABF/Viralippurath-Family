@@ -59,7 +59,16 @@ const Footer: React.FC = () => {
             {t("viralippurath_kudumbasamithi")}.
           </p>
           <p className="mt-4 md:mt-0">
-            Designed & Developed by Adnan Bin Farook.
+            Designed & Developed by{" "}
+            <a
+              href={import.meta.env.VITE_PORTFOLIO_URL || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-amber-700 transition-colors duration-200 underline-offset-4 hover:underline"
+            >
+              Adnan Bin Farook
+            </a>
+            .
           </p>
         </div>
       </div>
