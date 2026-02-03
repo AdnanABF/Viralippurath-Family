@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
+import { useFormDirty } from "../../../hooks/useFormDirty";
 import type {
   AdminGalleryItem,
   GalleryStatus,
@@ -11,6 +12,7 @@ interface Props {
   onSave: (formData: FormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const GalleryForm: React.FC<Props> = ({
@@ -18,6 +20,7 @@ const GalleryForm: React.FC<Props> = ({
   onSave,
   onCancel,
   isLoading,
+  onDirtyChange,
 }) => {
   // Local state for the physical file and the UI preview
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -30,6 +33,25 @@ const GalleryForm: React.FC<Props> = ({
   const [status, setStatus] = useState<GalleryStatus>(
     initial?.status ?? "DRAFT"
   );
+
+  // Dirty check logic
+  const currentValues = {
+    caption,
+    album,
+    year,
+    status,
+    hasNewFile: !!selectedFile,
+  };
+
+  const initialValues = {
+    caption: initial?.caption ?? "",
+    album: initial?.album ?? "",
+    year: initial?.year ?? new Date().getFullYear(),
+    status: initial?.status ?? "DRAFT",
+    hasNewFile: false,
+  };
+
+  const isDirty = useFormDirty(currentValues, initialValues, onDirtyChange);
 
   // Clean up the object URL to prevent memory leaks
   useEffect(() => {
@@ -64,13 +86,26 @@ const GalleryForm: React.FC<Props> = ({
       formData.append("image", selectedFile);
     }
 
-    // Add other fields
     formData.append("caption", caption);
     formData.append("album", album);
     formData.append("year", year.toString());
     formData.append("status", status);
 
     await onSave(formData);
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to close this form?"
+        )
+      ) {
+        onCancel();
+      }
+    } else {
+      onCancel();
+    }
   };
 
   return (
@@ -209,7 +244,7 @@ const GalleryForm: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <SecondaryButton
           variant="form"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isLoading}
           label="Cancel"
         />

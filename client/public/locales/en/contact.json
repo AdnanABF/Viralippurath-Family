@@ -4,7 +4,7 @@
   "form": {
     "fullName": "Full Name",
     "fullName_placeholder": "Enter your name",
-    "email": "Emai",
+    "email": "Email",
     "email_placeholder": "Enter your email",
     "subject": "Subject",
     "subject_placeholder": "What is this regarding?",

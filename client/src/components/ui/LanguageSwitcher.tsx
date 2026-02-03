@@ -1,6 +1,14 @@
 import { useTranslation } from "react-i18next";
 
-const LanguageSwitcher = () => {
+interface LanguageSwitcherProps {
+  className?: string;
+  buttonClassName?: string;
+}
+
+const LanguageSwitcher = ({
+  className = "",
+  buttonClassName = "",
+}: LanguageSwitcherProps) => {
   const { i18n } = useTranslation();
 
   const currentLanguage = i18n.language;
@@ -15,7 +23,9 @@ const LanguageSwitcher = () => {
   ];
 
   return (
-    <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-lg border border-stone-200 w-fit">
+    <div
+      className={`flex items-center gap-1 bg-stone-100 p-1 rounded-lg border border-stone-200 w-fit ${className}`}
+    >
       {languages.map((lang) => {
         const isActive = currentLanguage.startsWith(lang.code);
 
@@ -27,7 +37,7 @@ const LanguageSwitcher = () => {
               isActive
                 ? "bg-white text-amber-900 shadow-sm ring-1 ring-stone-200"
                 : "text-stone-500 hover:text-stone-800 hover:bg-white/50"
-            }`}
+            } ${buttonClassName}`}
           >
             <span className="inline">{lang.short}</span>
           </button>

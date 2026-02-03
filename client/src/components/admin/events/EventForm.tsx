@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFormDirty } from "../../../hooks/useFormDirty";
 import type {
   AdminEvent,
   AdminEventDraft,
@@ -7,6 +8,7 @@ import type {
 import {
   toDateTimeInputValue,
   nowDateTimeInputValue,
+  toUTCISO,
 } from "../../../utils/date";
 import { PrimaryButton, SecondaryButton } from "../../ui";
 
@@ -15,6 +17,7 @@ interface Props {
   onSave: (event: AdminEvent | AdminEventDraft) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const EventForm: React.FC<Props> = ({
@@ -22,6 +25,7 @@ const EventForm: React.FC<Props> = ({
   onSave,
   onCancel,
   isLoading,
+  onDirtyChange,
 }) => {
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
   const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
@@ -47,6 +51,37 @@ const EventForm: React.FC<Props> = ({
 
   const [status, setStatus] = useState<EventStatus>(initial?.status ?? "DRAFT");
 
+  // Reusable dirty check logic
+  const currentData = {
+    title_en: titleEn,
+    title_ml: titleMl,
+    description_en: descriptionEn,
+    description_ml: descriptionMl,
+    type,
+    location,
+    startDateTime,
+    endDateTime,
+    status,
+  };
+
+  const initialData = {
+    title_en: initial?.title_en ?? "",
+    title_ml: initial?.title_ml ?? "",
+    description_en: initial?.description_en ?? "",
+    description_ml: initial?.description_ml ?? "",
+    type: initial?.type ?? "",
+    location: initial?.location ?? "",
+    startDateTime: initial?.startDateTime
+      ? toDateTimeInputValue(initial.startDateTime)
+      : nowDateTimeInputValue(),
+    endDateTime: initial?.endDateTime
+      ? toDateTimeInputValue(initial.endDateTime)
+      : nowDateTimeInputValue(),
+    status: initial?.status ?? "DRAFT",
+  };
+
+  const isDirty = useFormDirty(currentData, initialData, onDirtyChange);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -57,8 +92,8 @@ const EventForm: React.FC<Props> = ({
       description_ml: descriptionMl,
       type,
       location,
-      startDateTime: new Date(startDateTime).toISOString(),
-      endDateTime: new Date(endDateTime).toISOString(),
+      startDateTime: toUTCISO(startDateTime),
+      endDateTime: toUTCISO(endDateTime),
       status,
     };
 
@@ -76,6 +111,20 @@ const EventForm: React.FC<Props> = ({
     }
   };
 
+  const handleCancel = () => {
+    if (isDirty) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to close this form?"
+        )
+      ) {
+        onCancel();
+      }
+    } else {
+      onCancel();
+    }
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -88,7 +137,6 @@ const EventForm: React.FC<Props> = ({
       </div>
 
       <div className="space-y-5">
-        {/* Title */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500 flex gap-1">
@@ -234,7 +282,7 @@ const EventForm: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <SecondaryButton
           variant="form"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isLoading}
           label="Cancel"
         />

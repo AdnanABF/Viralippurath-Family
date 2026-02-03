@@ -70,6 +70,7 @@ const AdminManagement = () => {
 
   // 2. Action States
   const [editing, setEditing] = useState<AdminUser | null>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -190,7 +191,11 @@ const AdminManagement = () => {
       )}
 
       {/* Create / Edit Modal */}
-      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        isDirty={isFormDirty}
+      >
         {editing && (
           <AdminUserForm
             initial={editing.uuid ? editing : undefined}
@@ -198,6 +203,7 @@ const AdminManagement = () => {
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}
+            onDirtyChange={setIsFormDirty}
           />
         )}
       </Modal>

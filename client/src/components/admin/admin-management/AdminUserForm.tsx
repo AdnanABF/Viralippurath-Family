@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useFormDirty } from "../../../hooks/useFormDirty";
 import type {
   AdminUser,
   AdminUserDraft,
@@ -14,6 +15,7 @@ interface Props {
   onSave: (admin: AdminUser | AdminUserDraft) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const AdminUserForm: React.FC<Props> = ({
@@ -22,6 +24,7 @@ const AdminUserForm: React.FC<Props> = ({
   onSave,
   onCancel,
   isLoading,
+  onDirtyChange,
 }) => {
   const [username, setUsername] = useState(initial?.username ?? "");
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
@@ -31,6 +34,25 @@ const AdminUserForm: React.FC<Props> = ({
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
 
   const isSelf = initial?.uuid === currentUserUuid;
+
+  // Prepare data for dirty check
+  const currentValues = {
+    username,
+    fullName,
+    password,
+    role,
+    isActive,
+  };
+
+  const initialValues = {
+    username: initial?.username ?? "",
+    fullName: initial?.fullName ?? "",
+    password: "",
+    role: initial?.role ?? "ADMIN",
+    isActive: initial?.isActive ?? true,
+  };
+
+  const isDirty = useFormDirty(currentValues, initialValues, onDirtyChange);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +72,20 @@ const AdminUserForm: React.FC<Props> = ({
       onSave({ ...payload, uuid: initial.uuid } as AdminUser);
     } else {
       onSave(payload as AdminUserDraft);
+    }
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to close this form?"
+        )
+      ) {
+        onCancel();
+      }
+    } else {
+      onCancel();
     }
   };
 
@@ -136,7 +172,7 @@ const AdminUserForm: React.FC<Props> = ({
               disabled={isLoading || isSelf}
               value={role}
               onChange={(e) => setRole(e.target.value as AdminRole)}
-              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none disabled:bg-stone-400 disabled:text-white disabled:opacity-50 disabled:font-bold"
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none disabled:bg-stone-400 disabled:text-white disabled:opacity-50 disabled:font-bold disabled:cursor-not-allowed"
             >
               <option value="ADMIN">Admin</option>
               <option value="SUPER_ADMIN">Super Admin</option>
@@ -152,7 +188,7 @@ const AdminUserForm: React.FC<Props> = ({
               disabled={isLoading || isSelf}
               value={isActive ? "true" : "false"}
               onChange={(e) => setIsActive(e.target.value === "true")}
-              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none disabled:bg-stone-400 disabled:text-white disabled:opacity-50 disabled:font-bold"
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none disabled:bg-stone-400 disabled:text-white disabled:opacity-50 disabled:font-bold disabled:cursor-not-allowed"
             >
               <option value="true">Active (Has Access)</option>
               <option value="false">Disabled (No Access)</option>
@@ -165,7 +201,7 @@ const AdminUserForm: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <SecondaryButton
           variant="form"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isLoading}
           label="Cancel"
         />
