@@ -106,17 +106,24 @@ export class AuthController {
 
     const isProduction = this.configService.get('NODE_ENV') === 'production';
 
-    res.cookie('accessToken', tokenData.accessToken, {
+    // Scoping to .viralippurath.com allows www and api subdomains to share it
+    const domain = isProduction ? '.viralippurath.com' : 'localhost';
+
+    const baseOptions = {
       httpOnly: true,
-      secure: true,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true, // Always true for HTTPS production
+      sameSite: (isProduction ? 'lax' : 'lax') as 'lax',
+      domain: domain,
+      path: '/',
+    };
+
+    res.cookie('accessToken', tokenData.accessToken, {
+      ...baseOptions,
       maxAge: accessMaxAge,
     });
 
     res.cookie('refreshToken', tokenData.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: isProduction ? 'none' : 'lax',
+      ...baseOptions,
       maxAge: refreshMaxAge,
     });
   }
@@ -126,11 +133,14 @@ export class AuthController {
    */
   private clearCookies(res: Response) {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
+    const domain = isProduction ? '.viralippurath.com' : 'localhost';
 
     const cookieOptions = {
       httpOnly: true,
       secure: true,
-      sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+      sameSite: 'lax' as 'lax',
+      domain: domain,
+      path: '/',
     };
 
     res.clearCookie('accessToken', cookieOptions);
