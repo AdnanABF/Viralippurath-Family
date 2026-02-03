@@ -4,7 +4,7 @@
   "viralippurath_kudumbasamithi": "Viralippurath Kudumbasamithi",
   "mookkuthala": "Mookkuthala",
   "address": "Viralippurath House, Kerala, IN - 679574",
-  "email_address":"Email Address",
+  "email_address": "Email Address",
   "loading": "Loading...",
   "retry": "Retry",
   "error_title": "Something went wrong",
@@ -18,7 +18,8 @@
     "notifications": "Notifications",
     "about_us": "About Us",
     "contact": "Contact",
-    "admin_portal": "Admin Portal"
+    "admin_portal": "Admin Portal",
+    "directory": "Directory"
   },
   "logout": "Logout",
   "footer_message": "Preserving our heritage, celebrating our unity, and nurturing future generations.",
