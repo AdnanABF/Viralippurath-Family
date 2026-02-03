@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFormDirty } from "../../../hooks/useFormDirty";
 import type {
   AdminNotification,
   AdminNotificationDraft,
@@ -17,6 +18,7 @@ interface Props {
   onSave: (data: AdminNotification | AdminNotificationDraft) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const NotificationForm: React.FC<Props> = ({
@@ -24,6 +26,7 @@ const NotificationForm: React.FC<Props> = ({
   onSave,
   onCancel,
   isLoading,
+  onDirtyChange,
 }) => {
   const getDefaultExpiry = () => {
     const d = new Date();
@@ -31,11 +34,9 @@ const NotificationForm: React.FC<Props> = ({
     return toDateTimeInputValue(d.toISOString());
   };
 
-  // State for English Fields (Required)
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
   const [contentEn, setContentEn] = useState(initial?.content_en ?? "");
 
-  // State for Malayalam Fields (Optional)
   const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
   const [contentMl, setContentMl] = useState(initial?.content_ml ?? "");
 
@@ -43,17 +44,47 @@ const NotificationForm: React.FC<Props> = ({
     initial?.category ?? "GENERAL"
   );
   const [isPinned, setIsPinned] = useState(initial?.isPinned ?? false);
-  const [date, setDate] = useState(
-    initial?.date ? toDateTimeInputValue(initial.date) : nowDateTimeInputValue()
-  );
-  const [expiresAt, setExpiresAt] = useState(
-    initial?.expiresAt
-      ? toDateTimeInputValue(initial.expiresAt)
-      : getDefaultExpiry()
-  );
+
+  const initialDate = initial?.date
+    ? toDateTimeInputValue(initial.date)
+    : nowDateTimeInputValue();
+  const [date, setDate] = useState(initialDate);
+
+  const initialExpiry = initial?.expiresAt
+    ? toDateTimeInputValue(initial.expiresAt)
+    : getDefaultExpiry();
+  const [expiresAt, setExpiresAt] = useState(initialExpiry);
+
   const [status, setStatus] = useState<NotificationStatus>(
     initial?.status ?? "DRAFT"
   );
+
+  // Dirty check logic
+  const currentValues = {
+    titleEn,
+    contentEn,
+    titleMl,
+    contentMl,
+    category,
+    isPinned,
+    date,
+    expiresAt,
+    status,
+  };
+
+  const initialValues = {
+    titleEn: initial?.title_en ?? "",
+    contentEn: initial?.content_en ?? "",
+    titleMl: initial?.title_ml ?? "",
+    contentMl: initial?.content_ml ?? "",
+    category: initial?.category ?? "GENERAL",
+    isPinned: initial?.isPinned ?? false,
+    date: initialDate,
+    expiresAt: initialExpiry,
+    status: initial?.status ?? "DRAFT",
+  };
+
+  const isDirty = useFormDirty(currentValues, initialValues, onDirtyChange);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +104,20 @@ const NotificationForm: React.FC<Props> = ({
       onSave({ ...payload, uuid: initial.uuid } as AdminNotification);
     } else {
       onSave(payload as AdminNotificationDraft);
+    }
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to close this form?"
+        )
+      ) {
+        onCancel();
+      }
+    } else {
+      onCancel();
     }
   };
 
@@ -252,7 +297,7 @@ const NotificationForm: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-stone-200">
         <SecondaryButton
           variant="form"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isLoading}
           label="Cancel"
         />

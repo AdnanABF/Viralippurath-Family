@@ -71,6 +71,7 @@ const GalleryAdmin = () => {
 
   // 2. Local UI States
   const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -84,10 +85,8 @@ const GalleryAdmin = () => {
     try {
       const uuid = editing?.uuid;
       if (uuid && uuid !== "") {
-        // Success toast is now handled globally by api.ts interceptor
         await galleryAdminService.update(uuid, formData);
       } else {
-        // Success toast is now handled globally by api.ts interceptor
         await galleryAdminService.create(formData);
       }
       setEditing(null);
@@ -103,7 +102,6 @@ const GalleryAdmin = () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      // Success toast is now handled globally by api.ts interceptor
       await galleryAdminService.remove(deleteTarget.uuid);
       refresh();
     } catch {
@@ -189,13 +187,18 @@ const GalleryAdmin = () => {
       )}
 
       {/* Form Modal */}
-      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        isDirty={isFormDirty}
+      >
         {editing && (
           <GalleryForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}
+            onDirtyChange={setIsFormDirty}
           />
         )}
       </Modal>

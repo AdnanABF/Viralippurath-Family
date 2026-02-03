@@ -69,6 +69,7 @@ const EventsAdmin = () => {
   });
 
   // 2. Action States (Modals & Buttons)
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [editing, setEditing] = useState<AdminEvent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -207,13 +208,18 @@ const EventsAdmin = () => {
       )}
 
       {/* Modals */}
-      <Modal open={!!editing} onClose={() => !isSaving && setEditing(null)}>
+      <Modal
+        open={!!editing}
+        onClose={() => !isSaving && setEditing(null)}
+        isDirty={isFormDirty}
+      >
         {editing && (
           <EventForm
             initial={editing.uuid ? editing : undefined}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}
+            onDirtyChange={setIsFormDirty}
           />
         )}
       </Modal>
