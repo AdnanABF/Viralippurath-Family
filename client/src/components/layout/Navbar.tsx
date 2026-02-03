@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import NavLinks from "./NavLinks";
 import MobileMenu from "./MobileMenu";
-import { Menu, X } from "lucide-react"; // Added X for a better toggle experience
+import { Menu, X, Notebook } from "lucide-react"; // Added X for a better toggle experience
 import LanguageSwitcher from "../ui/LanguageSwitcher";
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation("common");
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
 
   return (
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-stone-200">
@@ -37,23 +35,15 @@ const Navbar: React.FC = () => {
 
             <LanguageSwitcher />
 
-            {!isAuthenticated ? (
-              <Link
-                to="/login"
-                className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700 transition-all"
-              >
-                {t("nav.admin_portal")}
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/admin/dashboard"
-                  className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700"
-                >
-                  {t("nav.admin_portal")}
-                </Link>
-              </>
-            )}
+            <Link
+              to={import.meta.env.VITE_DIRECTORY_URL || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-stone-800 text-white px-5 py-2 rounded-full text-sm hover:bg-stone-700 flex items-center gap-2"
+            >
+              <Notebook size="15" />
+              <span>{t("nav.directory")}</span>
+            </Link>
           </div>
 
           {/* Mobile toggle button */}

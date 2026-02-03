@@ -50,7 +50,10 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
         }`}
       >
         <div className="px-4 pt-2 pb-6 space-y-1">
-          <LanguageSwitcher className="w-full min-[450px]:hidden" buttonClassName="flex-1"/>
+          <LanguageSwitcher
+            className="w-full min-[450px]:hidden"
+            buttonClassName="flex-1"
+          />
           {navLinks.map((link) => (
             <Link
               key={link.path}
@@ -63,24 +66,18 @@ const MobileMenu: React.FC<Props> = ({ onClose }) => {
           ))}
 
           <div className="border-t border-stone-100 mt-2 pt-2 space-y-1">
-            {!isAuthenticated ? (
-              <Link
-                to="/login"
-                onClick={handleClose}
-                className="block px-3 py-3 text-base font-medium text-amber-800 active:bg-stone-50"
-              >
-                {t("nav.admin_portal")}
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/admin/dashboard"
-                  onClick={handleClose}
-                  className="block px-3 py-3 text-base font-medium text-stone-800 active:bg-stone-50"
-                >
-                  {t("nav.admin_portal")}
-                </Link>
+            <Link
+              to={import.meta.env.VITE_DIRECTORY_URL || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleClose}
+              className="block px-3 py-3 text-base font-medium text-stone-800 active:bg-stone-50"
+            >
+              {t("nav.directory")}
+            </Link>
 
+            {isAuthenticated && (
+              <>
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-3 text-base font-medium text-red-600 active:bg-red-50"
