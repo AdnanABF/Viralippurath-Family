@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://viralippurath-family-api.vercel.app/:path*"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
