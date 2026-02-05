@@ -9,6 +9,16 @@ export enum EventStatus {
   PUBLISHED = 'PUBLISHED',
 }
 
+export enum EventType {
+  GENERAL = 'GENERAL',
+  MARRIAGE = 'MARRIAGE',
+  FUNERAL = 'FUNERAL',
+  CEREMONY = 'CEREMONY',
+  GATHERING = 'GATHERING',
+  BIRTHDAY = 'BIRTHDAY',
+  OTHER = 'OTHER',
+}
+
 @Schema({ timestamps: true })
 export class Event {
   @Prop({ default: () => randomUUID(), unique: true, required: true })
@@ -26,8 +36,13 @@ export class Event {
   @Prop({ required: false, trim: true })
   description_ml?: string;
 
-  @Prop({ required: true })
-  type: string; // Gathering, Ceremony, Meeting, etc.
+  @Prop({
+    required: true,
+    type: String,
+    enum: EventType,
+    default: EventType.GENERAL,
+  })
+  type: EventType;
 
   @Prop({ required: true })
   startDateTime: Date;

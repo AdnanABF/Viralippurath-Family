@@ -34,6 +34,7 @@ export class EventsService {
     page?: number;
     limit?: number;
     status?: string;
+    type?: string;
     search?: string;
     startDate?: string;
     endDate?: string;
@@ -44,6 +45,7 @@ export class EventsService {
         page = 1,
         limit = 10,
         status,
+        type,
         search,
         startDate,
         endDate,
@@ -52,6 +54,7 @@ export class EventsService {
 
       const filters: any = {};
       if (status && status !== 'ALL') filters.status = status;
+      if (type && type !== 'ALL') filters.type = type;
 
       if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
@@ -60,7 +63,6 @@ export class EventsService {
           { title_ml: searchRegex },
           { description_en: searchRegex },
           { description_ml: searchRegex },
-          { type: searchRegex },
           { location: searchRegex },
         ];
       }

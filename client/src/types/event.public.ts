@@ -1,3 +1,6 @@
+export type EventType = "GENERAL" | "MARRIAGE" | "FUNERAL" | "CEREMONY" | "GATHERING" | "BIRTHDAY" | "OTHER";
+
+
 export type PublicEvent = {
   uuid: string;
   title_en: string;
@@ -6,6 +9,6 @@ export type PublicEvent = {
   description_ml?: string;
   startDateTime: string; // ISO string
   endDateTime: string; // ISO string
-  type: string; // e.g. "Gathering", "Ceremony"
+  type: EventType;
   location: string;
 };
