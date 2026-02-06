@@ -37,10 +37,8 @@ const TYPE_OPTIONS = [
   { label: "General", value: "GENERAL" },
   { label: "Marriage", value: "MARRIAGE" },
   { label: "Funeral", value: "FUNERAL" },
-  { label: "Ceremony", value: "CEREMONY" },
   { label: "Gathering", value: "GATHERING" },
-  { label: "Birthday", value: "BIRTHDAY" },
-  { label: "Other", value: "OTHER" },
+  { label: "New Born", value: "NEWBORN" },
 ];
 
 const defaultEventValues = {

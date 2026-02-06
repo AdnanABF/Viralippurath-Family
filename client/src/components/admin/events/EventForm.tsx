@@ -215,10 +215,8 @@ const EventForm: React.FC<Props> = ({
               <option value="GENERAL">General</option>
               <option value="MARRIAGE">Marriage</option>
               <option value="FUNERAL">Funeral</option>
-              <option value="CEREMONY">Ceremony</option>
               <option value="GATHERING">Gathering</option>
-              <option value="BIRTHDAY">Birthday</option>
-              <option value="OTHER">Other</option>
+              <option value="NEWBORN">New Born</option>
             </select>
           </div>
 

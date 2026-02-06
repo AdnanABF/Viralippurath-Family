@@ -10,7 +10,7 @@ interface Props {
 }
 
 const EventCard: React.FC<Props> = ({ event }) => {
-  const { i18n } = useTranslation("events");
+  const { t, i18n } = useTranslation("events");
 
   const start = new Date(event.startDateTime);
   const end = new Date(event.endDateTime);
@@ -56,7 +56,7 @@ const EventCard: React.FC<Props> = ({ event }) => {
 
           <div className="mt-4 md:mt-0">
             <span className="bg-white border border-stone-200 px-3 py-1 rounded-full text-xs text-stone-600 font-medium">
-              {event.type}
+              {t(`event_types.${event.type.toLowerCase()}`) || event.type}
             </span>
           </div>
         </div>

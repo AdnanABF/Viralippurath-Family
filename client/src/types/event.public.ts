@@ -1,5 +1,9 @@
-export type EventType = "GENERAL" | "MARRIAGE" | "FUNERAL" | "CEREMONY" | "GATHERING" | "BIRTHDAY" | "OTHER";
-
+export type EventType =
+  | "GENERAL"
+  | "MARRIAGE"
+  | "FUNERAL"
+  | "GATHERING"
+  | "NEWBORN";
 
 export type PublicEvent = {
   uuid: string;

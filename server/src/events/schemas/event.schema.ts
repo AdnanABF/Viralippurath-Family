@@ -13,10 +13,8 @@ export enum EventType {
   GENERAL = 'GENERAL',
   MARRIAGE = 'MARRIAGE',
   FUNERAL = 'FUNERAL',
-  CEREMONY = 'CEREMONY',
   GATHERING = 'GATHERING',
-  BIRTHDAY = 'BIRTHDAY',
-  OTHER = 'OTHER',
+  NEWBORN = 'NEWBORN',
 }
 
 @Schema({ timestamps: true })

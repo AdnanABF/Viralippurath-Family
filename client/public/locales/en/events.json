@@ -8,5 +8,12 @@
   "error_title": "Something went wrong",
   "error_message": "We couldn't load the events. Please try again.",
   "empty_events": "There are no upcoming events at this time.",
-  "empty_past_events": "No past event records were found."
+  "empty_past_events": "No past event records were found.",
+  "event_types": {
+    "general": "General",
+    "marriage": "Marriage",
+    "funeral": "Funeral",
+    "gathering": "Gathering",
+    "newborn": "New Born"
+  }
 }
