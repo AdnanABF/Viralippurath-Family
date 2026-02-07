@@ -7,5 +7,7 @@
   "loading_gallery": "Curating the family lens...",
   "no_caption": "Family Memory",
   "loading_more": "Uncovering more memories...",
-  "photos": "Photos"
+  "photos": "Photos",
+  "image_details" : "Image Details",
+  "download": "Download Original"
 }

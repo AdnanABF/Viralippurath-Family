@@ -112,6 +112,7 @@ const Gallery = () => {
                 activeId={activeAlbum}
                 onSelect={(id) => setActiveAlbum(id)}
                 className="bg-stone-50/80"
+                showNavButtons={true}
               />
             </div>
 

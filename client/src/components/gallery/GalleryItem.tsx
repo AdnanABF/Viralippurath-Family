@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import { Download } from "lucide-react";
 import type { PublicGalleryItem } from "../../types/gallery.public";
 
 interface GalleryItemProps {
@@ -13,6 +14,25 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, index, onClick }) => {
   const { t } = useTranslation("gallery");
   const [isLoaded, setIsLoaded] = useState(false);
 
+  /**
+   * Cloudinary Optimization Helper
+   */
+  const getOptimizedUrl = (url: string) => {
+    if (!url.includes("cloudinary.com")) return url;
+    return url.replace(
+      "/upload/",
+      "/upload/w_600,c_fill,g_auto,f_auto,q_auto/",
+    );
+  };
+
+  /**
+   * Force Download URL Helper
+   */
+  const getDownloadUrl = (url: string) => {
+    if (!url.includes("cloudinary.com")) return url;
+    return url.replace("/upload/", "/upload/fl_attachment/");
+  };
+
   return (
     <motion.div
       layout
@@ -21,9 +41,9 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, index, onClick }) => {
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{
         duration: 0.4,
-        delay: Math.min(index * 0.05, 0.3), // Stagger effect for initial load
+        delay: Math.min(index * 0.05, 0.3),
       }}
-      className="break-inside-avoid mb-6" // Crucial for CSS Masonry columns
+      className="break-inside-avoid mb-6"
       onClick={onClick}
     >
       <div className="group relative overflow-hidden rounded-2xl bg-stone-200 border border-stone-200 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-amber-200/50">
@@ -37,7 +57,7 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, index, onClick }) => {
         )}
 
         <img
-          src={image.imageUrl}
+          src={getOptimizedUrl(image.imageUrl)}
           alt={image.caption}
           onLoad={() => setIsLoaded(true)}
           className={`w-full h-auto object-cover transition-all duration-700 ease-out group-hover:scale-105 ${
@@ -46,7 +66,7 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, index, onClick }) => {
           loading="lazy"
         />
 
-        {/* Year Badge (Always Visible - Top Right) */}
+        {/* Year Badge */}
         <div className="absolute top-3 right-3 z-10">
           <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-stone-800 text-[10px] font-bold rounded-lg shadow-sm border border-stone-100">
             {image.year}
@@ -54,12 +74,30 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, index, onClick }) => {
         </div>
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-5">
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            whileHover={{ y: 0, opacity: 1 }}
-            className="transform transition-transform"
-          >
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-between p-5"
+        >
+          {/* Download Button - positioned at the top-right */}
+          <div className="flex justify-start">
+            {" "}
+            {/* Use flexbox to push to end */}
+            <a
+              href={getDownloadUrl(image.imageUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()} // Prevents opening the Lightbox
+              className="p-2 bg-white/10 hover:bg-amber-500 backdrop-blur-md text-white hover:text-stone-900 rounded-xl transition-all duration-300 border border-white/10"
+              title={t("download")}
+            >
+              <Download size={16} />
+            </a>
+          </div>
+
+          {/* Image Details - positioned at the bottom */}
+          <div>
             <p className="text-white text-sm font-semibold leading-snug">
               {image.caption || t("no_caption")}
             </p>
@@ -69,8 +107,8 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, index, onClick }) => {
                 {image.album}
               </p>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </motion.div>
   );
