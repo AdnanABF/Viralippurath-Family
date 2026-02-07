@@ -4,10 +4,36 @@ import type { PublicGalleryItem } from "../types/gallery.public";
 import type { PublicMagazine } from "../types/magazine.public";
 import type { PublicNotification } from "../types/notification.public";
 
+// Interface for the paginated response structure
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+    typeCounts?: Record<string, number>;
+    totalInView?: number;
+  };
+}
+
 export const publicService = {
-  getEvents: async (timeline: "upcoming" | "past" | "ongoing") => {
-    return (await api.get<PublicEvent[]>(
-      `/events/published?timeline=${timeline}`
+  getEvents: async (params: {
+    timeline: "upcoming" | "past" | "ongoing";
+    type?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const { timeline, type, page, limit } = params;
+    const queryParams = new URLSearchParams({ timeline });
+
+    if (type && type !== "ALL") queryParams.append("type", type);
+    if (page) queryParams.append("page", page.toString());
+    if (limit) queryParams.append("limit", limit.toString());
+
+    return (await api.get<PaginatedResponse<PublicEvent>>(
+      `/events/published?${queryParams.toString()}`,
     )) as any;
   },
 
@@ -21,7 +47,7 @@ export const publicService = {
 
   getLatestNotifications: async () => {
     return (await api.get<PublicNotification[]>(
-      "/notifications/latest"
+      "/notifications/latest",
     )) as any;
   },
 

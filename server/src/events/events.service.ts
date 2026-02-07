@@ -252,65 +252,111 @@ export class EventsService {
     }
   }
 
-  async findPublished(
-    timeline: 'upcoming' | 'past' | 'ongoing' = 'upcoming',
-    page: number = 1,
-    limit: number = 10,
-  ) {
+  async findPublished(query: {
+    timeline?: 'upcoming' | 'past' | 'ongoing';
+    type?: string;
+    page?: number;
+    limit?: number;
+  }) {
     try {
+      const {
+        timeline = 'upcoming',
+        type = 'ALL',
+        page = 1,
+        limit = 10,
+      } = query;
+
       const now = new Date();
       const skip = (page - 1) * limit;
 
-      let query: any = { status: EventStatus.PUBLISHED };
+      // 1. Base query for the specific timeline (used for counts)
+      const timelineFilter: any = { status: EventStatus.PUBLISHED };
       let sortOrder: any = { startDateTime: 1 };
 
       switch (timeline) {
         case 'ongoing':
-          query.startDateTime = { $lte: now };
-          query.endDateTime = { $gte: now };
-          sortOrder = { startDateTime: 1 };
+          timelineFilter.startDateTime = { $lte: now };
+          timelineFilter.endDateTime = { $gte: now };
           break;
         case 'upcoming':
-          query.startDateTime = { $gt: now };
-          sortOrder = { startDateTime: 1 };
+          timelineFilter.startDateTime = { $gt: now };
           break;
         case 'past':
-          query.endDateTime = { $lt: now };
+          timelineFilter.endDateTime = { $lt: now };
           sortOrder = { startDateTime: -1 };
           break;
       }
 
-      const [data, totalItems] = await Promise.all([
-        this.eventModel
-          .find(query)
-          .select(
-            'uuid title_en title_ml description_en description_ml startDateTime endDateTime type location -_id',
-          )
-          .sort(sortOrder)
-          .skip(skip)
-          .limit(limit)
-          .exec(),
-        this.eventModel.countDocuments(query).exec(),
-      ]);
+      // 2. Data-specific filter (includes category)
+      const dataFilter = { ...timelineFilter };
+      if (type && type !== 'ALL') {
+        dataFilter.type = type;
+      }
+
+      // 3. Facet Aggregation
+      const result = await this.eventModel
+        .aggregate([
+          {
+            $facet: {
+              // Branch: Paginated Data
+              data: [
+                { $match: dataFilter },
+                { $sort: sortOrder },
+                { $skip: skip },
+                { $limit: limit },
+                {
+                  $project: {
+                    _id: 0,
+                    uuid: 1,
+                    title_en: 1,
+                    title_ml: 1,
+                    description_en: 1,
+                    description_ml: 1,
+                    startDateTime: 1,
+                    endDateTime: 1,
+                    type: 1,
+                    location: 1,
+                  },
+                },
+              ],
+              // Branch: Total count for current filter (pagination)
+              totalCount: [{ $match: dataFilter }, { $count: 'count' }],
+              // Branch: Counts per type for the whole timeline (filter pills)
+              typeCounts: [
+                { $match: timelineFilter },
+                { $group: { _id: '$type', count: { $sum: 1 } } },
+              ],
+            },
+          },
+        ])
+        .exec();
+
+      const totalItems = result[0].totalCount[0]?.count || 0;
+      const rawTypeCounts = result[0].typeCounts || [];
+
+      // Format counts to: { MARRIAGE: 5, GENERAL: 2 }
+      const formattedTypeCounts = rawTypeCounts.reduce((acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      }, {});
 
       return {
-        data,
+        data: result[0].data,
         meta: {
           totalItems,
-          itemCount: data.length,
-          itemsPerPage: limit,
+          itemCount: result[0].data.length,
+          itemsPerPage: Number(limit),
           totalPages: Math.ceil(totalItems / limit),
           currentPage: Number(page),
+          typeCounts: formattedTypeCounts,
+          totalInView: Object.values(formattedTypeCounts).reduce(
+            (a: number, b: number) => a + b,
+            0,
+          ) as number,
         },
       };
     } catch (error) {
-      await this.handleError(
-        error,
-        'GET',
-        '/public/events',
-        { timeline, page, limit },
-        'GUEST',
-      );
+      await this.handleError(error, 'GET', '/public/events', query, 'GUEST');
       throw new InternalServerErrorException('Failed to fetch events');
     }
   }
