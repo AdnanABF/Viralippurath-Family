@@ -41,10 +41,14 @@ export class NotificationsController {
     @Query('category') category?: string,
     @Query('archived', new ParseBoolPipe({ optional: true }))
     archived?: boolean,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
     return await this.notificationsService.findPublished({
-      category,
+      category: category || 'ALL',
       showArchived: archived ?? false,
+      page: page ?? 1,
+      limit: limit ?? 10,
     });
   }
 

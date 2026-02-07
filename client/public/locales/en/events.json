@@ -2,11 +2,20 @@
   "title": "Calendar of Gatherings",
   "sub_title": "Upcoming events and historic milestones.",
   "happening_now": "Happening Now",
-  "upcoming": "Upcoming",
+  "upcoming": "Upcoming Events",
   "past": "Past Events",
   "loading_message": "Loading events...",
   "error_title": "Something went wrong",
   "error_message": "We couldn't load the events. Please try again.",
   "empty_events": "There are no upcoming events at this time.",
-  "empty_past_events": "No past event records were found."
+  "empty_past_events": "No past event records were found.",
+  "no_events_category": "No events found for this category.",
+  "event_types": {
+    "all": "All",
+    "general": "General",
+    "marriage": "Marriage",
+    "funeral": "Funeral",
+    "gathering": "Gathering",
+    "newborn": "New Born"
+  }
 }

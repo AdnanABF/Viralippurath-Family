@@ -38,6 +38,7 @@ export class EventsController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('status') status?: string,
+    @Query('type') type?: string,
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -46,6 +47,7 @@ export class EventsController {
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 10,
       status,
+      type,
       search,
       startDate,
       endDate,
@@ -76,14 +78,16 @@ export class EventsController {
 
   @Get('published')
   async findPublished(
-    @Query('type') type: 'upcoming' | 'past' | 'ongoing',
+    @Query('timeline') timeline?: 'upcoming' | 'past' | 'ongoing',
+    @Query('type') type?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    return await this.eventsService.findPublished(
-      type || 'upcoming',
-      page ? Number(page) : 1,
-      limit ? Number(limit) : 10,
-    );
+    return await this.eventsService.findPublished({
+      timeline: timeline || 'upcoming',
+      type: type || 'ALL',
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+    });
   }
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import { ArrowRight, CheckCircle2, Calendar, MapPin } from "lucide-react";
 import type { AdminEvent } from "../../../types/event.admin";
+import type { EventType } from "../../../types/event.public";
 import EventStatusBadge from "./EventStatusBadge";
 import { formatDateTime } from "../../../utils/date";
 import {
@@ -17,6 +18,15 @@ interface Props {
   onDelete: (uuid: string) => void;
   disabled?: boolean;
 }
+
+// Map the EventType enum to a user-friendly display label
+const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  GENERAL: "General",
+  MARRIAGE: "Marriage",
+  FUNERAL: "Funeral",
+  GATHERING: "Gathering",
+  NEWBORN: "New Born",
+};
 
 const EventsTable: React.FC<Props> = ({
   events,
@@ -61,7 +71,7 @@ const EventsTable: React.FC<Props> = ({
       render: (event) => {
         const status = getTimelineStatus(
           event.startDateTime,
-          event.endDateTime
+          event.endDateTime,
         );
         return (
           <div className="flex flex-col gap-1.5">
@@ -87,7 +97,7 @@ const EventsTable: React.FC<Props> = ({
       header: "Type",
       render: (event) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 border border-stone-200">
-          {event.type}
+          {EVENT_TYPE_LABELS[event.type] || event.type}
         </span>
       ),
     },
@@ -161,6 +171,9 @@ const EventsTable: React.FC<Props> = ({
                 {!status.pin && status.icon}
                 {status.label}
               </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 border border-stone-200">
+                {EVENT_TYPE_LABELS[event.type] || event.type}
+              </span>
             </div>
             <div className="flex items-center gap-1.5 text-stone-500 text-sm">
               <MapPin size={14} className="shrink-0" />

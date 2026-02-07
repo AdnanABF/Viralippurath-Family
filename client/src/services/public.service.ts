@@ -4,15 +4,57 @@ import type { PublicGalleryItem } from "../types/gallery.public";
 import type { PublicMagazine } from "../types/magazine.public";
 import type { PublicNotification } from "../types/notification.public";
 
+// Interface for the paginated response structure
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+    typeCounts?: Record<string, number>; // Specific to Events
+    categoryCounts?: Record<string, number>; // Specific to Notifications
+    albumCounts?: Record<string, number>; // Specific to Gallery
+    totalInView?: number;
+  };
+}
+
 export const publicService = {
-  getEvents: async (type: "upcoming" | "past" | "ongoing") => {
-    return (await api.get<PublicEvent[]>(
-      `/events/published?type=${type}`
+  getEvents: async (params: {
+    timeline: "upcoming" | "past" | "ongoing";
+    type?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const { timeline, type, page, limit } = params;
+    const queryParams = new URLSearchParams({ timeline });
+
+    if (type && type !== "ALL") queryParams.append("type", type);
+    if (page) queryParams.append("page", page.toString());
+    if (limit) queryParams.append("limit", limit.toString());
+
+    return (await api.get<PaginatedResponse<PublicEvent>>(
+      `/events/published?${queryParams.toString()}`,
     )) as any;
   },
 
-  getGallery: async () => {
-    return (await api.get<PublicGalleryItem[]>("/gallery/published")) as any;
+  getGallery: async (params: {
+    album?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const { album, page, limit } = params;
+    const queryParams = new URLSearchParams();
+
+    if (album && album !== "ALL") queryParams.append("album", album);
+    if (page) queryParams.append("page", page.toString());
+    if (limit) queryParams.append("limit", limit.toString());
+
+    const queryString = queryParams.toString();
+    const url = `/gallery/published${queryString ? `?${queryString}` : ""}`;
+
+    return (await api.get<PaginatedResponse<PublicGalleryItem>>(url)) as any;
   },
 
   getMagazines: async () => {
@@ -21,29 +63,35 @@ export const publicService = {
 
   getLatestNotifications: async () => {
     return (await api.get<PublicNotification[]>(
-      "/notifications/latest"
+      "/notifications/latest",
     )) as any;
   },
 
-  getNotifications: async (params?: {
+  getNotifications: async (params: {
     category?: string;
     archived?: boolean;
+    page?: number;
+    limit?: number;
   }) => {
+    const { category, archived, page, limit } = params;
     const queryParams = new URLSearchParams();
 
-    if (params?.category && params.category !== "ALL") {
-      queryParams.append("category", params.category);
+    if (category && category !== "ALL") {
+      queryParams.append("category", category);
     }
 
-    if (params?.archived !== undefined) {
-      queryParams.append("archived", params.archived.toString());
+    if (archived !== undefined) {
+      queryParams.append("archived", archived.toString());
     }
+
+    if (page) queryParams.append("page", page.toString());
+    if (limit) queryParams.append("limit", limit.toString());
 
     const queryString = queryParams.toString();
     const url = `/notifications/published${
       queryString ? `?${queryString}` : ""
     }`;
 
-    return (await api.get<PublicNotification[]>(url)) as any;
+    return (await api.get<PaginatedResponse<PublicNotification>>(url)) as any;
   },
 };

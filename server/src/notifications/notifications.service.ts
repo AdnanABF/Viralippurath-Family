@@ -250,7 +250,7 @@ export class NotificationsService {
       return await this.notificationModel
         .find({
           status: NotificationStatus.PUBLISHED,
-          date: { $lte: now }, // Using $lte for safety to include "exactly now"
+          date: { $lte: now },
           expiresAt: { $gt: now },
         })
         .select(
@@ -273,31 +273,101 @@ export class NotificationsService {
     }
   }
 
-  async findPublished(query?: { category?: string; showArchived?: boolean }) {
+  async findPublished(query: {
+    category?: string;
+    showArchived?: boolean;
+    page?: number;
+    limit?: number;
+  }) {
     try {
+      const {
+        category = 'ALL',
+        showArchived = false,
+        page = 1,
+        limit = 10,
+      } = query;
       const now = new Date();
-      const filters: any = {
+      const skip = (page - 1) * limit;
+
+      // 1. Base view filter (Upcoming vs Archive)
+      const viewFilter: any = {
         status: NotificationStatus.PUBLISHED,
         date: { $lte: now },
       };
 
-      if (query?.category && query.category !== 'ALL') {
-        filters.category = query.category;
-      }
-
-      if (query?.showArchived) {
-        filters.expiresAt = { $lte: now };
+      if (showArchived) {
+        viewFilter.expiresAt = { $lte: now };
       } else {
-        filters.expiresAt = { $gt: now };
+        viewFilter.expiresAt = { $gt: now };
       }
 
-      return await this.notificationModel
-        .find(filters)
-        .select(
-          'uuid title_en title_ml content_en content_ml date expiresAt category isPinned -_id',
-        )
-        .sort({ isPinned: -1, category: -1, date: -1 })
+      // 2. Data filter (includes specific category)
+      const dataFilter = { ...viewFilter };
+      if (category && category !== 'ALL') {
+        dataFilter.category = category;
+      }
+
+      // 3. Facet Aggregation
+      const result = await this.notificationModel
+        .aggregate([
+          {
+            $facet: {
+              // Lane 1: Paginated Content
+              data: [
+                { $match: dataFilter },
+                { $sort: { isPinned: -1, date: -1 } },
+                { $skip: skip },
+                { $limit: limit },
+                {
+                  $project: {
+                    _id: 0,
+                    uuid: 1,
+                    title_en: 1,
+                    title_ml: 1,
+                    content_en: 1,
+                    content_ml: 1,
+                    date: 1,
+                    expiresAt: 1,
+                    category: 1,
+                    isPinned: 1,
+                  },
+                },
+              ],
+              // Lane 2: Total count for pagination
+              totalCount: [{ $match: dataFilter }, { $count: 'count' }],
+              // Lane 3: Counts per category for pills
+              categoryCounts: [
+                { $match: viewFilter },
+                { $group: { _id: '$category', count: { $sum: 1 } } },
+              ],
+            },
+          },
+        ])
         .exec();
+
+      const totalItems = result[0].totalCount[0]?.count || 0;
+      const rawCategoryCounts = result[0].categoryCounts || [];
+
+      const formattedCategoryCounts = rawCategoryCounts.reduce((acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      }, {});
+
+      return {
+        data: result[0].data,
+        meta: {
+          totalItems,
+          itemCount: result[0].data.length,
+          itemsPerPage: Number(limit),
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: Number(page),
+          categoryCounts: formattedCategoryCounts,
+          totalInView: Object.values(formattedCategoryCounts).reduce(
+            (a: number, b: number) => a + b,
+            0,
+          ) as number,
+        },
+      };
     } catch (error) {
       await this.handleError(
         error,

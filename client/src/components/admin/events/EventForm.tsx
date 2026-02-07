@@ -11,6 +11,7 @@ import {
   toUTCISO,
 } from "../../../utils/date";
 import { PrimaryButton, SecondaryButton } from "../../ui";
+import type { EventType } from "../../../types/event.public";
 
 interface Props {
   initial?: AdminEvent;
@@ -30,23 +31,23 @@ const EventForm: React.FC<Props> = ({
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
   const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
   const [descriptionEn, setDescriptionEn] = useState(
-    initial?.description_en ?? ""
+    initial?.description_en ?? "",
   );
   const [descriptionMl, setDescriptionMl] = useState(
-    initial?.description_ml ?? ""
+    initial?.description_ml ?? "",
   );
-  const [type, setType] = useState(initial?.type ?? "");
+  const [type, setType] = useState<EventType>(initial?.type ?? "GENERAL");
   const [location, setLocation] = useState(initial?.location ?? "");
 
   const [startDateTime, setStartDateTime] = useState(
     initial?.startDateTime
       ? toDateTimeInputValue(initial.startDateTime)
-      : nowDateTimeInputValue()
+      : nowDateTimeInputValue(),
   );
   const [endDateTime, setEndDateTime] = useState(
     initial?.endDateTime
       ? toDateTimeInputValue(initial.endDateTime)
-      : nowDateTimeInputValue()
+      : nowDateTimeInputValue(),
   );
 
   const [status, setStatus] = useState<EventStatus>(initial?.status ?? "DRAFT");
@@ -115,7 +116,7 @@ const EventForm: React.FC<Props> = ({
     if (isDirty) {
       if (
         window.confirm(
-          "You have unsaved changes. Are you sure you want to close this form?"
+          "You have unsaved changes. Are you sure you want to close this form?",
         )
       ) {
         onCancel();
@@ -204,14 +205,19 @@ const EventForm: React.FC<Props> = ({
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
               Event Type
             </label>
-            <input
+            <select
               required
-              disabled={isLoading}
               value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base"
-              placeholder="Gathering, Ceremony, etc."
-            />
+              disabled={isLoading}
+              onChange={(e) => setType(e.target.value as EventType)}
+              className="w-full bg-white border border-stone-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-base appearance-none"
+            >
+              <option value="GENERAL">General</option>
+              <option value="MARRIAGE">Marriage</option>
+              <option value="FUNERAL">Funeral</option>
+              <option value="GATHERING">Gathering</option>
+              <option value="NEWBORN">New Born</option>
+            </select>
           </div>
 
           <div className="space-y-1.5">
