@@ -7,6 +7,7 @@
   "no_notices": "No active notices in this category.",
   "error_title": "Unable to load notifications",
   "error_message": "Please check back later for the latest family updates.",
+  "no_notices_category": "No notifications found for this category.",
   "categories": {
     "all": "All",
     "urgent": "Urgent",

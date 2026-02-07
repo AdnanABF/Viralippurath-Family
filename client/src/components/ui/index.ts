@@ -5,6 +5,10 @@ export { default as ResetButton } from "./ResetButton";
 export { default as EditButton } from "./EditButton";
 export { default as DeleteButton } from "./DeleteButton";
 
+// Filter Pills
+export { default as FilterPills } from "./FilterPills";
+export type { FilterOption } from "./FilterPills";
+
 // Layout & Navigation
 export { default as AdminHeader } from "./AdminHeader";
 export { default as AdminControlGroup } from "./AdminControlGroup";
