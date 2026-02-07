@@ -11,16 +11,6 @@ const Events = () => {
   const [view, setView] = useState<"upcoming" | "past">("upcoming");
   const [activeType, setActiveType] = useState<string>("ALL");
 
-  // Define categories based on your EventType and translations
-  const TYPES = [
-    { id: "ALL", label: t("event_types.all", "All") },
-    { id: "GENERAL", label: t("event_types.general") },
-    { id: "MARRIAGE", label: t("event_types.marriage") },
-    { id: "FUNERAL", label: t("event_types.funeral") },
-    { id: "GATHERING", label: t("event_types.gathering") },
-    { id: "NEWBORN", label: t("event_types.newborn") },
-  ];
-
   // 1. Fetch Ongoing Events
   const { data: ongoingEvents = [] } = useQuery({
     queryKey: ["events", "ongoing"],
@@ -38,7 +28,51 @@ const Events = () => {
     queryFn: () => publicService.getEvents(view),
   });
 
-  // 3. Client-side Filter Logic
+  // 3. Count events per type for the current view
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const rawEvents = eventsResponse?.data || [];
+    rawEvents.forEach((event: any) => {
+      counts[event.type] = (counts[event.type] || 0) + 1;
+    });
+    return counts;
+  }, [eventsResponse]);
+
+  // 4. Define categories with dynamic counts
+  const TYPES = [
+    {
+      id: "ALL",
+      label: t("event_types.all", "All"),
+      count: eventsResponse?.data?.length || 0,
+    },
+    {
+      id: "GENERAL",
+      label: t("event_types.general"),
+      count: typeCounts["GENERAL"] || 0,
+    },
+    {
+      id: "MARRIAGE",
+      label: t("event_types.marriage"),
+      count: typeCounts["MARRIAGE"] || 0,
+    },
+    {
+      id: "FUNERAL",
+      label: t("event_types.funeral"),
+      count: typeCounts["FUNERAL"] || 0,
+    },
+    {
+      id: "GATHERING",
+      label: t("event_types.gathering"),
+      count: typeCounts["GATHERING"] || 0,
+    },
+    {
+      id: "NEWBORN",
+      label: t("event_types.newborn"),
+      count: typeCounts["NEWBORN"] || 0,
+    },
+  ];
+
+  // 5. Client-side Filter Logic
   const filteredEvents = useMemo(() => {
     const rawEvents = eventsResponse?.data || [];
     if (activeType === "ALL") return rawEvents;
@@ -74,7 +108,7 @@ const Events = () => {
                 key={timeline}
                 onClick={() => {
                   setView(timeline);
-                  setActiveType("ALL"); //Reset filter when switching timeline
+                  setActiveType("ALL"); // Reset filter when switching timeline
                 }}
                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
                   view === timeline
@@ -94,13 +128,27 @@ const Events = () => {
             <button
               key={type.id}
               onClick={() => setActiveType(type.id)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+              disabled={type.count === 0}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
                 activeType === type.id
-                  ? "bg-amber-50 border-amber-200 text-amber-700"
-                  : "bg-white border-stone-200 text-stone-500 hover:border-stone-300"
+                  ? "bg-amber-50 border-amber-200 text-amber-700 shadow-sm"
+                  : type.count === 0
+                    ? "bg-stone-50 border-stone-100 text-stone-300 cursor-not-allowed"
+                    : "bg-white border-stone-200 text-stone-500 hover:border-stone-300"
               }`}
             >
-              {type.label}
+              <span>{type.label}</span>
+              {type.count > 0 && (
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                    activeType === type.id
+                      ? "bg-amber-200/50"
+                      : "bg-stone-100 text-stone-600"
+                  }`}
+                >
+                  {type.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
