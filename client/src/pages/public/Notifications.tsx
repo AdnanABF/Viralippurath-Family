@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { publicService } from "../../services/public.service";
@@ -12,8 +12,10 @@ import {
   AdminLoading,
   AdminError,
   FilterPills,
+  Pagination,
   type FilterOption,
 } from "../../components/ui";
+
 const Notifications = () => {
   const { t } = useTranslation("notifications");
 
@@ -21,53 +23,73 @@ const Notifications = () => {
     NotificationCategory | "ALL"
   >("ALL");
   const [showArchived, setShowArchived] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // 1. Fetch Data (Fetching all for the current archive status to allow client-side filtering)
+  // Reset page to 1 when filters or archive status change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, showArchived, pageSize]);
+
+  // 1. Fetch Paginated Data
   const {
-    data: notifications = [],
+    data: response,
     isLoading,
+    isFetching,
     isError,
     refetch,
-  } = useQuery<PublicNotification[]>({
-    queryKey: ["public-notifications", showArchived],
-    queryFn: () => publicService.getNotifications({ archived: showArchived }),
+  } = useQuery({
+    queryKey: [
+      "public-notifications",
+      showArchived,
+      activeCategory,
+      currentPage,
+      pageSize,
+    ],
+    queryFn: () =>
+      publicService.getNotifications({
+        category: activeCategory,
+        archived: showArchived,
+        page: currentPage,
+        limit: pageSize,
+      }),
   });
 
-  // 2. Count notifications per category for the current archive view
-  const counts = useMemo(() => {
-    const tally: Record<string, number> = {};
-    notifications.forEach((n) => {
-      tally[n.category] = (tally[n.category] || 0) + 1;
-    });
-    return tally;
-  }, [notifications]);
+  const notifications = response?.data || [];
+  const meta = response?.meta;
+  const categoryCounts = meta?.categoryCounts || {};
 
-  // 3. Define Filter Options
-  const categories: FilterOption<NotificationCategory | "ALL">[] = [
-    { id: "ALL", label: t("categories.all"), count: notifications.length },
-    {
-      id: "URGENT",
-      label: t("categories.urgent"),
-      count: counts["URGENT"] || 0,
-    },
-    {
-      id: "GENERAL",
-      label: t("categories.general"),
-      count: counts["GENERAL"] || 0,
-    },
-    {
-      id: "MAGAZINE",
-      label: t("categories.magazines"),
-      count: counts["MAGAZINE"] || 0,
-    },
-    { id: "EVENT", label: t("categories.events"), count: counts["EVENT"] || 0 },
-  ];
-
-  // 4. Filter logic
-  const filteredNotifications = useMemo(() => {
-    if (activeCategory === "ALL") return notifications;
-    return notifications.filter((n) => n.category === activeCategory);
-  }, [notifications, activeCategory]);
+  // 2. Define Filter Options using server-side counts
+  const categories = useMemo<FilterOption<NotificationCategory | "ALL">[]>(
+    () => [
+      {
+        id: "ALL",
+        label: t("categories.all"),
+        count: meta?.totalInView || 0,
+      },
+      {
+        id: "URGENT",
+        label: t("categories.urgent"),
+        count: categoryCounts["URGENT"] || 0,
+      },
+      {
+        id: "GENERAL",
+        label: t("categories.general"),
+        count: categoryCounts["GENERAL"] || 0,
+      },
+      {
+        id: "MAGAZINE",
+        label: t("categories.magazines"),
+        count: categoryCounts["MAGAZINE"] || 0,
+      },
+      {
+        id: "EVENT",
+        label: t("categories.events"),
+        count: categoryCounts["EVENT"] || 0,
+      },
+    ],
+    [t, meta, categoryCounts],
+  );
 
   return (
     <div className="py-20 bg-stone-50 min-h-screen transition-colors duration-500">
@@ -86,7 +108,7 @@ const Notifications = () => {
           <button
             onClick={() => {
               setShowArchived(!showArchived);
-              setActiveCategory("ALL"); // Reset filter when switching archive
+              setActiveCategory("ALL");
             }}
             className={`flex items-center gap-2 px-3 sm:px-5 py-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 cursor-pointer ${
               showArchived
@@ -113,7 +135,7 @@ const Notifications = () => {
           <>
             {isLoading ? (
               <AdminLoading message="Opening the notice board..." />
-            ) : filteredNotifications.length === 0 ? (
+            ) : notifications.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-3xl border border-stone-200 shadow-sm border-dashed">
                 <p className="text-stone-400 font-medium">
                   {activeCategory !== "ALL"
@@ -124,13 +146,28 @@ const Notifications = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {filteredNotifications.map((notification) => (
-                  <NotificationItem
-                    key={notification.uuid}
-                    notification={notification}
+              <div className="space-y-12">
+                <div className="space-y-6">
+                  {notifications.map((notification: PublicNotification) => (
+                    <NotificationItem
+                      key={notification.uuid}
+                      notification={notification}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination Component */}
+                {meta && meta.totalItems > 9 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={meta.totalPages}
+                    totalItems={meta.totalItems}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={setPageSize}
+                    isLoading={isFetching}
                   />
-                ))}
+                )}
               </div>
             )}
           </>

@@ -13,7 +13,8 @@ export interface PaginatedResponse<T> {
     itemsPerPage: number;
     totalPages: number;
     currentPage: number;
-    typeCounts?: Record<string, number>;
+    typeCounts?: Record<string, number>; // Specific to Events
+    categoryCounts?: Record<string, number>; // Specific to Notifications
     totalInView?: number;
   };
 }
@@ -51,25 +52,31 @@ export const publicService = {
     )) as any;
   },
 
-  getNotifications: async (params?: {
+  getNotifications: async (params: {
     category?: string;
     archived?: boolean;
+    page?: number;
+    limit?: number;
   }) => {
+    const { category, archived, page, limit } = params;
     const queryParams = new URLSearchParams();
 
-    if (params?.category && params.category !== "ALL") {
-      queryParams.append("category", params.category);
+    if (category && category !== "ALL") {
+      queryParams.append("category", category);
     }
 
-    if (params?.archived !== undefined) {
-      queryParams.append("archived", params.archived.toString());
+    if (archived !== undefined) {
+      queryParams.append("archived", archived.toString());
     }
+
+    if (page) queryParams.append("page", page.toString());
+    if (limit) queryParams.append("limit", limit.toString());
 
     const queryString = queryParams.toString();
     const url = `/notifications/published${
       queryString ? `?${queryString}` : ""
     }`;
 
-    return (await api.get<PublicNotification[]>(url)) as any;
+    return (await api.get<PaginatedResponse<PublicNotification>>(url)) as any;
   },
 };
