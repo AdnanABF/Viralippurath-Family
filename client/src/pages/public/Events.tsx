@@ -1,16 +1,27 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { publicService } from "../../services/public.service";
 import EventsHeader from "../../components/events/EventsHeader";
 import EventsTimeline from "../../components/events/EventsTimeline";
-import { AdminLoading, AdminError } from "../../components/ui"; // Use your existing UI components
+import { AdminLoading, AdminError } from "../../components/ui";
 
 const Events = () => {
   const { t } = useTranslation("events");
   const [view, setView] = useState<"upcoming" | "past">("upcoming");
+  const [activeType, setActiveType] = useState<string>("ALL");
 
-  // 1. Fetch Ongoing Events (Happening Now)
+  // Define categories based on your EventType and translations
+  const TYPES = [
+    { id: "ALL", label: t("event_types.all", "All") },
+    { id: "GENERAL", label: t("event_types.general") },
+    { id: "MARRIAGE", label: t("event_types.marriage") },
+    { id: "FUNERAL", label: t("event_types.funeral") },
+    { id: "GATHERING", label: t("event_types.gathering") },
+    { id: "NEWBORN", label: t("event_types.newborn") },
+  ];
+
+  // 1. Fetch Ongoing Events
   const { data: ongoingEvents = [] } = useQuery({
     queryKey: ["events", "ongoing"],
     queryFn: () => publicService.getEvents("ongoing"),
@@ -18,7 +29,7 @@ const Events = () => {
 
   // 2. Fetch Toggled Events (Upcoming/Past)
   const {
-    data: events = [],
+    data: eventsResponse = { data: [] },
     isLoading,
     isError,
     refetch,
@@ -26,6 +37,13 @@ const Events = () => {
     queryKey: ["events", view],
     queryFn: () => publicService.getEvents(view),
   });
+
+  // 3. Client-side Filter Logic
+  const filteredEvents = useMemo(() => {
+    const rawEvents = eventsResponse?.data || [];
+    if (activeType === "ALL") return rawEvents;
+    return rawEvents.filter((event: any) => event.type === activeType);
+  }, [eventsResponse, activeType]);
 
   return (
     <div className="py-20 bg-white min-h-screen">
@@ -48,23 +66,43 @@ const Events = () => {
           </div>
         )}
 
-        {/* View Toggle */}
-        <div className="flex justify-center mb-12">
+        {/* View Toggle (Upcoming / Past) */}
+        <div className="flex justify-center mb-8">
           <div className="inline-flex bg-stone-100 p-1 rounded-xl">
-            {(["upcoming", "past"] as const).map((type) => (
+            {(["upcoming", "past"] as const).map((timeline) => (
               <button
-                key={type}
-                onClick={() => setView(type)}
+                key={timeline}
+                onClick={() => {
+                  setView(timeline);
+                  setActiveType("ALL"); //Reset filter when switching timeline
+                }}
                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                  view === type
+                  view === timeline
                     ? "bg-white text-amber-700 shadow-sm"
                     : "text-stone-500 hover:text-stone-700"
                 }`}
               >
-                {type === "upcoming" ? t("upcoming") : t("past")}
+                {timeline === "upcoming" ? t("upcoming") : t("past")}
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          {TYPES.map((type) => (
+            <button
+              key={type.id}
+              onClick={() => setActiveType(type.id)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                activeType === type.id
+                  ? "bg-amber-50 border-amber-200 text-amber-700"
+                  : "bg-white border-stone-200 text-stone-500 hover:border-stone-300"
+              }`}
+            >
+              {type.label}
+            </button>
+          ))}
         </div>
 
         {/* --- Content States --- */}
@@ -76,12 +114,16 @@ const Events = () => {
             message={t("error_message")}
             onRetry={() => refetch()}
           />
-        ) : events?.data?.length > 0 ? (
-          <EventsTimeline events={events?.data} />
+        ) : filteredEvents.length > 0 ? (
+          <EventsTimeline events={filteredEvents} />
         ) : (
           <div className="text-center py-20 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
             <p className="text-stone-500 italic">
-              {view === "upcoming" ? t("empty_events") : t("empty_past_events")}
+              {activeType !== "ALL"
+                ? t("no_events_category", "No events found for this category")
+                : view === "upcoming"
+                  ? t("empty_events")
+                  : t("empty_past_events")}
             </p>
           </div>
         )}

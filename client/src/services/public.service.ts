@@ -5,9 +5,9 @@ import type { PublicMagazine } from "../types/magazine.public";
 import type { PublicNotification } from "../types/notification.public";
 
 export const publicService = {
-  getEvents: async (type: "upcoming" | "past" | "ongoing") => {
+  getEvents: async (timeline: "upcoming" | "past" | "ongoing") => {
     return (await api.get<PublicEvent[]>(
-      `/events/published?type=${type}`
+      `/events/published?timeline=${timeline}`
     )) as any;
   },
 

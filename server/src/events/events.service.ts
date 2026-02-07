@@ -253,7 +253,7 @@ export class EventsService {
   }
 
   async findPublished(
-    type: 'upcoming' | 'past' | 'ongoing' = 'upcoming',
+    timeline: 'upcoming' | 'past' | 'ongoing' = 'upcoming',
     page: number = 1,
     limit: number = 10,
   ) {
@@ -264,7 +264,7 @@ export class EventsService {
       let query: any = { status: EventStatus.PUBLISHED };
       let sortOrder: any = { startDateTime: 1 };
 
-      switch (type) {
+      switch (timeline) {
         case 'ongoing':
           query.startDateTime = { $lte: now };
           query.endDateTime = { $gte: now };
@@ -308,7 +308,7 @@ export class EventsService {
         error,
         'GET',
         '/public/events',
-        { type, page, limit },
+        { timeline, page, limit },
         'GUEST',
       );
       throw new InternalServerErrorException('Failed to fetch events');

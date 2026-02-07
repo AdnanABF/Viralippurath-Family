@@ -78,12 +78,12 @@ export class EventsController {
 
   @Get('published')
   async findPublished(
-    @Query('type') type: 'upcoming' | 'past' | 'ongoing',
+    @Query('timeline') timeline: 'upcoming' | 'past' | 'ongoing',
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
     return await this.eventsService.findPublished(
-      type || 'upcoming',
+      timeline || 'upcoming',
       page ? Number(page) : 1,
       limit ? Number(limit) : 10,
     );
