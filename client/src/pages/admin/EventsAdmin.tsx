@@ -32,6 +32,15 @@ const STATUS_OPTIONS = [
   { label: "Draft", value: "DRAFT" },
 ];
 
+const TYPE_OPTIONS = [
+  { label: "All Types", value: "ALL" },
+  { label: "General", value: "GENERAL" },
+  { label: "Marriage", value: "MARRIAGE" },
+  { label: "Funeral", value: "FUNERAL" },
+  { label: "Gathering", value: "GATHERING" },
+  { label: "New Born", value: "NEWBORN" },
+];
+
 const defaultEventValues = {
   uuid: "",
   title_en: "",
@@ -165,12 +174,20 @@ const EventsAdmin = () => {
             onChange={(val) => setFilters((prev) => ({ ...prev, status: val }))}
             options={STATUS_OPTIONS}
           />
-          <ResetButton onClick={reset} />
-          <PrimaryButton
-            label="Add New Event"
-            onClick={() => setEditing(defaultEventValues as AdminEvent)}
+
+          <AdminSelect
+            value={filters.type || "ALL"}
+            onChange={(val) => setFilters((prev) => ({ ...prev, type: val }))}
+            options={TYPE_OPTIONS}
           />
+          <ResetButton onClick={reset} />
         </AdminControlGroup>
+
+        <PrimaryButton
+          label="Add New Event"
+          className="w-full sm:w-auto"
+          onClick={() => setEditing(defaultEventValues as AdminEvent)}
+        />
       </AdminHeader>
 
       {/* Main Content Area */}

@@ -5,7 +5,7 @@ import {
   IsEnum,
   MinLength,
 } from 'class-validator';
-import { EventStatus } from '../schemas/event.schema';
+import { EventStatus, EventType } from '../schemas/event.schema';
 import { IsAfter } from '../../common/decorators/is-after.decorator';
 
 export class CreateEventDto {
@@ -25,8 +25,8 @@ export class CreateEventDto {
   @IsOptional()
   description_ml?: string;
 
-  @IsString()
-  type: string;
+  @IsEnum(EventType)
+  type: EventType;
 
   @IsDateString()
   startDateTime: string;

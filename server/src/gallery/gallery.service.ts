@@ -268,16 +268,84 @@ export class GalleryService {
     }
   }
 
-  // ===== PUBLIC METHODS =====
-  async findPublished() {
+  // ===== PUBLIC METHODS UPDATED FOR INFINITE SCROLL =====
+
+  async findPublished(query: {
+    album?: string;
+    page?: number;
+    limit?: number;
+  }) {
     try {
-      return await this.galleryModel
-        .find({ status: GalleryStatus.PUBLISHED })
-        .select('uuid imageUrl caption album year -_id')
-        .sort({ year: -1, createdAt: -1 })
+      const { album = 'ALL', page = 1, limit = 12 } = query;
+      const skip = (page - 1) * limit;
+
+      // Base filter for the view
+      const viewFilter = { status: GalleryStatus.PUBLISHED };
+
+      // Filter for the actual data (includes album selection)
+      const dataFilter: any = { ...viewFilter };
+      if (album !== 'ALL') {
+        dataFilter.album = album;
+      }
+
+      const result = await this.galleryModel
+        .aggregate([
+          {
+            $facet: {
+              // Lane 1: Paginated Data (The photos currently being viewed)
+              data: [
+                { $match: dataFilter },
+                { $sort: { year: -1, createdAt: -1 } },
+                { $skip: skip },
+                { $limit: limit },
+                {
+                  $project: {
+                    _id: 0,
+                    uuid: 1,
+                    imageUrl: 1,
+                    caption: 1,
+                    album: 1,
+                    year: 1,
+                  },
+                },
+              ],
+              // Lane 2: Total count for this specific filter (tells infinite scroll when to stop)
+              totalCount: [{ $match: dataFilter }, { $count: 'count' }],
+              // Lane 3: Count per album (for the filter pills)
+              albumCounts: [
+                { $match: viewFilter },
+                { $group: { _id: '$album', count: { $sum: 1 } } },
+              ],
+            },
+          },
+        ])
         .exec();
+
+      const totalItems = result[0].totalCount[0]?.count || 0;
+      const rawAlbumCounts = result[0].albumCounts || [];
+
+      const formattedAlbumCounts = rawAlbumCounts.reduce((acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      }, {});
+
+      return {
+        data: result[0].data,
+        meta: {
+          totalItems,
+          itemCount: result[0].data.length,
+          itemsPerPage: Number(limit),
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: Number(page),
+          albumCounts: formattedAlbumCounts,
+          totalInView: Object.values(formattedAlbumCounts).reduce(
+            (a: number, b: number) => a + b,
+            0,
+          ) as number,
+        },
+      };
     } catch (error) {
-      await this.handleError(error, 'GET', '/public/gallery', null, 'GUEST');
+      await this.handleError(error, 'GET', '/public/gallery', query, 'GUEST');
       throw new InternalServerErrorException('Failed to fetch gallery');
     }
   }
