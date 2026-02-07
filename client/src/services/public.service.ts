@@ -15,6 +15,7 @@ export interface PaginatedResponse<T> {
     currentPage: number;
     typeCounts?: Record<string, number>; // Specific to Events
     categoryCounts?: Record<string, number>; // Specific to Notifications
+    albumCounts?: Record<string, number>; // Specific to Gallery
     totalInView?: number;
   };
 }
@@ -38,8 +39,22 @@ export const publicService = {
     )) as any;
   },
 
-  getGallery: async () => {
-    return (await api.get<PublicGalleryItem[]>("/gallery/published")) as any;
+  getGallery: async (params: {
+    album?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const { album, page, limit } = params;
+    const queryParams = new URLSearchParams();
+
+    if (album && album !== "ALL") queryParams.append("album", album);
+    if (page) queryParams.append("page", page.toString());
+    if (limit) queryParams.append("limit", limit.toString());
+
+    const queryString = queryParams.toString();
+    const url = `/gallery/published${queryString ? `?${queryString}` : ""}`;
+
+    return (await api.get<PaginatedResponse<PublicGalleryItem>>(url)) as any;
   },
 
   getMagazines: async () => {

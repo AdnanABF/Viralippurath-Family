@@ -90,13 +90,13 @@ const Events = () => {
   );
 
   return (
-    <div className="py-20 bg-white min-h-screen">
+    <div className="py-15 sm:py-20 bg-white min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <EventsHeader />
 
         {/* --- Ongoing Events Section --- */}
         {ongoingEventsResponse?.data?.length > 0 && (
-          <div className="mb-16">
+          <div className="mb-10 sm:mb-16">
             <div className="flex items-center gap-3 mb-6">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -111,7 +111,7 @@ const Events = () => {
         )}
 
         {/* View Toggle (Upcoming / Past) */}
-        <div className="flex justify-center mb-8">
+        <div className="sm:sticky sm:top-20 sm:z-30 py-2 flex justify-center mb-5 sm:mb-8 bg-white">
           <div className="inline-flex bg-stone-100 p-1 rounded-xl">
             {(["upcoming", "past"] as const).map((timeline) => (
               <button
@@ -134,7 +134,7 @@ const Events = () => {
           options={filterOptions}
           activeId={activeType}
           onSelect={setActiveType}
-          className="mb-12"
+          className="sm:sticky sm:top-33 sm:z-30 mb-8 sm:mb-12 bg-white backdrop-blur-none"
         />
 
         {/* --- Content States --- */}

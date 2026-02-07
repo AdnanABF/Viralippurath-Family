@@ -92,7 +92,7 @@ const Notifications = () => {
   );
 
   return (
-    <div className="py-20 bg-stone-50 min-h-screen transition-colors duration-500">
+    <div className="py-15 sm:py-20 bg-stone-50 min-h-screen transition-colors duration-500">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <NotificationsHeader />
 
@@ -102,6 +102,7 @@ const Notifications = () => {
             options={categories}
             activeId={activeCategory}
             onSelect={(id) => setActiveCategory(id)}
+            className="sticky top-20 z-30"
           />
 
           {/* Archive Toggle */}

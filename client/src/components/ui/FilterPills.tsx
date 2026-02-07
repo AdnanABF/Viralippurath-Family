@@ -22,7 +22,7 @@ const FilterPills = <T extends string>({
   return (
     <div
       className={`
-        py-4 bg-white/80 backdrop-blur-md
+        py-4 backdrop-blur-md
         -mx-4 px-4 sm:mx-0 sm:px-0 
         overflow-x-auto no-scrollbar 
         ${className}

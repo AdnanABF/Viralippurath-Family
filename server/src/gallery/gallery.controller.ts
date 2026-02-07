@@ -29,8 +29,16 @@ export class GalleryController {
 
   // ===== PUBLIC =====
   @Get('published')
-  async getPublished() {
-    return await this.galleryService.findPublished();
+  async getPublished(
+    @Query('album') album?: string,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return await this.galleryService.findPublished({
+      album: album || 'ALL',
+      page: page ?? 1,
+      limit: limit ?? 12, // Default to 12 for Masonry grid compatibility (divisible by 2, 3, 4)
+    });
   }
 
   // ===== ADMIN =====
