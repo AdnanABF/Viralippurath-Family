@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
@@ -110,28 +109,22 @@ export class GalleryService {
     }
   }
 
+  /**
+   * Creates a gallery entry. Image is already uploaded by the client.
+   */
   async create(
     dto: CreateGalleryDto,
-    file: Express.Multer.File,
     admin: { userUuid: string; username: string },
   ) {
-    let cloudResponse: any;
     try {
-      if (!file) throw new BadRequestException('Image file is required');
-
-      // 1. Upload to Cloudinary
-      cloudResponse = await this.cloudinaryService.uploadFile(file, 'gallery');
-
-      // 2. Save to Database
+      // Create record with URLs provided by the frontend
       const newGallery = new this.galleryModel({
         ...dto,
-        imageUrl: cloudResponse.secure_url,
-        publicId: cloudResponse.public_id,
+        publicId: dto.cloudinaryPublicId, // Map DTO to Schema field
       });
 
       const savedGallery = await newGallery.save();
 
-      // 3. Activity Log
       await this.activityLogService.create({
         adminUuid: admin.userUuid,
         adminUserName: admin.username,
@@ -143,47 +136,40 @@ export class GalleryService {
 
       return {
         data: savedGallery,
-        message: 'Gallery item uploaded successfully',
+        message: 'Gallery item saved successfully',
       };
     } catch (error) {
       await this.handleError(
         error,
         'POST',
         '/admin/gallery',
-        { ...dto, cloudResponse },
+        dto,
         admin.userUuid,
       );
-
-      if (error.getStatus && typeof error.getStatus === 'function') {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to upload gallery item');
+      throw new InternalServerErrorException('Failed to save gallery item');
     }
   }
 
+  /**
+   * Updates a gallery entry. If imageUrl is provided, old asset is deleted from Cloudinary.
+   */
   async update(
     uuid: string,
     dto: UpdateGalleryDto,
     admin: { userUuid: string; username: string },
-    file?: Express.Multer.File,
   ) {
-    let cloudResponse: any;
     try {
       const existing = await this.galleryModel.findOne({ uuid }).exec();
       if (!existing) throw new NotFoundException('Gallery item not found');
 
-      let updateData = { ...dto } as any;
+      const updateData = { ...dto } as any;
 
-      if (file) {
-        if (existing.publicId) {
+      // Handle Cloudinary cleanup if a new image was uploaded by client
+      if (dto.imageUrl && dto.cloudinaryPublicId) {
+        if (existing.publicId && existing.publicId !== dto.cloudinaryPublicId) {
           await this.cloudinaryService.deleteFile(existing.publicId);
         }
-        cloudResponse = await this.cloudinaryService.uploadFile(
-          file,
-          'gallery',
-        );
-        updateData.imageUrl = cloudResponse.secure_url;
-        updateData.publicId = cloudResponse.public_id;
+        updateData.publicId = dto.cloudinaryPublicId;
       }
 
       const updated = await this.galleryModel
@@ -214,7 +200,7 @@ export class GalleryService {
         error,
         'PATCH',
         `/admin/gallery/${uuid}`,
-        { ...dto, cloudResponse },
+        dto,
         admin.userUuid,
       );
 
@@ -231,6 +217,7 @@ export class GalleryService {
       const existing = await this.galleryModel.findOne({ uuid }).exec();
       if (!existing) throw new NotFoundException('Gallery item not found');
 
+      // Cleanup Cloudinary asset
       if (existing.publicId) {
         cloudResponse = await this.cloudinaryService.deleteFile(
           existing.publicId,
@@ -268,7 +255,7 @@ export class GalleryService {
     }
   }
 
-  // ===== PUBLIC METHODS UPDATED FOR INFINITE SCROLL =====
+  // ===== PUBLIC METHODS =====
 
   async findPublished(query: {
     album?: string;

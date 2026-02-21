@@ -8,13 +8,10 @@ import {
   Post,
   UseGuards,
   ParseUUIDPipe,
-  UseInterceptors,
-  UploadedFile,
   Request,
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { GalleryService } from './gallery.service';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
@@ -37,7 +34,7 @@ export class GalleryController {
     return await this.galleryService.findPublished({
       album: album || 'ALL',
       page: page ?? 1,
-      limit: limit ?? 12, // Default to 12 for Masonry grid compatibility (divisible by 2, 3, 4)
+      limit: limit ?? 12,
     });
   }
 
@@ -70,26 +67,19 @@ export class GalleryController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post()
-  @UseInterceptors(FileInterceptor('image'))
-  async create(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() dto: CreateGalleryDto,
-    @Request() req,
-  ) {
-    return await this.galleryService.create(dto, file, req.user);
+  async create(@Body() dto: CreateGalleryDto, @Request() req) {
+    return await this.galleryService.create(dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Patch(':uuid')
-  @UseInterceptors(FileInterceptor('image'))
   async update(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @Body() dto: UpdateGalleryDto,
     @Request() req,
-    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return await this.galleryService.update(uuid, dto, req.user, file);
+    return await this.galleryService.update(uuid, dto, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

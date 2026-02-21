@@ -4,9 +4,18 @@ export type GalleryStatus = "DRAFT" | "PUBLISHED";
 
 export type AdminGalleryItem = PublicGalleryItem & {
   status: GalleryStatus;
+  cloudinaryPublicId: string;
 };
 
-export type AdminGalleryDraft = Omit<AdminGalleryItem, "uuid">;
+export type AdminGalleryDraft = {
+  caption: string;
+  album: string;
+  year: number;
+  status: GalleryStatus;
+  file?: File; // Temporary for form handling
+  imageUrl?: string;
+  cloudinaryPublicId?: string;
+};
 
 export interface GalleryQueryParams {
   page?: number;

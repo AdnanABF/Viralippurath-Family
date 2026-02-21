@@ -1,7 +1,10 @@
 import { useState } from "react";
 
 // Types and services
-import type { AdminGalleryItem } from "../../types/gallery.admin";
+import type {
+  AdminGalleryItem,
+  AdminGalleryDraft,
+} from "../../types/gallery.admin";
 import { galleryAdminService } from "../../services/gallery.admin.service";
 import { useAdminData } from "../../hooks/admin/useAdminData";
 
@@ -32,9 +35,7 @@ const STATUS_OPTIONS = [
   { label: "Draft", value: "DRAFT" },
 ];
 
-const defaultGalleryValues = {
-  uuid: "",
-  imageUrl: "",
+const defaultGalleryValues: AdminGalleryDraft = {
   caption: "",
   album: "",
   year: new Date().getFullYear(),
@@ -66,11 +67,13 @@ const GalleryAdmin = () => {
       search: "",
       startDate: "",
       endDate: "",
-    }
+    },
   );
 
   // 2. Local UI States
-  const [editing, setEditing] = useState<AdminGalleryItem | null>(null);
+  const [editing, setEditing] = useState<
+    AdminGalleryItem | AdminGalleryDraft | null
+  >(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -80,14 +83,13 @@ const GalleryAdmin = () => {
   } | null>(null);
 
   // 3. Handlers
-  const handleSave = async (formData: FormData) => {
+  const handleSave = async (data: AdminGalleryDraft & { uuid?: string }) => {
     setIsSaving(true);
     try {
-      const uuid = editing?.uuid;
-      if (uuid && uuid !== "") {
-        await galleryAdminService.update(uuid, formData);
+      if (data.uuid) {
+        await galleryAdminService.update(data.uuid, data);
       } else {
-        await galleryAdminService.create(formData);
+        await galleryAdminService.create(data);
       }
       setEditing(null);
       refresh();
@@ -146,7 +148,7 @@ const GalleryAdmin = () => {
           <ResetButton onClick={reset} />
           <PrimaryButton
             label="Add New Image"
-            onClick={() => setEditing(defaultGalleryValues as AdminGalleryItem)}
+            onClick={() => setEditing(defaultGalleryValues)}
           />
         </AdminControlGroup>
       </AdminHeader>
@@ -194,7 +196,7 @@ const GalleryAdmin = () => {
       >
         {editing && (
           <GalleryForm
-            initial={editing.uuid ? editing : undefined}
+            initial={editing}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}

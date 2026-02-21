@@ -3,13 +3,14 @@ import { Upload, X } from "lucide-react";
 import { useFormDirty } from "../../../hooks/useFormDirty";
 import type {
   AdminGalleryItem,
+  AdminGalleryDraft,
   GalleryStatus,
 } from "../../../types/gallery.admin";
 import { PrimaryButton, SecondaryButton } from "../../ui";
 
 interface Props {
-  initial?: AdminGalleryItem;
-  onSave: (formData: FormData) => Promise<void>;
+  initial?: AdminGalleryItem | AdminGalleryDraft;
+  onSave: (data: AdminGalleryDraft & { uuid?: string }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
@@ -22,16 +23,19 @@ const GalleryForm: React.FC<Props> = ({
   isLoading,
   onDirtyChange,
 }) => {
+  // Extract uuid if it exists (it exists on AdminGalleryItem but not necessarily on Draft)
+  const uuid = (initial as AdminGalleryItem)?.uuid;
+
   // Local state for the physical file and the UI preview
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
-    initial?.imageUrl ?? null
+    (initial as AdminGalleryItem)?.imageUrl ?? null,
   );
   const [caption, setCaption] = useState(initial?.caption ?? "");
   const [album, setAlbum] = useState(initial?.album ?? "");
   const [year, setYear] = useState(initial?.year ?? new Date().getFullYear());
   const [status, setStatus] = useState<GalleryStatus>(
-    initial?.status ?? "DRAFT"
+    initial?.status ?? "DRAFT",
   );
 
   // Dirty check logic
@@ -46,7 +50,7 @@ const GalleryForm: React.FC<Props> = ({
   const initialValues = {
     caption: initial?.caption ?? "",
     album: initial?.album ?? "",
-    year: initial?.year ?? new Date().getFullYear(),
+    year: initial?.year ?? new Date().getFullYear().toString(),
     status: initial?.status ?? "DRAFT",
     hasNewFile: false,
   };
@@ -56,11 +60,14 @@ const GalleryForm: React.FC<Props> = ({
   // Clean up the object URL to prevent memory leaks
   useEffect(() => {
     return () => {
-      if (previewUrl && !initial?.imageUrl) {
+      if (
+        previewUrl &&
+        previewUrl !== (initial as AdminGalleryItem)?.imageUrl
+      ) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [previewUrl, initial?.imageUrl]);
+  }, [previewUrl, initial]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,33 +79,30 @@ const GalleryForm: React.FC<Props> = ({
 
   const removeImage = () => {
     setSelectedFile(null);
-    setPreviewUrl(initial?.imageUrl ?? null);
+    setPreviewUrl((initial as AdminGalleryItem)?.imageUrl ?? null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create FormData to send binary file + text fields
-    const formData = new FormData();
+    // Pass the plain object to the handler. Service will handle the upload orchestration.
+    const payload: AdminGalleryDraft & { uuid?: string } = {
+      uuid,
+      caption,
+      album,
+      year,
+      status,
+      file: selectedFile || undefined,
+    };
 
-    // Add the file (the key 'image' must match FileInterceptor('image') in NestJS)
-    if (selectedFile) {
-      formData.append("image", selectedFile);
-    }
-
-    formData.append("caption", caption);
-    formData.append("album", album);
-    formData.append("year", year.toString());
-    formData.append("status", status);
-
-    await onSave(formData);
+    await onSave(payload);
   };
 
   const handleCancel = () => {
     if (isDirty) {
       if (
         window.confirm(
-          "You have unsaved changes. Are you sure you want to close this form?"
+          "You have unsaved changes. Are you sure you want to close this form?",
         )
       ) {
         onCancel();
@@ -115,7 +119,7 @@ const GalleryForm: React.FC<Props> = ({
     >
       <div className="sticky top-0 bg-white sm:bg-stone-50 pt-4 pb-4 sm:pt-0 z-10 border-b border-stone-100 flex items-center justify-between">
         <h2 className="text-xl font-serif text-stone-800">
-          {initial?.uuid ? "Edit Image" : "Add to Gallery"}
+          {uuid ? "Edit Image" : "Add to Gallery"}
         </h2>
         {isLoading && (
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-700/30 border-t-amber-700"></div>
@@ -167,7 +171,7 @@ const GalleryForm: React.FC<Props> = ({
 
           <input
             type="file"
-            required={!initial?.uuid}
+            required={!uuid}
             disabled={isLoading}
             accept="image/*"
             onChange={handleFileChange}
@@ -251,9 +255,9 @@ const GalleryForm: React.FC<Props> = ({
         <PrimaryButton
           type="submit"
           variant="form"
-          label={initial?.uuid ? "Update Image" : "Save to Gallery"}
+          label={uuid ? "Update Image" : "Save to Gallery"}
           isLoading={isLoading}
-          loadingLabel={initial?.uuid ? "Updating..." : "Creating..."}
+          loadingLabel={uuid ? "Updating..." : "Creating..."}
         />
       </div>
     </form>
