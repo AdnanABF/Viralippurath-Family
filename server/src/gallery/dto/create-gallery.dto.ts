@@ -4,8 +4,8 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
+  IsUrl,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { GalleryStatus } from '../schemas/gallery.schema';
 
 export class CreateGalleryDto {
@@ -19,10 +19,17 @@ export class CreateGalleryDto {
 
   @IsInt()
   @IsNotEmpty()
-  @Type(() => Number) // Crucial for FormData to convert string to number
   year: number;
 
   @IsEnum(GalleryStatus)
   @IsOptional()
   status: GalleryStatus;
+
+  @IsUrl()
+  @IsNotEmpty()
+  imageUrl: string;
+
+  @IsString()
+  @IsNotEmpty()
+  cloudinaryPublicId: string;
 }
