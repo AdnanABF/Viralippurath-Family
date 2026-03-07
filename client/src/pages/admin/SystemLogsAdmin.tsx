@@ -78,7 +78,7 @@ const SystemLogAdmin = () => {
       // Success toast is now handled globally by api.ts interceptor
       await systemLogAdminService.cleanup();
       refresh(); // Reload data via hook
-      refreshStatus;
+      await refreshStatus(); // Reload cleanup eligibility status
     } catch {
       /* api.ts handles global error reporting via toast.error */
     } finally {
