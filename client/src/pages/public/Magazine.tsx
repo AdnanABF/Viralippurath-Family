@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { publicService } from "../../services/public.service";
 import MagazineHeader from "../../components/magazine/MagazineHeader";
@@ -27,12 +27,10 @@ const Magazine = () => {
     queryFn: publicService.getMagazines,
   });
 
-  // 2. Auto-select the most recent issue when data first arrives
-  useEffect(() => {
-    if (issues.length > 0 && !selectedIssue) {
-      setSelectedIssue(issues[0]);
-    }
-  }, [issues, selectedIssue]);
+  const resolvedSelectedIssue =
+    issues.find((issue) => issue.uuid === selectedIssue?.uuid) ??
+    issues[0] ??
+    null;
 
   const handleSelectIssue = (issue: PublicMagazine) => {
     setSelectedIssue(issue);
@@ -64,14 +62,14 @@ const Magazine = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                 <MagazineArchive
                   issues={issues}
-                  selectedId={selectedIssue?.uuid}
+                  selectedId={resolvedSelectedIssue?.uuid}
                   onSelect={handleSelectIssue}
                 />
 
                 <div className="hidden lg:block lg:col-span-2 lg:sticky lg:top-28 self-start space-y-6">
                   <MagazineViewer
-                    key={selectedIssue?.uuid}
-                    issue={selectedIssue}
+                    key={resolvedSelectedIssue?.uuid}
+                    issue={resolvedSelectedIssue}
                   />
                 </div>
               </div>
@@ -83,7 +81,7 @@ const Magazine = () => {
       <MagazineBottomSheet
         isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
-        issue={selectedIssue}
+        issue={resolvedSelectedIssue}
       />
     </div>
   );

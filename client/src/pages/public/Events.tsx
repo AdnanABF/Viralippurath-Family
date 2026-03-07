@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { publicService } from "../../services/public.service";
@@ -19,10 +19,20 @@ const Events = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Reset page when filter or view changes
-  useEffect(() => {
+  const handleViewChange = (timeline: "upcoming" | "past") => {
+    setView(timeline);
     setCurrentPage(1);
-  }, [view, activeType, pageSize]);
+  };
+
+  const handleTypeChange = (type: string) => {
+    setActiveType(type);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   // 1. Fetch Ongoing Events (Not paginated as these are usually few)
   const { data: ongoingEventsResponse } = useQuery({
@@ -50,43 +60,45 @@ const Events = () => {
 
   const events = eventsResponse?.data || [];
   const meta = eventsResponse?.meta;
-  const typeCounts = meta?.typeCounts || {};
 
   // 3. Map to FilterOption format using server-side counts from meta
   const filterOptions = useMemo<FilterOption<string>[]>(
-    () => [
-      {
-        id: "ALL",
-        label: t("event_types.all", "All"),
-        count: meta?.totalInView || 0,
-      },
-      {
-        id: "GENERAL",
-        label: t("event_types.general"),
-        count: typeCounts["GENERAL"] || 0,
-      },
-      {
-        id: "MARRIAGE",
-        label: t("event_types.marriage"),
-        count: typeCounts["MARRIAGE"] || 0,
-      },
-      {
-        id: "FUNERAL",
-        label: t("event_types.funeral"),
-        count: typeCounts["FUNERAL"] || 0,
-      },
-      {
-        id: "GATHERING",
-        label: t("event_types.gathering"),
-        count: typeCounts["GATHERING"] || 0,
-      },
-      {
-        id: "NEWBORN",
-        label: t("event_types.newborn"),
-        count: typeCounts["NEWBORN"] || 0,
-      },
-    ],
-    [t, meta, typeCounts],
+    () => {
+      const typeCounts = meta?.typeCounts ?? {};
+      return [
+        {
+          id: "ALL",
+          label: t("event_types.all", "All"),
+          count: meta?.totalInView || 0,
+        },
+        {
+          id: "GENERAL",
+          label: t("event_types.general"),
+          count: typeCounts["GENERAL"] || 0,
+        },
+        {
+          id: "MARRIAGE",
+          label: t("event_types.marriage"),
+          count: typeCounts["MARRIAGE"] || 0,
+        },
+        {
+          id: "FUNERAL",
+          label: t("event_types.funeral"),
+          count: typeCounts["FUNERAL"] || 0,
+        },
+        {
+          id: "GATHERING",
+          label: t("event_types.gathering"),
+          count: typeCounts["GATHERING"] || 0,
+        },
+        {
+          id: "NEWBORN",
+          label: t("event_types.newborn"),
+          count: typeCounts["NEWBORN"] || 0,
+        },
+      ];
+    },
+    [t, meta],
   );
 
   return (
@@ -116,7 +128,7 @@ const Events = () => {
             {(["upcoming", "past"] as const).map((timeline) => (
               <button
                 key={timeline}
-                onClick={() => setView(timeline)}
+                onClick={() => handleViewChange(timeline)}
                 className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
                   view === timeline
                     ? "bg-white text-amber-700 shadow-sm"
@@ -133,7 +145,7 @@ const Events = () => {
         <FilterPills
           options={filterOptions}
           activeId={activeType}
-          onSelect={setActiveType}
+          onSelect={handleTypeChange}
           className="sm:sticky sm:top-33 sm:z-30 mb-8 sm:mb-12 bg-white backdrop-blur-none"
         />
 
@@ -161,7 +173,7 @@ const Events = () => {
                       totalItems={meta.totalItems}
                       pageSize={pageSize}
                       onPageChange={setCurrentPage}
-                      onPageSizeChange={setPageSize}
+                      onPageSizeChange={handlePageSizeChange}
                       isLoading={isFetching}
                     />
                   </div>
