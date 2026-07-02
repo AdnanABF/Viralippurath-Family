@@ -6,7 +6,6 @@ import {
   useCallback,
 } from "react";
 import {
-  isTokenValid,
   getUserFromToken,
   saveUserToStorage,
   clearUserFromStorage,
@@ -65,15 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    * Initial check on app mount
    */
   const initAuth = useCallback(async () => {
-    const hasHint = isTokenValid();
-
-    if (hasHint) {
-      // If we have a hint, we still show loading until server confirms
-      await refreshUser();
-    } else {
-      // No hint, no need to wait for a network call
-      setLoading(false);
-    }
+    // Always validate the server-side cookie session.
+    // localStorage is only a UI hint and may be missing or stale.
+    await refreshUser();
   }, [refreshUser]);
 
   /**

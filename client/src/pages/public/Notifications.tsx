@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { publicService } from "../../services/public.service";
@@ -26,10 +26,21 @@ const Notifications = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Reset page to 1 when filters or archive status change
-  useEffect(() => {
+  const handleCategoryChange = (category: NotificationCategory | "ALL") => {
+    setActiveCategory(category);
     setCurrentPage(1);
-  }, [activeCategory, showArchived, pageSize]);
+  };
+
+  const handleToggleArchived = () => {
+    setShowArchived((prev) => !prev);
+    setActiveCategory("ALL");
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   // 1. Fetch Paginated Data
   const {
@@ -57,38 +68,40 @@ const Notifications = () => {
 
   const notifications = response?.data || [];
   const meta = response?.meta;
-  const categoryCounts = meta?.categoryCounts || {};
 
   // 2. Define Filter Options using server-side counts
   const categories = useMemo<FilterOption<NotificationCategory | "ALL">[]>(
-    () => [
-      {
-        id: "ALL",
-        label: t("categories.all"),
-        count: meta?.totalInView || 0,
-      },
-      {
-        id: "URGENT",
-        label: t("categories.urgent"),
-        count: categoryCounts["URGENT"] || 0,
-      },
-      {
-        id: "GENERAL",
-        label: t("categories.general"),
-        count: categoryCounts["GENERAL"] || 0,
-      },
-      {
-        id: "MAGAZINE",
-        label: t("categories.magazines"),
-        count: categoryCounts["MAGAZINE"] || 0,
-      },
-      {
-        id: "EVENT",
-        label: t("categories.events"),
-        count: categoryCounts["EVENT"] || 0,
-      },
-    ],
-    [t, meta, categoryCounts],
+    () => {
+      const categoryCounts = meta?.categoryCounts ?? {};
+      return [
+        {
+          id: "ALL",
+          label: t("categories.all"),
+          count: meta?.totalInView || 0,
+        },
+        {
+          id: "URGENT",
+          label: t("categories.urgent"),
+          count: categoryCounts["URGENT"] || 0,
+        },
+        {
+          id: "GENERAL",
+          label: t("categories.general"),
+          count: categoryCounts["GENERAL"] || 0,
+        },
+        {
+          id: "MAGAZINE",
+          label: t("categories.magazines"),
+          count: categoryCounts["MAGAZINE"] || 0,
+        },
+        {
+          id: "EVENT",
+          label: t("categories.events"),
+          count: categoryCounts["EVENT"] || 0,
+        },
+      ];
+    },
+    [t, meta],
   );
 
   return (
@@ -101,16 +114,13 @@ const Notifications = () => {
           <FilterPills
             options={categories}
             activeId={activeCategory}
-            onSelect={(id) => setActiveCategory(id)}
+            onSelect={handleCategoryChange}
             className="sticky top-20 z-30"
           />
 
           {/* Archive Toggle */}
           <button
-            onClick={() => {
-              setShowArchived(!showArchived);
-              setActiveCategory("ALL");
-            }}
+            onClick={handleToggleArchived}
             className={`flex items-center gap-2 px-3 sm:px-5 py-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 cursor-pointer ${
               showArchived
                 ? "text-amber-900 bg-amber-100 ring-1 ring-amber-200"
@@ -165,7 +175,7 @@ const Notifications = () => {
                     totalItems={meta.totalItems}
                     pageSize={pageSize}
                     onPageChange={setCurrentPage}
-                    onPageSizeChange={setPageSize}
+                    onPageSizeChange={handlePageSizeChange}
                     isLoading={isFetching}
                   />
                 )}

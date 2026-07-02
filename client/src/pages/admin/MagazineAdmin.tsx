@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 // Types and services
 import type {
@@ -7,7 +6,6 @@ import type {
   AdminMagazineDraft,
 } from "../../types/magazine.admin";
 import { magazineAdminService } from "../../services/magazine.admin.service";
-import { cloudinaryUploadService } from "../../services/cloudinary.service";
 import { useAdminData } from "../../hooks/admin/useAdminData";
 
 // Magazine specific components
@@ -37,8 +35,7 @@ const STATUS_OPTIONS = [
   { label: "Draft", value: "DRAFT" },
 ];
 
-const defaultMagazineValues = {
-  uuid: "",
+const defaultMagazineValues: AdminMagazineDraft = {
   title_en: "",
   title_ml: "",
   publishedDate: new Date().toISOString(),
@@ -69,11 +66,13 @@ const MagazineAdmin = () => {
       search: "",
       startDate: "",
       endDate: "",
-    }
+    },
   );
 
   // 2. Action States
-  const [editing, setEditing] = useState<AdminMagazine | null>(null);
+  const [editing, setEditing] = useState<
+    AdminMagazine | AdminMagazineDraft | null
+  >(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -83,36 +82,20 @@ const MagazineAdmin = () => {
   } | null>(null);
 
   // 3. Handlers
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: AdminMagazineDraft & { uuid?: string }) => {
     setIsSaving(true);
     try {
-      let uploadResults = {};
-
-      // Handle Cloudinary PDF upload (Client-side action - keep manual toasts)
-      if (data.file) {
-        toast.loading("Uploading PDF to cloud...", { id: "upload-toast" });
-        uploadResults = await cloudinaryUploadService.uploadFile(
-          data.file,
-          "magazines"
-        );
-        toast.success("PDF uploaded successfully", { id: "upload-toast" });
-      }
-
-      const { file, ...formFields } = data;
-      const finalPayload = { ...formFields, ...uploadResults };
-
+      // Orchestration is now handled inside magazineAdminService
       if (data.uuid) {
-        await magazineAdminService.update(data.uuid, finalPayload);
+        await magazineAdminService.update(data.uuid, data);
       } else {
-        await magazineAdminService.create(finalPayload as AdminMagazineDraft);
+        await magazineAdminService.create(data);
       }
 
       setEditing(null);
       refresh();
     } catch (err) {
-      // If error occurs, we handle the toast cleanup here
-      // (Global interceptor will show the error message toast)
-      toast.dismiss("upload-toast");
+      /* api.ts and service handle error reporting */
     } finally {
       setIsSaving(false);
     }
@@ -166,7 +149,7 @@ const MagazineAdmin = () => {
           <ResetButton onClick={reset} />
           <PrimaryButton
             label="Add New Magazine"
-            onClick={() => setEditing(defaultMagazineValues as AdminMagazine)}
+            onClick={() => setEditing(defaultMagazineValues)}
           />
         </AdminControlGroup>
       </AdminHeader>
@@ -213,7 +196,7 @@ const MagazineAdmin = () => {
       >
         {editing && (
           <MagazineForm
-            initial={editing.uuid ? editing : undefined}
+            initial={editing}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
             isLoading={isSaving}

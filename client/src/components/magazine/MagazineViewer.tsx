@@ -124,7 +124,7 @@ const MagazineViewer: React.FC<Props> = ({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -234,7 +234,7 @@ const MagazineViewer: React.FC<Props> = ({
           <a
             href={issue.pdfUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="text-white/80 hover:text-white transition p-2"
           >
             <Maximize2 size={20} />

@@ -9,7 +9,7 @@ import type {
 import { PrimaryButton, SecondaryButton } from "../../ui";
 
 interface Props {
-  initial?: AdminMagazine;
+  initial?: AdminMagazine | AdminMagazineDraft;
   onSave: (data: any) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -23,6 +23,9 @@ const MagazineForm: React.FC<Props> = ({
   isLoading,
   onDirtyChange,
 }) => {
+  // Extract uuid if it exists (it exists on AdminMagazine but not necessarily on Draft)
+  const uuid = (initial as AdminMagazine)?.uuid;
+
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? "");
   const [titleMl, setTitleMl] = useState(initial?.title_ml ?? "");
 
@@ -32,7 +35,7 @@ const MagazineForm: React.FC<Props> = ({
 
   const [publishedDate, setPublishedDate] = useState(initialDate);
   const [status, setStatus] = useState<MagazineStatus>(
-    initial?.status ?? "DRAFT"
+    initial?.status ?? "DRAFT",
   );
 
   const [file, setFile] = useState<File | null>(null);
@@ -59,29 +62,25 @@ const MagazineForm: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload: any = {
+    // Prepare a plain JSON-ready object.
+    // The 'file' is included here and will be handled by the service orchestration.
+    const payload: AdminMagazineDraft & { uuid?: string } = {
+      uuid,
       title_en: titleEn,
       title_ml: titleMl,
       publishedDate: new Date(publishedDate).toISOString(),
       status,
+      file: file || undefined,
     };
 
-    if (file) {
-      payload.file = file;
-    }
-
-    if (initial?.uuid) {
-      onSave({ ...payload, uuid: initial.uuid });
-    } else {
-      onSave(payload as AdminMagazineDraft);
-    }
+    onSave(payload);
   };
 
   const handleCancel = () => {
     if (isDirty) {
       if (
         window.confirm(
-          "You have unsaved changes. Are you sure you want to close this form?"
+          "You have unsaved changes. Are you sure you want to close this form?",
         )
       ) {
         onCancel();
@@ -98,7 +97,7 @@ const MagazineForm: React.FC<Props> = ({
     >
       <div className="sticky top-0 bg-white sm:bg-stone-50 pt-4 pb-4 sm:pt-0 z-10 border-b border-stone-100 mb-2">
         <h2 className="text-xl font-serif text-stone-800">
-          {initial?.uuid ? "Edit Magazine Issue" : "Create New Magazine Issue"}
+          {uuid ? "Edit Magazine Issue" : "Create New Magazine Issue"}
         </h2>
       </div>
 
@@ -151,7 +150,7 @@ const MagazineForm: React.FC<Props> = ({
         {/* PDF File Upload */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold uppercase tracking-wider text-stone-500">
-            Magazine PDF {initial?.uuid ? "(Optional)" : "(Required)"}
+            Magazine PDF {uuid ? "(Optional)" : "(Required)"}
           </label>
 
           <div
@@ -165,7 +164,7 @@ const MagazineForm: React.FC<Props> = ({
             <input
               type="file"
               accept=".pdf"
-              required={!initial?.uuid}
+              required={!uuid}
               disabled={isLoading}
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="absolute inset-0 opacity-0 cursor-pointer z-10"
@@ -227,9 +226,9 @@ const MagazineForm: React.FC<Props> = ({
         <PrimaryButton
           type="submit"
           variant="form"
-          label={initial?.uuid ? "Update Magazine" : "Create Magazine"}
+          label={uuid ? "Update Magazine" : "Create Magazine"}
           isLoading={isLoading}
-          loadingLabel={initial?.uuid ? "Updating..." : "Creating..."}
+          loadingLabel={uuid ? "Updating..." : "Creating..."}
         />
       </div>
     </form>

@@ -3,8 +3,10 @@ import toast from "react-hot-toast";
 import { logout } from "../utils/logout";
 import { getUserIdFromToken } from "../utils/auth";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  baseURL: API_BASE_URL,
   // CRITICAL: Allows browser to send and receive cookies for cross-origin requests
   withCredentials: true,
 });
@@ -86,7 +88,7 @@ api.interceptors.response.use(
          * If the user is disabled, this call will fail and throw to the catch block.
          */
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+          `${API_BASE_URL}/auth/refresh`,
           { userUuid },
           { withCredentials: true }
         );

@@ -42,7 +42,7 @@ const MagazineBottomSheet: React.FC<Props> = ({ isOpen, onClose, issue }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      window.open(issue.pdfUrl, "_blank");
+      window.open(issue.pdfUrl, "_blank", "noopener,noreferrer");
     }
   };
 
