@@ -1,73 +1,54 @@
-# React + TypeScript + Vite
+# Client — Viralippurath Family Web App v1 (Archived)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> ⚠️ **Deprecated.** Do not deploy. Successor: <https://viralippurath.com> (API: <https://api.viralippurath.com>, repo: <https://github.com/AdnanABF/Viralippurath-Web>).
 
-Currently, two official plugins are available:
+React 19 + Vite 7 + TypeScript SPA: public family site plus admin panel. Talks to the NestJS API in `../server` via axios (`withCredentials`, HttpOnly-cookie auth, auto refresh, toast + correlation-ID error handling).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## React Compiler
+React 19, React Router 7, TanStack Query 5, Tailwind CSS 4, axios, i18next (English/Malayalam, `./public/locales`), Framer Motion, Embla Carousel, react-pdf, react-hot-toast, lucide-react.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Routes
 
-## Expanding the ESLint configuration
+Public (`PublicLayout`, `src/app/router.tsx`): `/`, `/vision`, `/gallery`, `/events`, `/magazine`, `/notifications`, `/about`, `/login` (guest-only), `/unauthorized`.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Admin (`/admin/*`, `AdminGuard`; `manage-admins` requires `SUPER_ADMIN`): `dashboard`, `events`, `gallery`, `magazine`, `notifications`, `activity-log`, `system-log`, `manage-admins`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Structure
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── app/        # router.tsx, admin-router.tsx
+├── pages/      # public/, admin/, common/ (NotFound, Unauthorized)
+├── components/ # layout/, admin/ (guards, layout), ui/
+├── services/   # api.ts + auth, public, dashboard, events/gallery/magazine/
+│               #   notifications/admin, activity-log, system-log, cloudinary
+├── context/    # AuthContext.tsx
+├── hooks/ types/ utils/  # auth helpers, logout, etc.
+├── i18n.ts main.tsx App.tsx index.css
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # vite dev server
+npm run build    # tsc -b && vite build
+npm run preview  # preview production build
+npm run lint     # eslint .
 ```
+
+## Env
+
+Copy `.env.example` to `.env`:
+
+| Var | Purpose |
+|-----|---------|
+| `VITE_API_URL` | API base URL (dev: `http://localhost:3000`) |
+| `VITE_ENV` | `development` / `production` |
+| `VITE_PORTFOLIO_URL` | Author portfolio link |
+| `VITE_DIRECTORY_URL` | Family directory link |
+
+## Deploy (historical)
+
+Vercel static site with SPA fallback (`vercel.json` rewrites `/(.*)` → `/index.html`). No longer deployed from this code.
